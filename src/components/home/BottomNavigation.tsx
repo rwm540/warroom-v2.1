@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
 import { 
   Home, 
-  ClipboardCheck, 
-  Shield, 
   BookOpen, 
   MoreHorizontal, 
   User as UserIcon, 
   Headphones, 
+  PhoneCall,
   Users, 
   SlidersHorizontal, 
   LogOut, 
   X, 
   Award, 
   Info,
-  ChevronLeft,
-  Compass
+  ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from '../../types';
@@ -48,9 +46,9 @@ export default function BottomNavigation({
 
   const mainItems = [
     { id: 'Home', label: 'صفحه اصلی', icon: Home },
-    { id: 'Journey', label: 'مسیر سفر', icon: Compass },
-    { id: 'WarRoom', label: 'اتاق جنگ', icon: Shield, isCentral: true },
-    { id: 'Missions', label: 'مأموریت‌ها', icon: ClipboardCheck },
+    { id: 'Trainings', label: 'آموزش‌ها', icon: BookOpen },
+    { id: 'Support', label: 'ارتباط با ما', icon: Headphones, isCentral: true },
+    { id: 'Contact', label: 'تماس با ما', icon: PhoneCall },
     { id: 'More', label: 'بیشتر', icon: MoreHorizontal, isMore: true }
   ];
 
@@ -76,19 +74,15 @@ export default function BottomNavigation({
                 key={item.id}
                 onClick={() => {
                   setIsMoreOpen(false);
-                  if (onOpenCentralModal) {
-                    onOpenCentralModal();
-                  } else {
-                    setActiveTab('Dashboard');
-                  }
+                  setActiveTab('Support');
                 }}
                 aria-label={item.label}
                 title={item.label}
                 className="relative -top-3 flex flex-col items-center justify-center focus:outline-none group"
               >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#3b82f6] to-[#e11d48] p-0.5 shadow-[0_0_20px_rgba(6,182,212,0.6)] group-hover:scale-105 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#00f0ff] via-[#3b82f6] to-[#06b6d4] p-0.5 shadow-[0_0_20px_rgba(6,182,212,0.6)] group-hover:scale-105 transition-transform">
                   <div className="w-full h-full rounded-full bg-[#070b1a] flex items-center justify-center text-white border border-cyan-400/50">
-                    <Shield size={20} className="text-cyan-400 animate-pulse drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                    <Headphones size={20} className="text-cyan-400 animate-pulse drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
                   </div>
                 </div>
                 <span className="text-[9px] font-black text-cyan-400 mt-0.5 tracking-tight">
@@ -272,18 +266,22 @@ export default function BottomNavigation({
                   <ChevronLeft size={16} className="text-slate-500" />
                 </button>
 
-                {/* Leaderboard */}
+                {/* Contact Us - تماس با ما */}
                 <button
-                  onClick={() => handleMoreItemClick(() => setActiveTab('Dashboard'))}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[#0b122c] border border-cyan-500/20 text-slate-200 hover:border-cyan-500/40 transition"
+                  onClick={() => handleMoreItemClick(() => setActiveTab('Contact'))}
+                  className={`flex items-center justify-between p-3 rounded-2xl border text-right transition ${
+                    activeTab === 'Contact'
+                      ? 'bg-cyan-950/80 border-cyan-400 text-cyan-300'
+                      : 'bg-[#0b122c] border-cyan-500/20 text-slate-200 hover:border-cyan-500/40'
+                  }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-amber-900/30 text-amber-400">
-                      <Award size={18} />
+                    <div className="p-2 rounded-xl bg-cyan-900/40 text-cyan-400">
+                      <PhoneCall size={18} />
                     </div>
                     <div>
-                      <div className="text-xs font-black">جدول رده‌بندی</div>
-                      <div className="text-[9px] text-slate-400">رتبه‌بندی رزمندگان</div>
+                      <div className="text-xs font-black">تماس با ما</div>
+                      <div className="text-[9px] text-slate-400">شماره‌ها و آدرس ستاد</div>
                     </div>
                   </div>
                   <ChevronLeft size={16} className="text-slate-500" />

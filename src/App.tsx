@@ -270,7 +270,11 @@ export default function App() {
             <PortalSelectorView 
               onSelectWarRoom={() => {
                 setShowPortalSelector(false);
-                setShowAuthScreen(true);
+                if (currentUser) {
+                  setActiveTab('Journey');
+                } else {
+                  setShowAuthScreen(true);
+                }
               }}
               onBackToHome={() => setShowPortalSelector(false)}
             />
@@ -411,7 +415,7 @@ export default function App() {
                     />
                   )}
 
-                  {activeTab === 'Support' && (
+                  {(activeTab === 'Support' || activeTab === 'Contact') && (
                     <SupportView 
                       currentUser={currentUser!}
                       tickets={tickets}
@@ -458,7 +462,7 @@ export default function App() {
           setActiveTab={(tab) => {
             if (tab === 'WarRoom') {
               setIsAdminMode(false);
-              setActiveTab('Dashboard');
+              setActiveTab('Journey');
             } else if (tab === 'Admin') {
               setIsAdminMode(true);
             } else {

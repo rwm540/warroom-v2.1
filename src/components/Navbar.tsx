@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
 import { 
   ShieldAlert, 
-  Target, 
   BookOpen, 
   HelpCircle, 
+  PhoneCall,
   User as UserIcon, 
-  LayoutDashboard, 
   Copy, 
   Check, 
   LogOut, 
   Users, 
   SlidersHorizontal,
-  Flame,
-  Award,
-  Bell,
-  Compass
+  Bell
 } from 'lucide-react';
 import { User } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -197,45 +193,6 @@ export default function Navbar({
               <span>صفحه اصلی</span>
             </button>
 
-            {/* Journey Map */}
-            <button
-              onClick={() => { setIsAdminView(false); setCurrentTab('Journey'); }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-                currentTab === 'Journey' && !isAdminView
-                  ? 'bg-amber-950/80 text-amber-300 border border-amber-500/60 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
-                  : 'text-slate-400 hover:text-amber-200 hover:bg-slate-900/50'
-              }`}
-            >
-              <Compass size={16} className="text-amber-400" />
-              <span>مسیر سفر</span>
-            </button>
-
-            {/* Dashboard */}
-            <button
-              onClick={() => { setIsAdminView(false); setCurrentTab('Dashboard'); }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-                currentTab === 'Dashboard' && !isAdminView
-                  ? 'bg-red-900/60 text-white border border-red-600/60 shadow-[0_0_10px_rgba(220,38,38,0.3)]'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-              }`}
-            >
-              <LayoutDashboard size={16} />
-              <span>اتاق جنگ</span>
-            </button>
-
-            {/* Missions */}
-            <button
-              onClick={() => { setIsAdminView(false); setCurrentTab('Missions'); }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-                currentTab === 'Missions' && !isAdminView
-                  ? 'bg-red-900/60 text-white border border-red-600/60 shadow-[0_0_10px_rgba(220,38,38,0.3)]'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-              }`}
-            >
-              <Target size={16} />
-              <span>ماموریت‌ها</span>
-            </button>
-
             {/* Trainings */}
             <button
               onClick={() => { setIsAdminView(false); setCurrentTab('Trainings'); }}
@@ -249,7 +206,7 @@ export default function Navbar({
               <span>آموزش‌ها</span>
             </button>
 
-            {/* Support */}
+            {/* Support - ارتباط با ما */}
             <button
               onClick={() => { setIsAdminView(false); setCurrentTab('Support'); }}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition relative ${
@@ -259,12 +216,25 @@ export default function Navbar({
               }`}
             >
               <HelpCircle size={16} />
-              <span>پشتیبانی</span>
+              <span>ارتباط با ما</span>
               {unreadTicketsCount > 0 && (
                 <span className="bg-red-600 text-white text-[10px] font-mono px-1.5 py-0.2 rounded-full font-bold">
                   {unreadTicketsCount}
                 </span>
               )}
+            </button>
+
+            {/* Contact - تماس با ما */}
+            <button
+              onClick={() => { setIsAdminView(false); setCurrentTab('Contact'); }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
+                currentTab === 'Contact' && !isAdminView
+                  ? 'bg-cyan-900/60 text-cyan-200 border border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+              }`}
+            >
+              <PhoneCall size={16} />
+              <span>تماس با ما</span>
             </button>
 
             {/* Profile & Medals */}

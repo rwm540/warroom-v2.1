@@ -43,6 +43,22 @@ export default function MissionsView({
   setSubmissions,
   triggerAlert
 }: MissionsViewProps) {
+  if (!currentUser) {
+    return (
+      <div className="dir-rtl max-w-2xl mx-auto py-12 px-4 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-red-950/80 border border-red-600/60 flex items-center justify-center text-red-400 mx-auto shadow-[0_0_20px_rgba(220,38,38,0.3)]">
+          <Target size={32} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-black text-white">مأموریت‌های اتاق جنگ</h2>
+          <p className="text-xs text-slate-300 leading-relaxed max-w-md mx-auto">
+            برای مشاهده و ارسال پاسخ مأموریت‌های عملیاتی، ابتدا باید وارد حساب کاربری خود شوید.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const [selectedMissionId, setSelectedMissionId] = useState<string>(missions[0]?.id || '');
   const selectedMission = missions.find(m => m.id === selectedMissionId) || missions[0];
 

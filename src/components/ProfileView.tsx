@@ -31,6 +31,22 @@ export default function ProfileView({
 }: ProfileViewProps) {
   const [copied, setCopied] = useState(false);
 
+  if (!currentUser) {
+    return (
+      <div className="dir-rtl max-w-2xl mx-auto py-12 px-4 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-amber-950/80 border border-amber-600/60 flex items-center justify-center text-amber-400 mx-auto shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+          <UserIcon size={32} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-black text-white">شناسنامه و مدال‌های رزمنده</h2>
+          <p className="text-xs text-slate-300 leading-relaxed max-w-md mx-auto">
+            برای مشاهده آمار انفرادی، کد ۹ رقمی اختصاصی و مدال‌های کسب شده، ابتدا وارد حساب کاربری خود شوید.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Filter medals earned by this user via personal_code
   const earnedUserMedals = userMedals.filter(um => um.personal_code === currentUser.personal_code);
   const earnedMedalIds = new Set(earnedUserMedals.map(um => um.medal_id));

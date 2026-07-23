@@ -11,7 +11,11 @@ import {
   ShieldAlert, 
   Tag, 
   User as UserIcon, 
-  Lock 
+  Lock,
+  Phone,
+  Mail,
+  MapPin,
+  Headphones
 } from 'lucide-react';
 import { User, SupportTicket, SupportReply, TicketType, TicketStatus } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -33,6 +37,22 @@ export default function SupportView({
   setReplies,
   triggerAlert
 }: SupportViewProps) {
+  if (!currentUser) {
+    return (
+      <div className="dir-rtl max-w-2xl mx-auto py-12 px-4 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-cyan-950/80 border border-cyan-600/60 flex items-center justify-center text-cyan-400 mx-auto shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+          <HelpCircle size={32} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-black text-white">پشتیبانی و تیکت‌های اتاق جنگ</h2>
+          <p className="text-xs text-slate-300 leading-relaxed max-w-md mx-auto">
+            برای ثبت تیکت جدید و مشاهده پاسخ‌های ستاد پشتیبانی، ابتدا وارد حساب کاربری خود شوید.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Filter tickets for current user
   const userTickets = tickets.filter(t => t.user_id === currentUser.id);
 
@@ -151,7 +171,41 @@ export default function SupportView({
         </button>
       </div>
 
-      {/* Main Grid: Ticket List (Right) + Conversation Thread (Left) */}
+      {/* Direct Contact Info Banner (تماس با ما & ارتباط مستقیم) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="bg-[#080d22] border border-cyan-500/30 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-3 rounded-xl bg-cyan-950/80 text-cyan-400 border border-cyan-500/40 shrink-0">
+            <Phone size={22} />
+          </div>
+          <div>
+            <span className="text-[10px] text-cyan-400 font-bold block">تلفن پشتیبانی مرکزی:</span>
+            <span className="text-sm font-black text-white dir-ltr font-mono">۰۲۱ - ۸۸۹۹۷۷۶۶</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">پاسخگویی ۹ صبح الی ۱۸ عصر</span>
+          </div>
+        </div>
+
+        <div className="bg-[#080d22] border border-blue-500/30 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-3 rounded-xl bg-blue-950/80 text-blue-400 border border-blue-500/40 shrink-0">
+            <Mail size={22} />
+          </div>
+          <div>
+            <span className="text-[10px] text-blue-400 font-bold block">پست الکترونیک و پیام‌رسان:</span>
+            <span className="text-xs font-bold text-white font-mono">support@warroom.ir</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">کانال ایتا: @WarRoom_Support</span>
+          </div>
+        </div>
+
+        <div className="bg-[#080d22] border border-amber-500/30 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-3 rounded-xl bg-amber-950/80 text-amber-400 border border-amber-500/40 shrink-0">
+            <MapPin size={22} />
+          </div>
+          <div>
+            <span className="text-[10px] text-amber-400 font-bold block">نشانی ستاد مرکزی:</span>
+            <span className="text-xs font-bold text-white">تهران، خیابان انقلاب، ستاد دانش‌آموزی</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">مرکز ارتباطات و ارزیابی</span>
+          </div>
+        </div>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Ticket List (4 cols) */}

@@ -23,9 +23,7 @@ export default function TrainingsView({
   currentUser,
   trainings
 }: TrainingsViewProps) {
-  // Filter trainings relevant to user role
-  // Member gets same access as 'user'
-  const effectiveRole = currentUser.role === 'member' ? 'user' : currentUser.role;
+  const effectiveRole = !currentUser ? 'all' : currentUser.role === 'member' ? 'user' : currentUser.role;
 
   const accessibleTrainings = trainings.filter(t => 
     t.is_active && (t.target_role === 'all' || t.target_role === effectiveRole)

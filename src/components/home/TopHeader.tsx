@@ -1,6 +1,6 @@
 import React from 'react';
 import { User } from '../../types';
-import { Bell, Shield, LogIn, UserPlus, LogOut, Home, ClipboardCheck, BookOpen, Headphones, LayoutDashboard, User as UserIcon } from 'lucide-react';
+import { Bell, Shield, LogIn, UserPlus, LogOut, Home, BookOpen, Headphones, PhoneCall, User as UserIcon } from 'lucide-react';
 
 interface TopHeaderProps {
   currentUser: User | null;
@@ -27,10 +27,9 @@ export default function TopHeader({
 }: TopHeaderProps) {
   const navItems = [
     { id: 'Home', label: 'صفحه اصلی', icon: Home },
-    { id: 'Dashboard', label: 'اتاق جنگ', icon: LayoutDashboard },
-    { id: 'Missions', label: 'مأموریت‌ها', icon: ClipboardCheck },
     { id: 'Trainings', label: 'آموزش‌ها', icon: BookOpen },
-    { id: 'Support', label: 'پشتیبانی', icon: Headphones },
+    { id: 'Support', label: 'ارتباط با ما', icon: Headphones },
+    { id: 'Contact', label: 'تماس با ما', icon: PhoneCall },
   ];
 
   return (

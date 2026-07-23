@@ -44,6 +44,31 @@ export default function DashboardView({
 }: DashboardViewProps) {
   const [copied, setCopied] = React.useState(false);
 
+  // Null check safety for non-logged in guests
+  if (!currentUser) {
+    return (
+      <div className="dir-rtl max-w-2xl mx-auto py-12 px-4 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-red-950/80 border border-red-600/60 flex items-center justify-center text-red-400 mx-auto shadow-[0_0_20px_rgba(220,38,38,0.3)]">
+          <ShieldAlert size={32} className="animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-black text-white">ورود به بخش اتاق جنگ</h2>
+          <p className="text-xs text-slate-300 leading-relaxed max-w-md mx-auto">
+            برای مشاهده کامل داشبورد، ثبت مأموریت‌ها و آمار عملیاتی لطفاً ابتدا وارد حساب کاربری خود شوید یا در صفحه اصلی ثبت‌نام کنید.
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            onClick={() => onNavigate('Journey')}
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black text-xs shadow-[0_0_15px_rgba(245,158,11,0.4)] transition"
+          >
+            مشاهده مسیر بازی‌ها و مراحل اتاق جنگ
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // User rank label calculation
   const rankTitle = currentUser.role === 'leader' ? 'فرمانده ارشد جوخه' : 'رزمنده جنگ استراتژیک';
 
