@@ -48,7 +48,7 @@ export default function BottomNavigation({
     { id: 'Home', label: 'صفحه اصلی', icon: Home },
     { id: 'PortalSelector', label: 'انتخاب بازی', icon: Gamepad2 },
     { id: 'Support', label: 'ارتباط با ما', icon: Headphones, isCentral: true },
-    { id: 'Contact', label: 'تماس با ما', icon: PhoneCall },
+    { id: 'About', label: 'درباره ما', icon: Info },
     { id: 'More', label: 'بیشتر', icon: MoreHorizontal, isMore: true }
   ];
 
@@ -266,22 +266,22 @@ export default function BottomNavigation({
                   <ChevronLeft size={16} className="text-slate-500" />
                 </button>
 
-                {/* Contact Us - تماس با ما */}
+                {/* About Us - درباره ما */}
                 <button
-                  onClick={() => handleMoreItemClick(() => setActiveTab('Contact'))}
+                  onClick={() => handleMoreItemClick(() => setActiveTab('About'))}
                   className={`flex items-center justify-between p-3 rounded-2xl border text-right transition ${
-                    activeTab === 'Contact'
+                    activeTab === 'About'
                       ? 'bg-cyan-950/80 border-cyan-400 text-cyan-300'
                       : 'bg-[#0b122c] border-cyan-500/20 text-slate-200 hover:border-cyan-500/40'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="p-2 rounded-xl bg-cyan-900/40 text-cyan-400">
-                      <PhoneCall size={18} />
+                      <Info size={18} />
                     </div>
                     <div>
-                      <div className="text-xs font-black">تماس با ما</div>
-                      <div className="text-[9px] text-slate-400">شماره‌ها و آدرس ستاد</div>
+                      <div className="text-xs font-black">درباره ما</div>
+                      <div className="text-[9px] text-slate-400">معرفی پروژه و اهداف سامانه</div>
                     </div>
                   </div>
                   <ChevronLeft size={16} className="text-slate-500" />

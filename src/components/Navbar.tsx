@@ -3,7 +3,7 @@ import {
   ShieldAlert, 
   Gamepad2, 
   HelpCircle, 
-  PhoneCall,
+  Info,
   User as UserIcon, 
   Copy, 
   Check, 
@@ -224,17 +224,17 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Contact - تماس با ما */}
+            {/* About - درباره ما */}
             <button
-              onClick={() => { setIsAdminView(false); setCurrentTab('Contact'); }}
+              onClick={() => { setIsAdminView(false); setCurrentTab('About'); }}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-                currentTab === 'Contact' && !isAdminView
+                currentTab === 'About' && !isAdminView
                   ? 'bg-cyan-900/60 text-cyan-200 border border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
               }`}
             >
-              <PhoneCall size={16} />
-              <span>تماس با ما</span>
+              <Info size={16} />
+              <span>درباره ما</span>
             </button>
 
             {/* Profile & Medals */}

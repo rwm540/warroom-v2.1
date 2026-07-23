@@ -43,6 +43,8 @@ import JourneyView from './components/JourneyView';
 import MissionsView from './components/MissionsView';
 import TrainingsView from './components/TrainingsView';
 import SupportView from './components/SupportView';
+import ContactView from './components/ContactView';
+import AboutView from './components/AboutView';
 import ProfileView from './components/ProfileView';
 import AdminPanel from './components/AdminPanel';
 import SquadManagementModal from './components/SquadManagementModal';
@@ -112,6 +114,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>('Home');
 
   const handleTabChange = (tab: string) => {
+    setShowPortalSelector(false);
+    setShowAuthScreen(false);
     if (tab === 'PortalSelector' || tab === 'GameSelection') {
       setShowPortalSelector(true);
     } else {
@@ -331,8 +335,37 @@ export default function App() {
               triggerAlert={triggerAlert}
             />
           </motion.div>
+        ) : (activeTab === 'Support' || activeTab === 'Contact') ? (
+          /* Standalone Animated Contact Us Page (Public & Independent) */
+          <motion.div
+            key="contactPage"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="min-h-screen bg-[#05091a] text-slate-100 py-6 px-3 sm:px-6 dir-rtl"
+          >
+            <ContactView 
+              onNavigate={(tab) => handleTabChange(tab)}
+              triggerAlert={triggerAlert}
+            />
+          </motion.div>
+        ) : activeTab === 'About' ? (
+          /* Standalone Animated About Us Page */
+          <motion.div
+            key="aboutPage"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="min-h-screen bg-[#05091a] text-slate-100 py-6 px-3 sm:px-6 dir-rtl"
+          >
+            <AboutView 
+              onNavigate={(tab) => handleTabChange(tab)}
+            />
+          </motion.div>
         ) : (
-          /* Main Platform View for other tabs */
+          /* Main Platform View for other logged-in tabs */
           <motion.div
             key="platform"
             initial={{ opacity: 0 }}
@@ -421,17 +454,6 @@ export default function App() {
                     <TrainingsView 
                       currentUser={currentUser!}
                       trainings={trainings}
-                    />
-                  )}
-
-                  {(activeTab === 'Support' || activeTab === 'Contact') && (
-                    <SupportView 
-                      currentUser={currentUser!}
-                      tickets={tickets}
-                      setTickets={setTickets}
-                      replies={replies}
-                      setReplies={setReplies}
-                      triggerAlert={triggerAlert}
                     />
                   )}
 

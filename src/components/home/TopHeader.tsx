@@ -1,6 +1,6 @@
 import React from 'react';
 import { User } from '../../types';
-import { Bell, Shield, LogIn, UserPlus, LogOut, Home, Headphones, PhoneCall, Gamepad2, User as UserIcon } from 'lucide-react';
+import { Bell, Shield, LogIn, UserPlus, LogOut, Home, Headphones, Info, Gamepad2, User as UserIcon } from 'lucide-react';
 
 interface TopHeaderProps {
   currentUser: User | null;
@@ -29,7 +29,7 @@ export default function TopHeader({
     { id: 'Home', label: 'صفحه اصلی', icon: Home },
     { id: 'PortalSelector', label: 'انتخاب بازی', icon: Gamepad2 },
     { id: 'Support', label: 'ارتباط با ما', icon: Headphones },
-    { id: 'Contact', label: 'تماس با ما', icon: PhoneCall },
+    { id: 'About', label: 'درباره ما', icon: Info },
   ];
 
   return (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { 
   HelpCircle, 
   Plus, 
@@ -15,46 +16,44 @@ import {
   Phone,
   Mail,
   MapPin,
-  Headphones
+  Headphones,
+  Home,
+  ArrowLeft,
+  Sparkles,
+  MessageCircle,
+  Globe
 } from 'lucide-react';
 import { User, SupportTicket, SupportReply, TicketType, TicketStatus } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
 
 interface SupportViewProps {
-  currentUser: User;
-  tickets: SupportTicket[];
-  setTickets: React.Dispatch<React.SetStateAction<SupportTicket[]>>;
-  replies: SupportReply[];
-  setReplies: React.Dispatch<React.SetStateAction<SupportReply[]>>;
-  triggerAlert: (msg: string) => void;
+  currentUser?: User | null;
+  tickets?: SupportTicket[];
+  setTickets?: React.Dispatch<React.SetStateAction<SupportTicket[]>>;
+  replies?: SupportReply[];
+  setReplies?: React.Dispatch<React.SetStateAction<SupportReply[]>>;
+  triggerAlert?: (msg: string) => void;
+  onNavigate?: (tab: string) => void;
 }
 
 export default function SupportView({
   currentUser,
-  tickets,
+  tickets = [],
   setTickets,
-  replies,
+  replies = [],
   setReplies,
-  triggerAlert
+  triggerAlert,
+  onNavigate
 }: SupportViewProps) {
-  if (!currentUser) {
-    return (
-      <div className="dir-rtl max-w-2xl mx-auto py-12 px-4 text-center space-y-6">
-        <div className="w-16 h-16 rounded-2xl bg-cyan-950/80 border border-cyan-600/60 flex items-center justify-center text-cyan-400 mx-auto shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-          <HelpCircle size={32} />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-xl font-black text-white">پشتیبانی و تیکت‌های اتاق جنگ</h2>
-          <p className="text-xs text-slate-300 leading-relaxed max-w-md mx-auto">
-            برای ثبت تیکت جدید و مشاهده پاسخ‌های ستاد پشتیبانی، ابتدا وارد حساب کاربری خود شوید.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Guest contact form state
+  const [guestName, setGuestName] = useState('');
+  const [guestContact, setGuestContact] = useState('');
+  const [guestSubject, setGuestSubject] = useState('');
+  const [guestMessage, setGuestMessage] = useState('');
+  const [isSent, setIsSent] = useState(false);
 
-  // Filter tickets for current user
-  const userTickets = tickets.filter(t => t.user_id === currentUser.id);
+  // Filter tickets for current user if logged in
+  const userTickets = currentUser ? tickets.filter(t => t.user_id === currentUser.id) : [];
 
   const [selectedTicketId, setSelectedTicketId] = useState<string>(userTickets[0]?.id || '');
   const selectedTicket = userTickets.find(t => t.id === selectedTicketId) || userTickets[0];
@@ -67,6 +66,23 @@ export default function SupportView({
 
   // Reply message text
   const [replyText, setReplyText] = useState<string>('');
+
+  const handleGuestSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!guestName.trim() || !guestContact.trim() || !guestMessage.trim()) return;
+
+    setIsSent(true);
+    if (triggerAlert) {
+      triggerAlert('پیام شما با موفقیت به ستاد پشتیبانی ارسال شد. کارشناسان ما به زودی با شما تماس خواهند گرفت.');
+    }
+    setTimeout(() => {
+      setGuestName('');
+      setGuestContact('');
+      setGuestSubject('');
+      setGuestMessage('');
+      setIsSent(false);
+    }, 4000);
+  };
 
   const getCategoryLabel = (type: TicketType) => {
     switch (type) {
@@ -96,7 +112,7 @@ export default function SupportView({
   // Create new ticket submit
   const handleCreateTicket = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSubject.trim() || !newMessage.trim()) return;
+    if (!currentUser || !newSubject.trim() || !newMessage.trim() || !setTickets) return;
 
     const newTicket: SupportTicket = {
       id: `tick-${Date.now()}`,
@@ -116,13 +132,13 @@ export default function SupportView({
     setNewSubject('');
     setNewMessage('');
     setShowNewModal(false);
-    triggerAlert('تیکت جدید با موفقیت ارسال شد.');
+    if (triggerAlert) triggerAlert('تیکت جدید با موفقیت ارسال شد.');
   };
 
   // Send reply handler
   const handleSendReply = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!replyText.trim() || !selectedTicket) return;
+    if (!currentUser || !replyText.trim() || !selectedTicket || !setReplies || !setTickets) return;
 
     const newReply: SupportReply = {
       id: `rep-${Date.now()}`,
@@ -142,258 +158,372 @@ export default function SupportView({
     ));
 
     setReplyText('');
-    triggerAlert('پاسخ شما ارسال شد و تیکت به حالت باز تغییر یافت.');
+    if (triggerAlert) triggerAlert('پاسخ شما ارسال شد و تیکت به حالت باز تغییر یافت.');
   };
 
   const currentReplies = replies.filter(r => r.ticket_id === selectedTicket?.id);
 
   return (
-    <div className="space-y-6 dir-rtl pb-8">
-      
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-        <div>
-          <h2 className="text-lg md:text-xl font-black text-white flex items-center gap-2">
-            <HelpCircle className="text-red-500" size={24} />
-            سامانه پشتیبانی و پاسخگویی به سوالات
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            ارسال تیکت به کارشناسان و داوران ستاد اتاق جنگ (فنی، محتوایی، داوری، عمومی)
-          </p>
+    <motion.div 
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="space-y-6 dir-rtl pb-16 max-w-6xl mx-auto px-2 md:px-4"
+    >
+      {/* Top Header Navigation Bar */}
+      <div className="flex items-center justify-between bg-[#080d22]/90 border border-cyan-500/30 rounded-2xl p-4 shadow-lg backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-cyan-950/80 border border-cyan-500/50 text-cyan-400">
+            <Headphones size={22} />
+          </div>
+          <div>
+            <h2 className="text-base font-black text-white">ارتباط با ما و مرکز پشتیبانی</h2>
+            <p className="text-[11px] text-cyan-300/80 font-bold">پاسخگویی سریع، ارسال پیام مستقیم و راهنمایی کاربران</p>
+          </div>
         </div>
 
-        <button
-          onClick={() => setShowNewModal(true)}
-          className="bg-red-700 hover:bg-red-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-[0_0_15px_rgba(220,38,38,0.4)] flex items-center justify-center gap-2"
-        >
-          <Plus size={16} />
-          <span>ثبت تیکت پشتیبانی جدید</span>
-        </button>
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate('Home')}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.4)] transition"
+          >
+            <Home size={15} />
+            <span>بازگشت به صفحه اصلی</span>
+            <ArrowLeft size={15} />
+          </button>
+        )}
       </div>
 
-      {/* Direct Contact Info Banner (تماس با ما & ارتباط مستقیم) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="bg-[#080d22] border border-cyan-500/30 rounded-2xl p-4 flex items-center gap-3">
+      {/* Direct Contact Info Banner */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="bg-[#080d22] border border-cyan-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-cyan-400/60 transition">
           <div className="p-3 rounded-xl bg-cyan-950/80 text-cyan-400 border border-cyan-500/40 shrink-0">
             <Phone size={22} />
           </div>
           <div>
-            <span className="text-[10px] text-cyan-400 font-bold block">تلفن پشتیبانی مرکزی:</span>
+            <span className="text-[10px] text-cyan-400 font-bold block">تلفن مستقیم پاسخگویی:</span>
             <span className="text-sm font-black text-white dir-ltr font-mono">۰۲۱ - ۸۸۹۹۷۷۶۶</span>
-            <span className="text-[10px] text-slate-400 block mt-0.5">پاسخگویی ۹ صبح الی ۱۸ عصر</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">شنبه تا چهارشنبه ۹ الی ۱۸</span>
           </div>
         </div>
 
-        <div className="bg-[#080d22] border border-blue-500/30 rounded-2xl p-4 flex items-center gap-3">
+        <div className="bg-[#080d22] border border-blue-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-blue-400/60 transition">
           <div className="p-3 rounded-xl bg-blue-950/80 text-blue-400 border border-blue-500/40 shrink-0">
             <Mail size={22} />
           </div>
           <div>
-            <span className="text-[10px] text-blue-400 font-bold block">پست الکترونیک و پیام‌رسان:</span>
+            <span className="text-[10px] text-blue-400 font-bold block">پست الکترونیک رسمی:</span>
             <span className="text-xs font-bold text-white font-mono">support@warroom.ir</span>
-            <span className="text-[10px] text-slate-400 block mt-0.5">کانال ایتا: @WarRoom_Support</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">پاسخگویی زیر ۲۴ ساعت</span>
           </div>
         </div>
 
-        <div className="bg-[#080d22] border border-amber-500/30 rounded-2xl p-4 flex items-center gap-3">
+        <div className="bg-[#080d22] border border-amber-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-amber-400/60 transition">
           <div className="p-3 rounded-xl bg-amber-950/80 text-amber-400 border border-amber-500/40 shrink-0">
+            <MessageCircle size={22} />
+          </div>
+          <div>
+            <span className="text-[10px] text-amber-400 font-bold block">شبکه‌های اجتماعی و پیام‌رسان:</span>
+            <span className="text-xs font-bold text-white font-mono">@WarRoom_Support</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">ایتا، روبیکا و بله</span>
+          </div>
+        </div>
+
+        <div className="bg-[#080d22] border border-emerald-500/30 rounded-2xl p-4 flex items-center gap-3 hover:border-emerald-400/60 transition">
+          <div className="p-3 rounded-xl bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 shrink-0">
             <MapPin size={22} />
           </div>
           <div>
-            <span className="text-[10px] text-amber-400 font-bold block">نشانی ستاد مرکزی:</span>
+            <span className="text-[10px] text-emerald-400 font-bold block">نشانی ستاد مرکزی:</span>
             <span className="text-xs font-bold text-white">تهران، خیابان انقلاب، ستاد دانش‌آموزی</span>
-            <span className="text-[10px] text-slate-400 block mt-0.5">مرکز ارتباطات و ارزیابی</span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">مرکز ارزیابی و مسابقات</span>
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Ticket List (4 cols) */}
-        <div className="lg:col-span-4 space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">تیکت‌های شما:</h3>
 
-          <div className="space-y-2.5">
-            {userTickets.map(t => {
-              const isSelected = t.id === selectedTicket?.id;
-
-              return (
-                <div
-                  key={t.id}
-                  onClick={() => setSelectedTicketId(t.id)}
-                  className={`p-3.5 rounded-xl border transition cursor-pointer ${
-                    isSelected
-                      ? 'bg-red-950/70 border-red-600/80 shadow-[0_0_15px_rgba(220,38,38,0.3)]'
-                      : 'bg-[#080d21] border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-[10px] font-bold bg-slate-900 text-slate-300 px-2 py-0.5 rounded border border-slate-800">
-                      {getCategoryLabel(t.type)}
-                    </span>
-                    {getStatusBadge(t.status)}
-                  </div>
-
-                  <h4 className="font-extrabold text-xs text-white line-clamp-1 mb-1">{t.subject}</h4>
-                  <p className="text-[10px] text-slate-500 font-mono">{t.created_at}</p>
-                </div>
-              );
-            })}
-
-            {userTickets.length === 0 && (
-              <div className="bg-[#080d21] border border-slate-800 rounded-xl p-6 text-center text-slate-500 text-xs">
-                هنوز تیکتی ثبت نکرده‌اید.
-              </div>
-            )}
+      {/* Direct Customer Message Form */}
+      <div className="bg-[#080d22] border border-cyan-500/30 rounded-3xl p-5 md:p-7 space-y-4 shadow-[0_0_25px_rgba(6,182,212,0.1)]">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <Send className="text-cyan-400" size={20} />
+            <h3 className="text-base font-black text-white">فرم ارتباط مستقیم مشتریان و ارسال پیام به ستاد</h3>
           </div>
+          <span className="text-xs text-slate-400">پاسخ پیام شما به شماره همراه یا ایمیل درج‌شده ارسال خواهد شد</span>
         </div>
 
-        {/* Conversation Thread (8 cols) */}
-        {selectedTicket ? (
-          <div className="lg:col-span-8 bg-[#080d21] border border-slate-800 rounded-2xl p-5 md:p-6 space-y-6 shadow-lg">
-            
-            {/* Ticket Subject Header */}
-            <div className="border-b border-slate-800 pb-4 space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="bg-slate-900 text-slate-300 text-[10px] font-bold px-2.5 py-0.5 rounded border border-slate-800">
-                  دسته: {getCategoryLabel(selectedTicket.type)}
-                </span>
-                {getStatusBadge(selectedTicket.status)}
-              </div>
-
-              <h3 className="text-base md:text-lg font-black text-white">{selectedTicket.subject}</h3>
-              <p className="text-[11px] text-slate-400 font-mono">شناسه تیکت: #{selectedTicket.id}</p>
-            </div>
-
-            {/* Chat Thread */}
-            <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
-              
-              {/* Initial Message from User */}
-              <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-red-400">
-                  <span>{selectedTicket.user_name} (رزمنده)</span>
-                  <span className="text-[10px] text-slate-500 font-mono">{selectedTicket.created_at}</span>
-                </div>
-                <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line">{selectedTicket.message}</p>
-              </div>
-
-              {/* Follow-up Replies */}
-              {currentReplies.map(r => (
-                <div
-                  key={r.id}
-                  className={`p-4 rounded-2xl space-y-2 border ${
-                    r.is_admin 
-                      ? 'bg-amber-950/20 border-amber-800/60 mr-4' 
-                      : 'bg-slate-950 border-slate-800 ml-4'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className={r.is_admin ? 'text-amber-400' : 'text-red-400'}>
-                      {r.user_name} {r.is_admin && '(پشتیبان ستاد)'}
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-mono">{r.created_at}</span>
-                  </div>
-                  <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line">{r.message}</p>
-                </div>
-              ))}
-
-            </div>
-
-            {/* Reply Input Form */}
-            {selectedTicket.status !== 'closed' ? (
-              <form onSubmit={handleSendReply} className="pt-4 border-t border-slate-800 space-y-3">
-                <textarea
-                  rows={3}
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="پاسخ یا سوال تکمیلی خود را بنویسید..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-red-600"
-                  required
-                />
-
-                <button
-                  type="submit"
-                  className="bg-red-700 hover:bg-red-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition shadow-[0_0_15px_rgba(220,38,38,0.4)] flex items-center justify-center gap-2"
-                >
-                  <Send size={15} />
-                  <span>ارسال پاسخ و بازکردن تیکت</span>
-                </button>
-              </form>
-            ) : (
-              <div className="bg-slate-950 p-3 rounded-xl text-center text-xs text-slate-500 font-bold border border-slate-800">
-                این تیکت توسط کارشناسان بسته شده است.
-              </div>
-            )}
-
+        {isSent ? (
+          <div className="p-6 rounded-2xl bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 text-center space-y-2">
+            <CheckCircle2 size={36} className="mx-auto text-emerald-400 animate-bounce" />
+            <h4 className="text-base font-black">پیام شما با موفقیت ثبت شد</h4>
+            <p className="text-xs text-slate-300">
+              با تشکر از ارتباط شما. کارشناسان پشتیبانی ستاد پس از بررسی پیام، در اسرع وقت پاسخ را ارسال خواهند کرد.
+            </p>
           </div>
         ) : (
-          <div className="lg:col-span-8 bg-[#080d21] border border-slate-800 rounded-2xl p-8 text-center text-slate-500">
-            تیکتی انتخاب نشده است.
-          </div>
-        )}
-
-      </div>
-
-      {/* New Ticket Modal */}
-      {showNewModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#080c1d] border border-red-900/80 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-black text-white">ثبت تیکت پشتیبانی جدید</h3>
-              <button onClick={() => setShowNewModal(false)} className="text-slate-500 hover:text-white">✕</button>
-            </div>
-
-            <form onSubmit={handleCreateTicket} className="space-y-3">
+          <form onSubmit={handleGuestSubmit} className="space-y-4 dir-rtl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">موضوع تیکت:</label>
-                <input
-                  type="text"
-                  value={newSubject}
-                  onChange={(e) => setNewSubject(e.target.value)}
-                  placeholder="عنوان مشخص موضوع"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-600"
+                <label className="block text-xs font-bold text-slate-300 mb-1">نام و نام خانوادگی *</label>
+                <input 
+                  type="text" 
                   required
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  placeholder="مثال: علی محمدی"
+                  className="w-full bg-[#0c1432] border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">دسته تیکت:</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1">شماره همراه یا ایمیل *</label>
+                <input 
+                  type="text" 
+                  required
+                  value={guestContact}
+                  onChange={(e) => setGuestContact(e.target.value)}
+                  placeholder="مثال: ۰۹۱۲۳۴۵۶۷۸۹ یا info@domain.com"
+                  className="w-full bg-[#0c1432] border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition dir-ltr text-right"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">موضوع پیام</label>
+                <input 
+                  type="text" 
+                  value={guestSubject}
+                  onChange={(e) => setGuestSubject(e.target.value)}
+                  placeholder="مثال: سوال درباره ثبت‌نام مسابقات"
+                  className="w-full bg-[#0c1432] border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">متن پیام یا توضیحات *</label>
+              <textarea 
+                rows={4}
+                required
+                value={guestMessage}
+                onChange={(e) => setGuestMessage(e.target.value)}
+                placeholder="لطفاً پیام یا سوال خود را با جزئیات کامل بنویسید..."
+                className="w-full bg-[#0c1432] border border-slate-700 focus:border-cyan-400 rounded-xl p-3 text-xs text-white outline-none transition resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(6,182,212,0.4)] transition flex items-center gap-2"
+              >
+                <Send size={16} />
+                <span>ارسال پیام به کارشناسان ستاد</span>
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* Logged in Formal Support Ticket Section */}
+      {currentUser && (
+        <div className="space-y-4 pt-4 border-t border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-black text-white flex items-center gap-2">
+                <FileText className="text-amber-400" size={20} />
+                سامانه ثبت و پیگیری تیکت‌های پشتیبانی کاربری
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                تیکت‌های اختصاصی شما و پاسخ‌های رسمی تیم داوری و فنی
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowNewModal(true)}
+              className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-[0_0_15px_rgba(245,158,11,0.4)] flex items-center justify-center gap-2"
+            >
+              <Plus size={16} />
+              <span>ثبت تیکت جدید</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Ticket List */}
+            <div className="lg:col-span-4 space-y-3">
+              <h4 className="text-xs font-bold text-slate-400">تیکت‌های ثبت‌شده شما:</h4>
+
+              <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
+                {userTickets.map(t => {
+                  const isSelected = t.id === selectedTicket?.id;
+
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => setSelectedTicketId(t.id)}
+                      className={`p-3.5 rounded-2xl border text-right cursor-pointer transition ${
+                        isSelected 
+                          ? 'bg-amber-950/40 border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.2)]' 
+                          : 'bg-[#080d22] border-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-xs font-bold text-white truncate">{t.subject}</span>
+                        {getStatusBadge(t.status)}
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 mt-2">
+                        <span>{getCategoryLabel(t.type)}</span>
+                        <span>{t.created_at}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {userTickets.length === 0 && (
+                  <div className="p-8 text-center text-xs text-slate-500 border border-dashed border-slate-800 rounded-2xl">
+                    هنوز تیکتی ثبت نکرده‌اید.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Ticket Chat / Detail */}
+            <div className="lg:col-span-8 bg-[#080d22] border border-slate-800 rounded-3xl p-5 space-y-4">
+              {selectedTicket ? (
+                <>
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div>
+                      <h4 className="text-sm font-black text-white">{selectedTicket.subject}</h4>
+                      <p className="text-[10px] text-slate-400 mt-0.5">کد پیگیری: {selectedTicket.id}</p>
+                    </div>
+                    {getStatusBadge(selectedTicket.status)}
+                  </div>
+
+                  {/* Messages list */}
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto p-2 bg-[#050816] rounded-2xl border border-slate-800">
+                    <div className="p-3 rounded-2xl bg-[#0c1432] border border-slate-700 text-right space-y-1">
+                      <div className="flex items-center justify-between text-[10px] text-cyan-400 font-bold">
+                        <span>{selectedTicket.user_name} (ارسال اولیه)</span>
+                        <span>{selectedTicket.created_at}</span>
+                      </div>
+                      <p className="text-xs text-slate-200 whitespace-pre-wrap">{selectedTicket.message}</p>
+                    </div>
+
+                    {currentReplies.map(rep => (
+                      <div
+                        key={rep.id}
+                        className={`p-3 rounded-2xl text-right space-y-1 ${
+                          rep.is_admin 
+                            ? 'bg-amber-950/30 border border-amber-500/40 mr-4' 
+                            : 'bg-[#0c1432] border border-slate-700 ml-4'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[10px] font-bold">
+                          <span className={rep.is_admin ? 'text-amber-400' : 'text-cyan-400'}>
+                            {rep.is_admin ? 'پاسخ ستاد پشتیبانی' : rep.user_name}
+                          </span>
+                          <span className="text-slate-400">{rep.created_at}</span>
+                        </div>
+                        <p className="text-xs text-slate-200 whitespace-pre-wrap">{rep.message}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Send Reply Input */}
+                  {selectedTicket.status !== 'closed' && (
+                    <form onSubmit={handleSendReply} className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="ارسال پاسخ جدید به تیکت..."
+                        className="flex-1 bg-[#0c1432] border border-slate-700 focus:border-amber-400 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none"
+                      />
+                      <button
+                        type="submit"
+                        className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs transition shrink-0 flex items-center gap-1.5"
+                      >
+                        <Send size={15} />
+                        <span>ارسال</span>
+                      </button>
+                    </form>
+                  )}
+                </>
+              ) : (
+                <div className="p-12 text-center text-xs text-slate-500">
+                  جهت مشاهده جزئیات یا ارسال پاسخ، یک تیکت از لیست انتخاب کنید.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Ticket Modal */}
+      {showNewModal && currentUser && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#080d22] border border-amber-500/40 rounded-3xl p-6 max-w-lg w-full dir-rtl space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-black text-white">ثبت تیکت جدید در ستاد</h3>
+              <button 
+                onClick={() => setShowNewModal(false)}
+                className="text-slate-400 hover:text-white text-xs font-bold"
+              >
+                انصراف ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTicket} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">موضوع تیکت *</label>
+                <input 
+                  type="text" 
+                  required
+                  value={newSubject}
+                  onChange={(e) => setNewSubject(e.target.value)}
+                  placeholder="عنوان موضوع..."
+                  className="w-full bg-[#0c1432] border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">دسته‌بندی موضوع</label>
                 <select
                   value={newType}
                   onChange={(e) => setNewType(e.target.value as TicketType)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-600"
+                  className="w-full bg-[#0c1432] border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none"
                 >
-                  <option value="technical">پشتیبانی فنی و سامانه (technical)</option>
-                  <option value="content">محتوا و آموزه‌ها (content)</option>
-                  <option value="judge">داوری و ارزیابی مأموریت‌ها (judge)</option>
-                  <option value="other">عمومی و سایر موارد (other)</option>
+                  <option value="technical">پشتیبانی فنی و سامانه</option>
+                  <option value="content">محتوا و آموزه‌ها</option>
+                  <option value="judge">داوری و امتیازدهی</option>
+                  <option value="other">عمومی و سایر موارد</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">متن پیام اولیه:</label>
-                <textarea
+                <label className="block text-xs font-bold text-slate-300 mb-1">شرح پیام *</label>
+                <textarea 
                   rows={4}
+                  required
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="شرح کامل مشکل یا سوال..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-red-600"
-                  required
+                  placeholder="جزئیات پیام خود را بنویسید..."
+                  className="w-full bg-[#0c1432] border border-slate-700 rounded-xl p-3 text-xs text-white outline-none resize-none"
                 />
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowNewModal(false)}
-                  className="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2.5 rounded-xl transition"
+                  className="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 font-bold text-xs"
                 >
-                  انصراف
+                  لغو
                 </button>
                 <button
                   type="submit"
-                  className="w-2/3 bg-red-700 hover:bg-red-600 text-white font-extrabold text-xs py-2.5 rounded-xl transition shadow-[0_0_15px_rgba(220,38,38,0.4)]"
+                  className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs"
                 >
-                  ارسال نهایی تیکت
+                  ثبت و ارسال تیکت
                 </button>
               </div>
             </form>
@@ -401,6 +531,19 @@ export default function SupportView({
         </div>
       )}
 
-    </div>
+      {/* Bottom Back Button */}
+      {onNavigate && (
+        <div className="pt-4 flex justify-center">
+          <button
+            onClick={() => onNavigate('Home')}
+            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.4)] transition"
+          >
+            <Home size={18} />
+            <span>بازگشت به صفحه اصلی</span>
+            <ArrowLeft size={18} />
+          </button>
+        </div>
+      )}
+    </motion.div>
   );
 }

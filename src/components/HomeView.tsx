@@ -92,7 +92,7 @@ export default function HomeView({
             activeAnnouncementsCount={unreadNotificationsCount || announcements.filter(a => a.isActive).length}
             activeTab={activeTab}
             setActiveTab={(tab) => {
-              if (tab === 'Missions' || tab === 'Trainings' || tab === 'Support') {
+              if (tab === 'Missions' || tab === 'Trainings') {
                 handleProtectedAction(tab);
               } else {
                 setActiveTab(tab);
@@ -158,7 +158,7 @@ export default function HomeView({
                         onOpenAuth('register_individual');
                       }
                     }}
-                    onSecondaryAction={() => setShowAboutModal(true)}
+                    onSecondaryAction={() => setActiveTab('About')}
                   />
 
                   {/* 4. Quick Actions Grid */}
@@ -170,7 +170,7 @@ export default function HomeView({
                         setActiveTab(tab);
                       }
                     }}
-                    onOpenAbout={() => setShowAboutModal(true)}
+                    onOpenAbout={() => setActiveTab('About')}
                   />
                 </div>
 
@@ -184,7 +184,7 @@ export default function HomeView({
 
                   {/* 6. Short About Section */}
                   <AboutSection 
-                    onOpenMore={() => setShowAboutModal(true)}
+                    onOpenMore={() => setActiveTab('About')}
                   />
 
                   {/* 7. Stats Strip */}
@@ -206,13 +206,9 @@ export default function HomeView({
               {/* 9. Footer */}
               <Footer 
                 onNavigate={(tab) => {
-                  if (tab === 'Support' && !currentUser) {
-                    handleProtectedAction('Support');
-                  } else {
-                    setActiveTab(tab);
-                  }
+                  setActiveTab(tab);
                 }}
-                onOpenAbout={() => setShowAboutModal(true)}
+                onOpenAbout={() => setActiveTab('About')}
               />
             </div>
           )}
