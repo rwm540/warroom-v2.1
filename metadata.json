@@ -1,0 +1,6 @@
+{
+  "name": "پلتفرم عملیاتی اتاق جنگ",
+  "description": "سامانه جامع مسابقه، آموزش و ارزیابی گروهی دانش‌آموزی با ظاهر عملیاتی و نظامی مدرن",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
