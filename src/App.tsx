@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, ShieldAlert } from 'lucide-react';
+import { Bell, ShieldAlert, X } from 'lucide-react';
 
 // Types
 import { 
@@ -200,25 +200,54 @@ export default function App() {
       {/* Background Cyber Radar Grid Accent */}
       <div className="fixed inset-0 bg-[linear-gradient(rgba(220,38,38,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(220,38,38,0.015)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none z-0" />
 
-      {/* Global Toast Alert Notification */}
+      {/* Global Toast Alert Notification (Swipeable right on Touch/Mobile + Close X Button) */}
       <AnimatePresence>
         {alertNotification && (
           <motion.div
+            key="global-alert-toast"
             initial={{ opacity: 0, y: -50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-5 left-4 right-4 md:left-6 md:right-auto z-50 p-[1px] rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 shadow-[0_0_25px_rgba(220,38,38,0.5)] max-w-sm"
+            animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
+            exit={{ opacity: 0, x: 280, scale: 0.9 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={{ left: 0.05, right: 0.8 }}
+            onDragEnd={(_e, info) => {
+              // Swipe right gesture detection
+              if (info.offset.x > 50 || info.velocity.x > 150) {
+                setAlertNotification(null);
+              }
+            }}
+            className="fixed top-4 left-3 right-3 sm:left-auto sm:right-6 z-50 p-[1px] rounded-2xl bg-gradient-to-r from-red-600 via-amber-500 to-rose-600 shadow-[0_0_30px_rgba(220,38,38,0.6)] sm:max-w-md cursor-grab active:cursor-grabbing touch-pan-y"
           >
-            <div className="p-4 rounded-[15px] bg-[#050818]/95 flex items-start gap-3 border border-red-500/30">
-              <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl bg-red-950 text-red-400 border border-red-800">
-                <Bell size={16} className="animate-bounce" />
-              </span>
-              <div className="space-y-0.5 text-right">
-                <span className="text-[10px] font-black uppercase tracking-widest text-red-400 font-mono">پیام سیستم اتاق جنگ</span>
-                <p className="text-xs text-slate-100 font-semibold leading-relaxed">
-                  {alertNotification}
-                </p>
+            <div className="p-3.5 sm:p-4 rounded-[15px] bg-[#050818]/95 flex items-start justify-between gap-3 border border-red-500/40 dir-rtl select-none">
+              <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
+                <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl bg-red-950 text-red-400 border border-red-800 shadow-inner">
+                  <Bell size={16} className="animate-bounce" />
+                </span>
+                <div className="space-y-0.5 text-right min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-red-400 font-mono">پیام سیستم اتاق جنگ</span>
+                    <span className="text-[9px] text-amber-400/80 font-mono hidden sm:inline-block">← بکشید به راست</span>
+                  </div>
+                  <p className="text-xs text-slate-100 font-semibold leading-relaxed break-words">
+                    {alertNotification}
+                  </p>
+                </div>
               </div>
+
+              {/* Close Button ('X') for Web & Desktop */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAlertNotification(null);
+                }}
+                className="p-1 rounded-lg bg-slate-900/90 text-slate-400 hover:text-white hover:bg-red-950/80 border border-slate-800 hover:border-red-500/50 transition shrink-0"
+                title="بستن هشدار"
+                aria-label="بستن هشدار"
+              >
+                <X size={16} />
+              </button>
             </div>
           </motion.div>
         )}
@@ -394,29 +423,33 @@ export default function App() {
                 triggerAlert={triggerAlert}
               />
             )}
-
-            {/* Android Mobile Bottom Navigation for User Views */}
-            {!isAdminMode && (
-              <BottomNavigation 
-                activeTab={activeTab}
-                setActiveTab={(tab) => {
-                  if (tab === 'WarRoom') {
-                    setActiveTab('Dashboard');
-                  } else {
-                    setActiveTab(tab);
-                  }
-                }}
-                currentUser={currentUser}
-                onOpenSquadModal={() => setShowSquadModal(true)}
-                onLogout={handleLogout}
-                isAdminMode={isAdminMode}
-                setIsAdminMode={setIsAdminMode}
-                unreadTicketsCount={tickets.filter(t => t.status === 'open').length}
-              />
-            )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Global Android Mobile Bottom Navigation for ALL Panels & Views (including Admin Panel) */}
+      {!showAuthScreen && (
+        <BottomNavigation 
+          activeTab={isAdminMode ? 'Admin' : activeTab}
+          setActiveTab={(tab) => {
+            if (tab === 'WarRoom') {
+              setIsAdminMode(false);
+              setActiveTab('Dashboard');
+            } else if (tab === 'Admin') {
+              setIsAdminMode(true);
+            } else {
+              setIsAdminMode(false);
+              setActiveTab(tab);
+            }
+          }}
+          currentUser={currentUser}
+          onOpenSquadModal={() => setShowSquadModal(true)}
+          onLogout={handleLogout}
+          isAdminMode={isAdminMode}
+          setIsAdminMode={setIsAdminMode}
+          unreadTicketsCount={tickets.filter(t => t.status === 'open').length}
+        />
+      )}
 
     </div>
   );

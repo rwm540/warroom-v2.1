@@ -108,15 +108,20 @@ export default function BottomNavigation({
                 className={`relative flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all focus:outline-none ${
                   isMoreOpen 
                     ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-500/40' 
+                    : isAdminMode 
+                    ? 'text-amber-400 bg-amber-950/40 border border-amber-500/30'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 {isMoreOpen && (
                   <span className="absolute -top-1.5 w-6 h-0.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]" />
                 )}
-                <MoreHorizontal size={20} className={isMoreOpen ? 'scale-110 text-cyan-300 animate-bounce' : ''} />
-                <span className={`text-[9px] font-bold mt-0.5 ${isMoreOpen ? 'text-cyan-300 font-black' : 'text-slate-400'}`}>
-                  {item.label}
+                {isAdminMode && !isMoreOpen && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border border-[#080d22] animate-pulse" />
+                )}
+                <MoreHorizontal size={20} className={isMoreOpen ? 'scale-110 text-cyan-300 animate-bounce' : isAdminMode ? 'text-amber-400' : ''} />
+                <span className={`text-[9px] font-bold mt-0.5 ${isMoreOpen ? 'text-cyan-300 font-black' : isAdminMode ? 'text-amber-300 font-black' : 'text-slate-400'}`}>
+                  {isAdminMode ? 'ادمین' : item.label}
                 </span>
               </button>
             );
