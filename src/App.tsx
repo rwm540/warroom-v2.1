@@ -110,6 +110,15 @@ export default function App() {
 
   // UI Navigation State
   const [activeTab, setActiveTab] = useState<string>('Home');
+
+  const handleTabChange = (tab: string) => {
+    if (tab === 'PortalSelector' || tab === 'GameSelection') {
+      setShowPortalSelector(true);
+    } else {
+      setIsAdminMode(false);
+      setActiveTab(tab);
+    }
+  };
   const [showPortalSelector, setShowPortalSelector] = useState<boolean>(false);
   const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('login');
@@ -315,7 +324,7 @@ export default function App() {
               currentUser={currentUser}
               groups={groups}
               activeTab={activeTab}
-              setActiveTab={setActiveTab}
+              setActiveTab={handleTabChange}
               onOpenAuth={handleOpenAuth}
               onLogout={handleLogout}
               onOpenSquadModal={() => setShowSquadModal(true)}
@@ -336,7 +345,7 @@ export default function App() {
             <Navbar 
               currentUser={currentUser}
               currentTab={activeTab}
-              setCurrentTab={setActiveTab}
+              setCurrentTab={handleTabChange}
               onLogout={handleLogout}
               onOpenSquadModal={() => setShowSquadModal(true)}
               isAdminView={isAdminMode}
@@ -462,12 +471,12 @@ export default function App() {
           setActiveTab={(tab) => {
             if (tab === 'WarRoom') {
               setIsAdminMode(false);
-              setActiveTab('Journey');
+              handleTabChange('PortalSelector');
             } else if (tab === 'Admin') {
               setIsAdminMode(true);
             } else {
               setIsAdminMode(false);
-              setActiveTab(tab);
+              handleTabChange(tab);
             }
           }}
           currentUser={currentUser}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   ShieldAlert, 
-  BookOpen, 
+  Gamepad2, 
   HelpCircle, 
   PhoneCall,
   User as UserIcon, 
@@ -193,17 +193,17 @@ export default function Navbar({
               <span>صفحه اصلی</span>
             </button>
 
-            {/* Trainings */}
+            {/* Game Selection */}
             <button
-              onClick={() => { setIsAdminView(false); setCurrentTab('Trainings'); }}
+              onClick={() => { setIsAdminView(false); setCurrentTab('PortalSelector'); }}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-                currentTab === 'Trainings' && !isAdminView
-                  ? 'bg-red-900/60 text-white border border-red-600/60 shadow-[0_0_10px_rgba(220,38,38,0.3)]'
+                currentTab === 'PortalSelector' && !isAdminView
+                  ? 'bg-amber-950/80 text-amber-300 border border-amber-500/60 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
               }`}
             >
-              <BookOpen size={16} />
-              <span>آموزش‌ها</span>
+              <Gamepad2 size={16} className="text-amber-400" />
+              <span>انتخاب بازی</span>
             </button>
 
             {/* Support - ارتباط با ما */}

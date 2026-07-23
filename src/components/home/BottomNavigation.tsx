@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Home, 
-  BookOpen, 
+  Gamepad2, 
   MoreHorizontal, 
   User as UserIcon, 
   Headphones, 
@@ -46,7 +46,7 @@ export default function BottomNavigation({
 
   const mainItems = [
     { id: 'Home', label: 'صفحه اصلی', icon: Home },
-    { id: 'Trainings', label: 'آموزش‌ها', icon: BookOpen },
+    { id: 'PortalSelector', label: 'انتخاب بازی', icon: Gamepad2 },
     { id: 'Support', label: 'ارتباط با ما', icon: Headphones, isCentral: true },
     { id: 'Contact', label: 'تماس با ما', icon: PhoneCall },
     { id: 'More', label: 'بیشتر', icon: MoreHorizontal, isMore: true }
@@ -177,7 +177,7 @@ export default function BottomNavigation({
               <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-400">
-                    <Shield size={18} />
+                    <Gamepad2 size={18} />
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-white">منوی دسترسی سریع و امکانات</h3>
@@ -196,22 +196,22 @@ export default function BottomNavigation({
               {/* Grid of Action Options */}
               <div className="grid grid-cols-2 gap-2.5">
                 
-                {/* Trainings */}
+                {/* Game Selection */}
                 <button
-                  onClick={() => handleMoreItemClick(() => setActiveTab('Trainings'))}
+                  onClick={() => handleMoreItemClick(() => setActiveTab('PortalSelector'))}
                   className={`flex items-center justify-between p-3 rounded-2xl border text-right transition ${
-                    activeTab === 'Trainings'
+                    activeTab === 'PortalSelector'
                       ? 'bg-amber-950/80 border-amber-400 text-amber-300'
                       : 'bg-[#0b122c] border-cyan-500/20 text-slate-200 hover:border-cyan-500/40'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="p-2 rounded-xl bg-amber-900/40 text-amber-400">
-                      <BookOpen size={18} />
+                      <Gamepad2 size={18} />
                     </div>
                     <div>
-                      <div className="text-xs font-black">آموزش‌های استراتژیک</div>
-                      <div className="text-[9px] text-slate-400">دوره‌ها و فیلم‌ها</div>
+                      <div className="text-xs font-black">انتخاب بازی</div>
+                      <div className="text-[9px] text-slate-400">مراحل و بازی‌های فعال</div>
                     </div>
                   </div>
                   <ChevronLeft size={16} className="text-slate-500" />
