@@ -36,6 +36,7 @@ import {
 import HomeView from './components/HomeView';
 import Navbar from './components/Navbar';
 import BottomNavigation from './components/home/BottomNavigation';
+import PortalSelectorView from './components/PortalSelectorView';
 import AuthView from './components/AuthView';
 import DashboardView from './components/DashboardView';
 import JourneyView from './components/JourneyView';
@@ -109,6 +110,7 @@ export default function App() {
 
   // UI Navigation State
   const [activeTab, setActiveTab] = useState<string>('Home');
+  const [showPortalSelector, setShowPortalSelector] = useState<boolean>(false);
   const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('login');
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
@@ -172,12 +174,14 @@ export default function App() {
     setCurrentUser(null);
     setIsAdminMode(false);
     setActiveTab('Home');
+    setShowPortalSelector(false);
     setShowAuthScreen(false);
     triggerAlert('خروج از سامانه اتاق جنگ با موفقیت انجام شد.');
   };
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
+    setShowPortalSelector(false);
     setShowAuthScreen(false);
     if (user.role === 'admin') {
       setIsAdminMode(true);
@@ -191,7 +195,7 @@ export default function App() {
 
   const handleOpenAuth = (mode: 'login' | 'register_individual' | 'register_group') => {
     setAuthMode(mode);
-    setShowAuthScreen(true);
+    setShowPortalSelector(true);
   };
 
   return (
@@ -254,8 +258,25 @@ export default function App() {
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {showAuthScreen ? (
-          /* Authentication / Registration Page */
+        {showPortalSelector ? (
+          /* Preliminary Portal Selector / Choice Menu Screen */
+          <motion.div
+            key="portal-selector"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PortalSelectorView 
+              onSelectWarRoom={() => {
+                setShowPortalSelector(false);
+                setShowAuthScreen(true);
+              }}
+              onBackToHome={() => setShowPortalSelector(false)}
+            />
+          </motion.div>
+        ) : showAuthScreen ? (
+          /* Authentication / Registration Page for War Room */
           <motion.div
             key="auth"
             initial={{ opacity: 0 }}
@@ -270,7 +291,10 @@ export default function App() {
               setGroups={setGroups}
               onLoginSuccess={handleLoginSuccess}
               triggerAlert={triggerAlert}
-              onBackToHome={() => setShowAuthScreen(false)}
+              onBackToHome={() => {
+                setShowAuthScreen(false);
+                setShowPortalSelector(true);
+              }}
               initialAuthMode={authMode}
             />
           </motion.div>
@@ -428,7 +452,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Global Android Mobile Bottom Navigation for ALL Panels & Views (including Admin Panel) */}
-      {!showAuthScreen && (
+      {!showAuthScreen && !showPortalSelector && (
         <BottomNavigation 
           activeTab={isAdminMode ? 'Admin' : activeTab}
           setActiveTab={(tab) => {
