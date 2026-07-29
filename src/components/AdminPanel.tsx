@@ -350,11 +350,11 @@ export default function AdminPanel({
       </div>
 
       {/* Admin Nav Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-slate-800 text-xs font-bold">
+      <div className="w-full overflow-x-auto no-scrollbar pb-2 border-b border-slate-800 flex items-center gap-1.5 text-xs font-bold">
         
         <button
           onClick={() => setActiveAdminTab('submissions')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap transition border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
             activeAdminTab === 'submissions' 
               ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' 
               : 'bg-[#080d21] text-slate-400 border-slate-800 hover:text-white'
@@ -366,7 +366,7 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveAdminTab('users')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap transition border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
             activeAdminTab === 'users' 
               ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' 
               : 'bg-[#080d21] text-slate-400 border-slate-800 hover:text-white'
@@ -378,7 +378,7 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveAdminTab('missions')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap transition border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
             activeAdminTab === 'missions' 
               ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' 
               : 'bg-[#080d21] text-slate-400 border-slate-800 hover:text-white'
@@ -390,7 +390,7 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveAdminTab('medals')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap transition border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
             activeAdminTab === 'medals' 
               ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' 
               : 'bg-[#080d21] text-slate-400 border-slate-800 hover:text-white'
@@ -402,7 +402,7 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveAdminTab('tickets')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap transition border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
             activeAdminTab === 'tickets' 
               ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' 
               : 'bg-[#080d21] text-slate-400 border-slate-800 hover:text-white'
@@ -414,7 +414,7 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveAdminTab('trainings')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap transition border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
             activeAdminTab === 'trainings' 
               ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' 
               : 'bg-[#080d21] text-slate-400 border-slate-800 hover:text-white'
@@ -426,7 +426,7 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveAdminTab('site_editor')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap transition border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
             activeAdminTab === 'site_editor' 
               ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' 
               : 'bg-[#080d21] text-slate-400 border-slate-800 hover:text-white'
@@ -871,35 +871,35 @@ export default function AdminPanel({
         <div className="space-y-4">
           
           {/* Category Filter */}
-          <div className="flex items-center gap-2 bg-[#080d21] p-3 rounded-xl border border-slate-800 text-xs font-bold">
-            <span className="text-slate-400">فیلتر تخصصی پشتیبان:</span>
+          <div className="w-full overflow-x-auto no-scrollbar flex items-center gap-2 bg-[#080d21] p-3 rounded-xl border border-slate-800 text-xs font-bold whitespace-nowrap touch-pan-x">
+            <span className="text-slate-400 shrink-0">فیلتر تخصصی پشتیبان:</span>
             <button
               onClick={() => setTicketSpecFilter('all')}
-              className={`px-3 py-1 rounded-lg transition ${ticketSpecFilter === 'all' ? 'bg-amber-500 text-black' : 'bg-slate-900 text-slate-300'}`}
+              className={`shrink-0 px-3 py-1.5 rounded-lg transition ${ticketSpecFilter === 'all' ? 'bg-amber-500 text-black font-black' : 'bg-slate-900 text-slate-300 hover:text-white'}`}
             >
               همه موارد
             </button>
             <button
               onClick={() => setTicketSpecFilter('technical')}
-              className={`px-3 py-1 rounded-lg transition ${ticketSpecFilter === 'technical' ? 'bg-amber-500 text-black' : 'bg-slate-900 text-slate-300'}`}
+              className={`shrink-0 px-3 py-1.5 rounded-lg transition ${ticketSpecFilter === 'technical' ? 'bg-amber-500 text-black font-black' : 'bg-slate-900 text-slate-300 hover:text-white'}`}
             >
               فنی (technical)
             </button>
             <button
               onClick={() => setTicketSpecFilter('content')}
-              className={`px-3 py-1 rounded-lg transition ${ticketSpecFilter === 'content' ? 'bg-amber-500 text-black' : 'bg-slate-900 text-slate-300'}`}
+              className={`shrink-0 px-3 py-1.5 rounded-lg transition ${ticketSpecFilter === 'content' ? 'bg-amber-500 text-black font-black' : 'bg-slate-900 text-slate-300 hover:text-white'}`}
             >
               محتوا (content)
             </button>
             <button
               onClick={() => setTicketSpecFilter('judge')}
-              className={`px-3 py-1 rounded-lg transition ${ticketSpecFilter === 'judge' ? 'bg-amber-500 text-black' : 'bg-slate-900 text-slate-300'}`}
+              className={`shrink-0 px-3 py-1.5 rounded-lg transition ${ticketSpecFilter === 'judge' ? 'bg-amber-500 text-black font-black' : 'bg-slate-900 text-slate-300 hover:text-white'}`}
             >
               داوری (judge)
             </button>
             <button
               onClick={() => setTicketSpecFilter('other')}
-              className={`px-3 py-1 rounded-lg transition ${ticketSpecFilter === 'other' ? 'bg-amber-500 text-black' : 'bg-slate-900 text-slate-300'}`}
+              className={`shrink-0 px-3 py-1.5 rounded-lg transition ${ticketSpecFilter === 'other' ? 'bg-amber-500 text-black font-black' : 'bg-slate-900 text-slate-300 hover:text-white'}`}
             >
               عمومی و سایر (other)
             </button>
