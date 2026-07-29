@@ -23,9 +23,10 @@ import {
 interface ContactViewProps {
   onNavigate?: (tab: string) => void;
   triggerAlert?: (msg: string) => void;
+  siteSettings?: any;
 }
 
-export default function ContactView({ onNavigate, triggerAlert }: ContactViewProps) {
+export default function ContactView({ onNavigate, triggerAlert, siteSettings }: ContactViewProps) {
   const [fullName, setFullName] = useState('');
   const [contactInfo, setContactInfo] = useState('');
   const [subject, setSubject] = useState('');
@@ -56,7 +57,7 @@ export default function ContactView({ onNavigate, triggerAlert }: ContactViewPro
     {
       title: 'تماس تلفنی مستقیم',
       desc: 'پاسخگویی تلفنی کارشناسان ستاد',
-      val: '۰۲۱-۸۸۹۹۷۷۶۶',
+      val: siteSettings?.contactPhone || '۰۲۱-۸۸۹۹۷۷۶۶',
       subVal: 'خط ویژه پشتیبانی: ۰۲۱-۸۸۹۹۷۷۶۷',
       icon: Phone,
       color: 'text-cyan-400',
@@ -66,7 +67,7 @@ export default function ContactView({ onNavigate, triggerAlert }: ContactViewPro
     {
       title: 'کانال‌ها و پیام‌رسان‌ها',
       desc: 'ارتباط در پیام‌رسان‌های داخلی و خارجی',
-      val: '@WarRoom_Support',
+      val: siteSettings?.telegram ? `@${siteSettings.telegram.replace('@', '')}` : '@WarRoom_Support',
       subVal: 'در ایتا، روبیکا، بله و تلگرام',
       icon: MessageCircle,
       color: 'text-amber-400',
@@ -76,7 +77,7 @@ export default function ContactView({ onNavigate, triggerAlert }: ContactViewPro
     {
       title: 'پست الکترونیک (ایمیل)',
       desc: 'ارسال نامه‌های رسمی و مکاتبات',
-      val: 'info@warroom.ir',
+      val: siteSettings?.contactEmail || 'info@warroom.ir',
       subVal: 'پشتیبانی فنی: support@warroom.ir',
       icon: Mail,
       color: 'text-emerald-400',

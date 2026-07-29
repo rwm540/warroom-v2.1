@@ -20,13 +20,15 @@ import {
 
 interface AboutViewProps {
   onNavigate?: (tab: string) => void;
+  siteSettings?: any;
+  homeStats?: any;
 }
 
-export default function AboutView({ onNavigate }: AboutViewProps) {
+export default function AboutView({ onNavigate, siteSettings, homeStats }: AboutViewProps) {
   const stats = [
-    { label: 'رزمندگان و شرکت‌کنندگان', value: '+۱۰,۰۰۰', icon: Users, color: 'text-cyan-400' },
-    { label: 'بازی‌ها و رویدادهای فعال', value: '۱۲ بازی', icon: Target, color: 'text-amber-400' },
-    { label: 'جوخه‌ها و گروه‌های دانش‌آموزی', value: '+۵۰۰ گروه', icon: ShieldAlert, color: 'text-red-400' },
+    { label: 'رزمندگان و شرکت‌کنندگان', value: homeStats ? `+${Number(homeStats.activeParticipants).toLocaleString('fa-IR')}` : '+۱۰,۰۰۰', icon: Users, color: 'text-cyan-400' },
+    { label: 'بازی‌ها و رویدادهای فعال', value: homeStats ? `${Number(homeStats.activeMissions).toLocaleString('fa-IR')} بازی` : '۱۲ بازی', icon: Target, color: 'text-amber-400' },
+    { label: 'جوخه‌ها و گروه‌های دانش‌آموزی', value: homeStats ? `+${Number(homeStats.activeGroups).toLocaleString('fa-IR')} گروه` : '+۵۰۰ گروه', icon: ShieldAlert, color: 'text-red-400' },
     { label: 'مأموریت‌های تکمیل‌شده', value: '+۲۵,۰۰۰', icon: Trophy, color: 'text-emerald-400' },
   ];
 
@@ -116,7 +118,7 @@ export default function AboutView({ onNavigate }: AboutViewProps) {
           </h1>
 
           <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
-            پلتفرم اتاق جنگ یک سامانه تعاملی، رقابتی و آموزشی است که با هدف پرورش تفکر استراتژیک، افزایش توان تحلیل مسئله و تقویت روحیه کار تیمی در میان نوجوانان و جوانان طراحی شده است. در این سامانه، کاربران در قالب جوخه‌های عملیاتی وارد سناریوهای واقعی و شبیه‌سازی‌شده می‌شوند.
+            {siteSettings?.aboutText || 'پلتفرم اتاق جنگ یک سامانه تعاملی، رقابتی و آموزشی است که با هدف پرورش تفکر استراتژیک، افزایش توان تحلیل مسئله و تقویت روحیه کار تیمی در میان نوجوانان و جوانان طراحی شده است. در این سامانه، کاربران در قالب جوخه‌های عملیاتی وارد سناریوهای واقعی و شبیه‌سازی‌شده می‌شوند.'}
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">

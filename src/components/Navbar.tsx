@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { 
   ShieldAlert, 
   Gamepad2, 
-  HelpCircle, 
-  Info,
   User as UserIcon, 
   Copy, 
   Check, 
   LogOut, 
   Users, 
   SlidersHorizontal,
-  Bell
+  Bell,
+  LayoutDashboard,
+  Target,
+  BookOpen,
+  Home
 } from 'lucide-react';
 import { User } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -163,6 +165,19 @@ export default function Navbar({
               </button>
             )}
 
+            {/* Return to Main Site */}
+            <button
+              onClick={() => {
+                setIsAdminView(false);
+                setCurrentTab('Home');
+              }}
+              className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1 rounded-lg text-xs font-bold transition bg-amber-500/10 hover:bg-amber-500 hover:text-black border border-amber-500/30 hover:border-transparent text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.1)] hover:shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+              title="بازگشت به صفحه اصلی سایت"
+            >
+              <Home size={15} className="animate-pulse shrink-0" />
+              <span className="hidden sm:inline">بازگشت به سایت</span>
+            </button>
+
             {/* Logout */}
             <button
               onClick={onLogout}
@@ -175,78 +190,83 @@ export default function Navbar({
         )}
       </div>
 
-      {/* Main Desktop Navigation Links */}
+      {/* Main Panel Navigation Links (Responsive for mobile & web, panel-only) */}
       {currentUser && (
-        <div className="max-w-7xl mx-auto px-4 hidden md:block">
-          <nav className="flex items-center gap-2 py-2 overflow-x-auto no-scrollbar">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4">
+          <nav className="flex items-center gap-1.5 sm:gap-2 py-2 overflow-x-auto no-scrollbar">
             
-            {/* Home Landing */}
+            {/* Return to Main Site Link */}
             <button
               onClick={() => { setIsAdminView(false); setCurrentTab('Home'); }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-                currentTab === 'Home' && !isAdminView
+              className="flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap bg-slate-900/40 text-slate-400 hover:text-amber-300 hover:bg-amber-950/20 border border-slate-800/80 hover:border-amber-500/30 transition duration-300 shrink-0"
+              title="بازگشت به صفحه اصلی سایت"
+            >
+              <Home size={14} className="text-amber-500 shrink-0" />
+              <span>مشاهده سایت اصلی</span>
+            </button>
+
+            {/* Dashboard */}
+            <button
+              onClick={() => { setIsAdminView(false); setCurrentTab('Dashboard'); }}
+              className={`flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap transition shrink-0 ${
+                currentTab === 'Dashboard' && !isAdminView
                   ? 'bg-red-900/60 text-white border border-red-600/60 shadow-[0_0_10px_rgba(220,38,38,0.3)]'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
               }`}
             >
-              <ShieldAlert size={16} />
-              <span>صفحه اصلی</span>
+              <LayoutDashboard size={14} className="shrink-0" />
+              <span>داشبورد</span>
             </button>
 
-            {/* Game Selection */}
+            {/* Journey / مراحل */}
             <button
-              onClick={() => { setIsAdminView(false); setCurrentTab('PortalSelector'); }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-                currentTab === 'PortalSelector' && !isAdminView
+              onClick={() => { setIsAdminView(false); setCurrentTab('Journey'); }}
+              className={`flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap transition shrink-0 ${
+                currentTab === 'Journey' && !isAdminView
                   ? 'bg-amber-950/80 text-amber-300 border border-amber-500/60 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
               }`}
             >
-              <Gamepad2 size={16} className="text-amber-400" />
-              <span>انتخاب بازی</span>
+              <Gamepad2 size={14} className="text-amber-400 shrink-0" />
+              <span>مراحل بازی</span>
             </button>
 
-            {/* Support - ارتباط با ما */}
+            {/* Missions / مأموریت‌ها */}
             <button
-              onClick={() => { setIsAdminView(false); setCurrentTab('Support'); }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition relative ${
-                currentTab === 'Support' && !isAdminView
+              onClick={() => { setIsAdminView(false); setCurrentTab('Missions'); }}
+              className={`flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap transition shrink-0 ${
+                currentTab === 'Missions' && !isAdminView
                   ? 'bg-red-900/60 text-white border border-red-600/60 shadow-[0_0_10px_rgba(220,38,38,0.3)]'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
               }`}
             >
-              <HelpCircle size={16} />
-              <span>ارتباط با ما</span>
-              {unreadTicketsCount > 0 && (
-                <span className="bg-red-600 text-white text-[10px] font-mono px-1.5 py-0.2 rounded-full font-bold">
-                  {unreadTicketsCount}
-                </span>
-              )}
+              <Target size={14} className="shrink-0" />
+              <span>مأموریت‌ها</span>
             </button>
 
-            {/* About - درباره ما */}
+            {/* Trainings / آموزش‌ها */}
             <button
-              onClick={() => { setIsAdminView(false); setCurrentTab('About'); }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-                currentTab === 'About' && !isAdminView
+              onClick={() => { setIsAdminView(false); setCurrentTab('Trainings'); }}
+              className={`flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap transition shrink-0 ${
+                currentTab === 'Trainings' && !isAdminView
                   ? 'bg-cyan-900/60 text-cyan-200 border border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
               }`}
             >
-              <Info size={16} />
-              <span>درباره ما</span>
+              <BookOpen size={14} className="shrink-0" />
+              <span>آموزش‌ها</span>
             </button>
 
             {/* Profile & Medals */}
             <button
               onClick={() => { setIsAdminView(false); setCurrentTab('Profile'); }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
+              className={`flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap transition shrink-0 ${
                 currentTab === 'Profile' && !isAdminView
                   ? 'bg-red-900/60 text-white border border-red-600/60 shadow-[0_0_10px_rgba(220,38,38,0.3)]'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
               }`}
             >
-              <UserIcon size={16} />
+              <UserIcon size={14} className="shrink-0" />
               <span>پروفایل و مدال‌ها</span>
             </button>
 
@@ -254,13 +274,13 @@ export default function Navbar({
             {currentUser.role === 'admin' && (
               <button
                 onClick={() => { setIsAdminView(true); setCurrentTab('Admin'); }}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition border ${
+                className={`flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap transition border shrink-0 ${
                   isAdminView
                     ? 'bg-amber-500 text-slate-950 border-amber-400 font-extrabold shadow-[0_0_12px_rgba(245,158,11,0.4)]'
                     : 'bg-amber-950/30 text-amber-400 border-amber-800/40 hover:bg-amber-900/50'
                 }`}
               >
-                <SlidersHorizontal size={16} />
+                <SlidersHorizontal size={14} className="shrink-0" />
                 <span>پنل ارزیابی و مدیریت</span>
               </button>
             )}

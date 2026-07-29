@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Group } from '../types';
 import { 
   initialHomeAnnouncements, 
   homeStatsData, 
   faqsData, 
-  HomeAnnouncement 
+  HomeAnnouncement,
+  HomeStats,
+  FaqItem
 } from '../data/home';
 
 import TopHeader from './home/TopHeader';
@@ -31,6 +33,10 @@ interface HomeViewProps {
   onOpenNotifications?: () => void;
   unreadNotificationsCount?: number;
   triggerAlert: (msg: string) => void;
+  siteSettings?: any;
+  homeAnnouncements?: HomeAnnouncement[];
+  homeStats?: HomeStats;
+  faqs?: FaqItem[];
 }
 
 export default function HomeView({
@@ -43,11 +49,24 @@ export default function HomeView({
   onOpenSquadModal,
   onOpenNotifications,
   unreadNotificationsCount = 0,
-  triggerAlert
+  triggerAlert,
+  siteSettings,
+  homeAnnouncements,
+  homeStats,
+  faqs
 }: HomeViewProps) {
   // Notification Panel Drawer state
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [announcements, setAnnouncements] = useState<HomeAnnouncement[]>(initialHomeAnnouncements);
+  const [announcements, setAnnouncements] = useState<HomeAnnouncement[]>(() => {
+    return homeAnnouncements || initialHomeAnnouncements;
+  });
+
+  // Keep state updated if props change
+  useEffect(() => {
+    if (homeAnnouncements) {
+      setAnnouncements(homeAnnouncements);
+    }
+  }, [homeAnnouncements]);
 
   // Simulated API Loading & Error states
   const [isLoading, setIsLoading] = useState(false);
@@ -159,6 +178,7 @@ export default function HomeView({
                       }
                     }}
                     onSecondaryAction={() => setActiveTab('About')}
+                    siteSettings={siteSettings}
                   />
 
                   {/* 4. Quick Actions Grid */}
@@ -189,7 +209,7 @@ export default function HomeView({
 
                   {/* 7. Stats Strip */}
                   <StatsStrip 
-                    stats={homeStatsData}
+                    stats={homeStats || homeStatsData}
                   />
                 </div>
 
@@ -199,7 +219,7 @@ export default function HomeView({
               <div className="md:px-4">
                 {/* 8. FAQ Accordion */}
                 <FaqAccordion 
-                  faqs={faqsData}
+                  faqs={faqs || faqsData}
                 />
               </div>
 

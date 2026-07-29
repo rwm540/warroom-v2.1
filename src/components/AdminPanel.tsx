@@ -63,6 +63,14 @@ interface AdminPanelProps {
   news: News[];
   setNews: React.Dispatch<React.SetStateAction<News[]>>;
   triggerAlert: (msg: string) => void;
+  siteSettings: any;
+  setSiteSettings: (settings: any) => void;
+  homeAnnouncements: any[];
+  setHomeAnnouncements: React.Dispatch<React.SetStateAction<any[]>>;
+  homeStats: any;
+  setHomeStats: (stats: any) => void;
+  faqs: any[];
+  setFaqs: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 export default function AdminPanel({
@@ -88,11 +96,45 @@ export default function AdminPanel({
   setAnnouncements,
   news,
   setNews,
-  triggerAlert
+  triggerAlert,
+  siteSettings,
+  setSiteSettings,
+  homeAnnouncements,
+  setHomeAnnouncements,
+  homeStats,
+  setHomeStats,
+  faqs,
+  setFaqs
 }: AdminPanelProps) {
   const [activeAdminTab, setActiveAdminTab] = useState<
-    'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news'
+    'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news' | 'site_editor'
   >('submissions');
+
+  // LOCAL CMS FORM STATES
+  const [generalTitle, setGeneralTitle] = useState(siteSettings?.heroTitle || '');
+  const [generalProgress, setGeneralProgress] = useState(siteSettings?.heroProgress || '');
+  const [generalCountdown, setGeneralCountdown] = useState(siteSettings?.heroCountdown || '');
+  const [generalImage, setGeneralImage] = useState(siteSettings?.heroImage || '');
+  const [generalBtnText, setGeneralBtnText] = useState(siteSettings?.heroButtonText || '');
+  const [generalPhone, setGeneralPhone] = useState(siteSettings?.contactPhone || '');
+  const [generalEmail, setGeneralEmail] = useState(siteSettings?.contactEmail || '');
+  const [generalTelegram, setGeneralTelegram] = useState(siteSettings?.telegram || '');
+  const [generalAddress, setGeneralAddress] = useState(siteSettings?.address || '');
+  const [generalAboutText, setGeneralAboutText] = useState(siteSettings?.aboutText || '');
+
+  // Local FAQ form state
+  const [faqQ, setFaqQ] = useState('');
+  const [faqA, setFaqA] = useState('');
+
+  // Local Stats form state
+  const [statMissions, setStatMissions] = useState(homeStats?.activeMissions || 0);
+  const [statParticipants, setStatParticipants] = useState(homeStats?.activeParticipants || 0);
+  const [statGroups, setStatGroups] = useState(homeStats?.activeGroups || 0);
+
+  // Local Home Announcement form state
+  const [annTitle, setAnnTitle] = useState('');
+  const [annMsg, setAnnMsg] = useState('');
+  const [annImg, setAnnImg] = useState('');
 
   // SUBMISSIONS GRADING STATE
   const [gradingSubId, setGradingSubId] = useState<string | null>(null);
@@ -380,6 +422,19 @@ export default function AdminPanel({
         >
           <BookOpen size={15} />
           <span>آموزش‌ها ({trainings.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveAdminTab('site_editor')}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap transition border ${
+            activeAdminTab === 'site_editor' 
+              ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' 
+              : 'bg-[#080d21] text-slate-400 border-slate-800 hover:text-white'
+          }`}
+          id="btn-tab-site-editor"
+        >
+          <FileText size={15} />
+          <span>مدیریت محتوای سایت و صفحات</span>
         </button>
 
       </div>
@@ -919,6 +974,373 @@ export default function AdminPanel({
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* 7. SITE CONTENT & PAGES CMS TAB */}
+      {activeAdminTab === 'site_editor' && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+            <SlidersHorizontal className="text-amber-400 animate-pulse" size={18} />
+            <h3 className="text-sm font-black text-white">پنل مدیریت محتوای داینامیک سایت و صفحات</h3>
+          </div>
+
+          {/* Grid Layout for CMS Sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
+            
+            {/* Column 1: General Settings & About Page */}
+            <div className="bg-[#080d21] border border-slate-800 p-4 rounded-2xl space-y-4">
+              <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                <FileText className="text-cyan-400" size={16} />
+                <h4 className="font-extrabold text-slate-200">تنظیمات هیرو هوم‌پیج و اطلاعات تماس</h4>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold block">عنوان مأموریت اصلی (هیرو):</label>
+                  <input 
+                    type="text" 
+                    value={generalTitle} 
+                    onChange={(e) => setGeneralTitle(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">درصد پیشرفت هیرو (مثلا ۷۲٪):</label>
+                    <input 
+                      type="text" 
+                      value={generalProgress} 
+                      onChange={(e) => setGeneralProgress(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">متن دکمه هیرو:</label>
+                    <input 
+                      type="text" 
+                      value={generalBtnText} 
+                      onChange={(e) => setGeneralBtnText(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">تایمر روزانه (DAYS : HRS : MINS : SECS):</label>
+                    <input 
+                      type="text" 
+                      value={generalCountdown} 
+                      onChange={(e) => setGeneralCountdown(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">تلفن پشتیبانی ستاد:</label>
+                    <input 
+                      type="text" 
+                      value={generalPhone} 
+                      onChange={(e) => setGeneralPhone(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">آی‌دی تلگرام / پیام‌رسان‌ها:</label>
+                    <input 
+                      type="text" 
+                      value={generalTelegram} 
+                      onChange={(e) => setGeneralTelegram(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">ایمیل رسمی قرارگاه:</label>
+                    <input 
+                      type="text" 
+                      value={generalEmail} 
+                      onChange={(e) => setGeneralEmail(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold block">آدرس تصویر هیرو سایت:</label>
+                  <input 
+                    type="text" 
+                    value={generalImage} 
+                    onChange={(e) => setGeneralImage(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono text-[10px]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold block">آدرس حضوری ستاد مرکزی:</label>
+                  <input 
+                    type="text" 
+                    value={generalAddress} 
+                    onChange={(e) => setGeneralAddress(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold block">متن معرفی درباره ما (صفحه اصلی و درباره ما):</label>
+                  <textarea 
+                    rows={4}
+                    value={generalAboutText} 
+                    onChange={(e) => setGeneralAboutText(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white leading-relaxed"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSiteSettings({
+                      heroTitle: generalTitle,
+                      heroProgress: generalProgress,
+                      heroCountdown: generalCountdown,
+                      heroImage: generalImage,
+                      heroButtonText: generalBtnText,
+                      contactPhone: generalPhone,
+                      contactEmail: generalEmail,
+                      telegram: generalTelegram,
+                      address: generalAddress,
+                      aboutText: generalAboutText
+                    });
+                    triggerAlert('تنظیمات عمومی و اطلاعات صفحات با موفقیت ذخیره و همگام‌سازی شد.');
+                  }}
+                  className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"
+                  id="btn-save-general-settings"
+                >
+                  <Check size={16} />
+                  <span>ذخیره کلیه تغییرات و اطلاعات عمومی</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Column 2: Stats & FAQs & Home Announcements */}
+            <div className="space-y-6">
+              
+              {/* Stats Block */}
+              <div className="bg-[#080d21] border border-slate-800 p-4 rounded-2xl space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                  <Award className="text-amber-400" size={16} />
+                  <h4 className="font-extrabold text-slate-200">آمار صفحه اصلی (Stats Strip)</h4>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">مأموریت‌ها:</label>
+                    <input 
+                      type="number" 
+                      value={statMissions} 
+                      onChange={(e) => setStatMissions(Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">رزمندگان:</label>
+                    <input 
+                      type="number" 
+                      value={statParticipants} 
+                      onChange={(e) => setStatParticipants(Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">جوخه‌ها:</label>
+                    <input 
+                      type="number" 
+                      value={statGroups} 
+                      onChange={(e) => setStatGroups(Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setHomeStats({
+                      activeMissions: statMissions,
+                      activeParticipants: statParticipants,
+                      activeGroups: statGroups
+                    });
+                    triggerAlert('آمار صفحه اصلی با موفقیت به‌روزرسانی شد.');
+                  }}
+                  className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2 rounded-xl transition flex items-center justify-center gap-1.5"
+                >
+                  <Check size={14} />
+                  <span>بروزرسانی شمارنده‌های آمار</span>
+                </button>
+              </div>
+
+              {/* FAQ Accordion Block */}
+              <div className="bg-[#080d21] border border-slate-800 p-4 rounded-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="text-rose-400" size={16} />
+                    <h4 className="font-extrabold text-slate-200">سوالات متداول (FAQ Accordion)</h4>
+                  </div>
+                  <span className="text-[10px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800 font-bold">{faqs.length} سوال</span>
+                </div>
+
+                {/* FAQ Add Form */}
+                <div className="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                  <div className="space-y-1">
+                    <input 
+                      type="text" 
+                      value={faqQ} 
+                      onChange={(e) => setFaqQ(e.target.value)}
+                      placeholder="عنوان سوال جدید را بنویسید..."
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <textarea 
+                      rows={2}
+                      value={faqA} 
+                      onChange={(e) => setFaqA(e.target.value)}
+                      placeholder="پاسخ کامل سوال را بنویسید..."
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!faqQ.trim() || !faqA.trim()) return;
+                      const newFaqItem = {
+                        id: `faq-${Date.now()}`,
+                        question: faqQ.trim(),
+                        answer: faqA.trim()
+                      };
+                      setFaqs(prev => [...prev, newFaqItem]);
+                      setFaqQ('');
+                      setFaqA('');
+                      triggerAlert('سوال متداول جدید اضافه شد.');
+                    }}
+                    className="w-full py-1.5 text-white font-bold rounded-lg text-[11px] transition flex items-center justify-center gap-1 bg-red-900/60 hover:bg-red-800 border border-red-800"
+                  >
+                    <Plus size={14} />
+                    <span>درج سوال جدید در لیست</span>
+                  </button>
+                </div>
+
+                {/* FAQ List */}
+                <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {faqs.map(item => (
+                    <div key={item.id} className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-900 flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <p className="font-extrabold text-white text-[11px]">؟ {item.question}</p>
+                        <p className="text-slate-400 text-[10px] leading-relaxed">{item.answer}</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setFaqs(prev => prev.filter(x => x.id !== item.id));
+                          triggerAlert('سوال متداول با موفقیت حذف گردید.');
+                        }}
+                        className="p-1 bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 rounded-lg transition shrink-0"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Home Announcements block */}
+              <div className="bg-[#080d21] border border-slate-800 p-4 rounded-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Megaphone className="text-emerald-400" size={16} />
+                    <h4 className="font-extrabold text-slate-200">اطلاعیه‌های صفحه اصلی (Announcements)</h4>
+                  </div>
+                  <span className="text-[10px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800 font-bold">{homeAnnouncements.length} اطلاعیه</span>
+                </div>
+
+                {/* Announcement Add Form */}
+                <div className="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input 
+                      type="text" 
+                      value={annTitle} 
+                      onChange={(e) => setAnnTitle(e.target.value)}
+                      placeholder="عنوان اطلاعیه..."
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                    />
+                    <input 
+                      type="text" 
+                      value={annImg} 
+                      onChange={(e) => setAnnImg(e.target.value)}
+                      placeholder="لینک عکس اطلاعیه..."
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white text-[10px]"
+                    />
+                  </div>
+                  <textarea 
+                    rows={2}
+                    value={annMsg} 
+                    onChange={(e) => setAnnMsg(e.target.value)}
+                    placeholder="متن کامل اطلاعیه..."
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                  />
+                  <button
+                    onClick={() => {
+                      if (!annTitle.trim() || !annMsg.trim()) return;
+                      const newAnn = {
+                        id: `ann-${Date.now()}`,
+                        title: annTitle.trim(),
+                        message: annMsg.trim(),
+                        imageUrl: annImg.trim() || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
+                        createdAt: '۱۴۰۳/۰۲/۲۲',
+                        isActive: true
+                      };
+                      setHomeAnnouncements(prev => [newAnn, ...prev]);
+                      setAnnTitle('');
+                      setAnnMsg('');
+                      setAnnImg('');
+                      triggerAlert('اطلاعیه جدید قرارگاه با موفقیت منتشر گردید.');
+                    }}
+                    className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[11px] transition flex items-center justify-center gap-1 border border-emerald-500"
+                  >
+                    <Plus size={14} />
+                    <span>انتشار اطلاعیه جدید قرارگاه</span>
+                  </button>
+                </div>
+
+                {/* Announcement List */}
+                <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {homeAnnouncements.map(ann => (
+                    <div key={ann.id} className="p-2 bg-slate-950/80 rounded-xl border border-slate-900 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        {ann.imageUrl && (
+                          <img src={ann.imageUrl} className="w-9 h-9 object-cover rounded-lg border border-slate-800" alt="" referrerPolicy="no-referrer" />
+                        )}
+                        <div>
+                          <p className="font-extrabold text-white text-[11px]">{ann.title}</p>
+                          <p className="text-[10px] text-slate-500 font-mono mt-0.5">{ann.createdAt}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setHomeAnnouncements(prev => prev.filter(x => x.id !== ann.id));
+                          triggerAlert('اطلاعیه قرارگاه با موفقیت حذف شد.');
+                        }}
+                        className="p-1 bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 rounded-lg transition"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
           </div>
         </div>
       )}

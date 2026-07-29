@@ -32,6 +32,15 @@ import {
   initialNews 
 } from './data';
 
+import { 
+  initialHomeAnnouncements, 
+  homeStatsData, 
+  faqsData, 
+  HomeAnnouncement, 
+  HomeStats, 
+  FaqItem 
+} from './data/home';
+
 // Views
 import HomeView from './components/HomeView';
 import Navbar from './components/Navbar';
@@ -96,8 +105,47 @@ export default function App() {
     return saved ? JSON.parse(saved) : initialSupportReplies;
   });
 
-  const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements);
-  const [news, setNews] = useState<News[]>(initialNews);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(() => {
+    const saved = localStorage.getItem('warroom_announcements');
+    return saved ? JSON.parse(saved) : initialAnnouncements;
+  });
+
+  const [news, setNews] = useState<News[]>(() => {
+    const saved = localStorage.getItem('warroom_news');
+    return saved ? JSON.parse(saved) : initialNews;
+  });
+
+  // Dynamic CMS States
+  const [siteSettings, setSiteSettings] = useState(() => {
+    const saved = localStorage.getItem('warroom_site_settings');
+    return saved ? JSON.parse(saved) : {
+      heroTitle: 'ماموریت اصلی: تسخیر کهکشان',
+      heroProgress: '۷۲٪',
+      heroCountdown: '۰۲:۱۴:۳۹:۱۵',
+      heroImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+      heroButtonText: 'مشاهده ماموریت',
+      contactPhone: '۰۲۱-۸۸۹۹۷۷۶۶',
+      contactEmail: 'info@warroom.ir',
+      telegram: 'WarRoom_Support',
+      address: 'تهران، بزرگراه شهید همت، ستاد مرکزی قرارگاه فضای مجازی',
+      aboutText: 'پلتفرم اتاق جنگ یک سامانه تعاملی، رقابتی و آموزشی است که با هدف پرورش تفکر استراتژیک، افزایش توان تحلیل مسئله و تقویت روحیه کار تیمی در میان نوجوانان و جوانان طراحی شده است. در این سامانه، کاربران در قالب جوخه‌های عملیاتی وارد سناریوهای واقعی و شبیه‌سازی‌شده می‌شوند.'
+    };
+  });
+
+  const [homeAnnouncements, setHomeAnnouncements] = useState<HomeAnnouncement[]>(() => {
+    const saved = localStorage.getItem('warroom_home_announcements');
+    return saved ? JSON.parse(saved) : initialHomeAnnouncements;
+  });
+
+  const [homeStats, setHomeStats] = useState<HomeStats>(() => {
+    const saved = localStorage.getItem('warroom_home_stats');
+    return saved ? JSON.parse(saved) : homeStatsData;
+  });
+
+  const [faqs, setFaqs] = useState<FaqItem[]>(() => {
+    const saved = localStorage.getItem('warroom_faqs');
+    return saved ? JSON.parse(saved) : faqsData;
+  });
 
   // Current Logged-in User
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -119,7 +167,7 @@ export default function App() {
     if (tab === 'PortalSelector' || tab === 'GameSelection') {
       setShowPortalSelector(true);
     } else {
-      setIsAdminMode(false);
+      setIsAdminMode(tab === 'Admin');
       setActiveTab(tab);
     }
   };
@@ -168,6 +216,30 @@ export default function App() {
   }, [replies]);
 
   useEffect(() => {
+    localStorage.setItem('warroom_announcements', JSON.stringify(announcements));
+  }, [announcements]);
+
+  useEffect(() => {
+    localStorage.setItem('warroom_news', JSON.stringify(news));
+  }, [news]);
+
+  useEffect(() => {
+    localStorage.setItem('warroom_site_settings', JSON.stringify(siteSettings));
+  }, [siteSettings]);
+
+  useEffect(() => {
+    localStorage.setItem('warroom_home_announcements', JSON.stringify(homeAnnouncements));
+  }, [homeAnnouncements]);
+
+  useEffect(() => {
+    localStorage.setItem('warroom_home_stats', JSON.stringify(homeStats));
+  }, [homeStats]);
+
+  useEffect(() => {
+    localStorage.setItem('warroom_faqs', JSON.stringify(faqs));
+  }, [faqs]);
+
+  useEffect(() => {
     if (currentUser) {
       localStorage.setItem('warroom_current_user_id', currentUser.id);
     } else {
@@ -210,6 +282,8 @@ export default function App() {
     setAuthMode(mode);
     setShowPortalSelector(true);
   };
+
+  const isPanelTab = ['Dashboard', 'Journey', 'Missions', 'Trainings', 'Profile', 'Admin'].includes(activeTab) || isAdminMode;
 
   return (
     <div className="bg-[#030611] text-slate-100 min-h-screen relative font-sans dir-rtl">
@@ -333,6 +407,10 @@ export default function App() {
               onLogout={handleLogout}
               onOpenSquadModal={() => setShowSquadModal(true)}
               triggerAlert={triggerAlert}
+              siteSettings={siteSettings}
+              homeAnnouncements={homeAnnouncements}
+              homeStats={homeStats}
+              faqs={faqs}
             />
           </motion.div>
         ) : (activeTab === 'Support' || activeTab === 'Contact') ? (
@@ -348,6 +426,7 @@ export default function App() {
             <ContactView 
               onNavigate={(tab) => handleTabChange(tab)}
               triggerAlert={triggerAlert}
+              siteSettings={siteSettings}
             />
           </motion.div>
         ) : activeTab === 'About' ? (
@@ -362,6 +441,8 @@ export default function App() {
           >
             <AboutView 
               onNavigate={(tab) => handleTabChange(tab)}
+              siteSettings={siteSettings}
+              homeStats={homeStats}
             />
           </motion.div>
         ) : (
@@ -413,6 +494,14 @@ export default function App() {
                   news={news}
                   setNews={setNews}
                   triggerAlert={triggerAlert}
+                  siteSettings={siteSettings}
+                  setSiteSettings={setSiteSettings}
+                  homeAnnouncements={homeAnnouncements}
+                  setHomeAnnouncements={setHomeAnnouncements}
+                  homeStats={homeStats}
+                  setHomeStats={setHomeStats}
+                  faqs={faqs}
+                  setFaqs={setFaqs}
                 />
               ) : (
                 <>
@@ -486,8 +575,8 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Global Android Mobile Bottom Navigation for ALL Panels & Views (including Admin Panel) */}
-      {!showAuthScreen && !showPortalSelector && (
+      {/* Global Android Mobile Bottom Navigation for Home/Public Views */}
+      {!showAuthScreen && !showPortalSelector && !isPanelTab && (
         <BottomNavigation 
           activeTab={isAdminMode ? 'Admin' : activeTab}
           setActiveTab={(tab) => {
