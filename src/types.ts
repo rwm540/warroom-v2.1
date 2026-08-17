@@ -155,3 +155,22 @@ export interface News {
   created_at: string;
   category?: string;
 }
+
+export interface StudentShowcase {
+  id: string;
+  title: string;
+  description: string;
+  student_name: string;
+  squad_name?: string;
+  gender: Gender;
+  education_level: EducationLevel;
+  grade: string;
+  province: string;
+  cover_image: string;
+  category: 'سناریو و استراتژی' | 'طراحی و گرافیک' | 'ویدیو و پادکست' | 'فنی و کدنویسی' | 'شبیه‌سازی تاکتیکی';
+  likes_count: number;
+  views_count: number;
+  tags: string[];
+  created_at: string;
+}
+

@@ -14,6 +14,7 @@ import NotificationPanel from './home/NotificationPanel';
 import UserStatusCard from './home/UserStatusCard';
 import CompetitionHero from './home/CompetitionHero';
 import QuickActionsGrid from './home/QuickActionsGrid';
+import StudentShowcaseSection from './home/StudentShowcaseSection';
 import AnnouncementsList from './home/AnnouncementsList';
 import AboutSection from './home/AboutSection';
 import StatsStrip from './home/StatsStrip';
@@ -213,6 +214,11 @@ export default function HomeView({
                   />
                 </div>
 
+              </div>
+
+              {/* Student Portfolio / Showcase on Scroll */}
+              <div className="w-full">
+                <StudentShowcaseSection onOpenAuth={onOpenAuth} />
               </div>
 
               {/* FAQ Section across full width */}

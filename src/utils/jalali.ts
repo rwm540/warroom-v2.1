@@ -1,6 +1,21 @@
 // Jalali Solar Hijri and Iranian Validation Helpers
 
-export function validateNationalCode(code: string): boolean {
+export function normalizeToEnglishDigits(str: string | number): string {
+  if (str === null || str === undefined) return '';
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  
+  let normalized = String(str);
+  for (let i = 0; i < 10; i++) {
+    normalized = normalized
+      .replace(new RegExp(persianDigits[i], 'g'), String(i))
+      .replace(new RegExp(arabicDigits[i], 'g'), String(i));
+  }
+  return normalized.trim();
+}
+
+export function validateNationalCode(inputCode: string): boolean {
+  const code = normalizeToEnglishDigits(inputCode);
   if (!/^\d{10}$/.test(code)) return false;
   
   // Check if all digits are the same e.g. 1111111111
@@ -16,11 +31,13 @@ export function validateNationalCode(code: string): boolean {
   return (remainder < 2 && check === remainder) || (remainder >= 2 && check === 11 - remainder);
 }
 
-export function validatePhoneNumber(phone: string): boolean {
-  return /^09\d{9}$/.test(phone.trim());
+export function validatePhoneNumber(inputPhone: string): boolean {
+  const phone = normalizeToEnglishDigits(inputPhone);
+  return /^09\d{9}$/.test(phone);
 }
 
-export function validateJalaliDate(dateStr: string): boolean {
+export function validateJalaliDate(inputDateStr: string): boolean {
+  const dateStr = normalizeToEnglishDigits(inputDateStr);
   // Format: YYYY/MM/DD or YYYY-MM-DD
   const parts = dateStr.replace(/-/g, '/').split('/');
   if (parts.length !== 3) return false;
@@ -61,6 +78,8 @@ export function getJalaliDate(): string {
 }
 
 export function formatToPersianDigits(numStr: string | number): string {
+  if (numStr === null || numStr === undefined) return '';
   const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
   return String(numStr).replace(/\d/g, (x) => persianDigits[parseInt(x, 10)]);
 }
+
