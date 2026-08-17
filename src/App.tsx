@@ -116,12 +116,26 @@ export default function App() {
   const handleTabChange = (tab: string) => {
     setShowPortalSelector(false);
     setShowAuthScreen(false);
+
     if (tab === 'PortalSelector' || tab === 'GameSelection') {
-      setShowPortalSelector(true);
-    } else {
       setIsAdminMode(false);
-      setActiveTab(tab);
+      setShowPortalSelector(true);
+      return;
     }
+
+    if (tab === 'Admin') {
+      if (currentUser?.role === 'admin') {
+        setIsAdminMode(true);
+        setActiveTab('Admin');
+      } else {
+        setIsAdminMode(false);
+        setActiveTab('Home');
+      }
+      return;
+    }
+
+    setIsAdminMode(false);
+    setActiveTab(tab);
   };
   const [showPortalSelector, setShowPortalSelector] = useState<boolean>(false);
   const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
@@ -335,7 +349,27 @@ export default function App() {
               triggerAlert={triggerAlert}
             />
           </motion.div>
-        ) : (activeTab === 'Support' || activeTab === 'Contact') ? (
+        ) : activeTab === 'Support' ? (
+          /* Standalone Support & Ticket Center Page */
+          <motion.div
+            key="supportPage"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="min-h-screen bg-[#05091a] text-slate-100 py-6 px-3 sm:px-6 dir-rtl"
+          >
+            <SupportView 
+              currentUser={currentUser}
+              tickets={tickets}
+              setTickets={setTickets}
+              replies={replies}
+              setReplies={setReplies}
+              onNavigate={(tab) => handleTabChange(tab)}
+              triggerAlert={triggerAlert}
+            />
+          </motion.div>
+        ) : activeTab === 'Contact' ? (
           /* Standalone Animated Contact Us Page (Public & Independent) */
           <motion.div
             key="contactPage"
@@ -419,8 +453,12 @@ export default function App() {
                   {activeTab === 'Journey' && (
                     <JourneyView 
                       currentUser={currentUser}
-                      onEnterDashboard={(stageId) => {
-                        setActiveTab('Dashboard');
+                      onEnterDashboard={(target) => {
+                        if (target === 'Missions' || target === 'Trainings' || target === 'Profile') {
+                          setActiveTab(target);
+                        } else {
+                          setActiveTab('Dashboard');
+                        }
                       }}
                       triggerAlert={triggerAlert}
                     />
@@ -495,7 +533,10 @@ export default function App() {
               setIsAdminMode(false);
               handleTabChange('PortalSelector');
             } else if (tab === 'Admin') {
-              setIsAdminMode(true);
+              if (currentUser?.role === 'admin') {
+                setIsAdminMode(true);
+                setActiveTab('Admin');
+              }
             } else {
               setIsAdminMode(false);
               handleTabChange(tab);
