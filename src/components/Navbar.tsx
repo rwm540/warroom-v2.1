@@ -23,7 +23,8 @@ import {
   Sparkles,
   ShieldCheck,
   Flame,
-  Radio
+  Radio,
+  Trophy
 } from 'lucide-react';
 import { User } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -95,11 +96,10 @@ export default function Navbar({
     { id: 'About', label: 'درباره ما', icon: Info },
   ];
 
-  // Android Mobile Bottom Navigation (4 Core buttons + 3-dots "سایر")
+  // Android Mobile Bottom Navigation (3 Core tabs + 3-dots "سایر")
   const mobileBottomItems = [
-    { id: 'Dashboard', label: 'داشبورد', icon: LayoutDashboard },
-    { id: 'Journey', label: 'مراحل بازی', icon: Gamepad2 },
-    { id: 'Missions', label: 'مأموریت‌ها', icon: Target },
+    { id: 'Journey', label: 'صفحه اصلی بازی', icon: Gamepad2 },
+    { id: 'RewardsLeaderboard', label: 'امتیازات و جوایز', icon: Trophy },
     { id: 'Trainings', label: 'آموزش‌ها', icon: BookOpen },
   ];
 
@@ -318,7 +318,7 @@ export default function Navbar({
           aria-label="منوی موبایل اندروید"
           className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#050816]/95 backdrop-blur-xl border-t border-cyan-500/30 shadow-[0_-8px_30px_rgba(0,0,0,0.85)] dir-rtl"
         >
-          <div className="grid grid-cols-5 items-center justify-around px-1 py-1.5">
+          <div className="grid grid-cols-4 items-center justify-items-center px-4 py-2">
             
             {/* 4 Primary Android Tabs */}
             {mobileBottomItems.map((item) => {
@@ -329,18 +329,18 @@ export default function Navbar({
                 <button
                   key={item.id}
                   onClick={() => handleSelectTab(item.id, false)}
-                  className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all ${
+                  title={item.label}
+                  className={`flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all ${
                     isActive
                       ? 'text-cyan-300 font-black scale-105'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  <div className={`p-1 rounded-lg transition ${
-                    isActive ? 'bg-cyan-500/20 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.4)]' : ''
+                  <div className={`p-2 rounded-xl transition ${
+                    isActive ? 'bg-cyan-500/25 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-cyan-500/40' : 'hover:bg-slate-900/80'
                   }`}>
-                    <Icon size={19} strokeWidth={isActive ? 2.2 : 1.6} />
+                    <Icon size={22} strokeWidth={isActive ? 2.4 : 1.7} />
                   </div>
-                  <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[65px]">{item.label}</span>
                 </button>
               );
             })}
@@ -348,18 +348,18 @@ export default function Navbar({
             {/* 5th Tab: Android Three-Dots ("سایر") -> Opens Slide-up Sheet */}
             <button
               onClick={() => setIsMobileMoreOpen(true)}
-              className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all ${
+              title="سایر امکانات و منو"
+              className={`flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all ${
                 isMobileMoreOpen
                   ? 'text-amber-400 font-black scale-105'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <div className={`p-1 rounded-lg transition ${
-                isMobileMoreOpen ? 'bg-amber-500/20 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.4)]' : ''
+              <div className={`p-2 rounded-xl transition ${
+                isMobileMoreOpen ? 'bg-amber-500/25 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.5)] border border-amber-500/40' : 'hover:bg-slate-900/80'
               }`}>
-                <MoreHorizontal size={19} strokeWidth={2} />
+                <MoreHorizontal size={22} strokeWidth={2.2} />
               </div>
-              <span className="text-[10px] mt-0.5 tracking-tight">سایر</span>
             </button>
 
           </div>

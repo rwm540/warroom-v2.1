@@ -57,6 +57,10 @@ import AboutView from './components/AboutView';
 import ProfileView from './components/ProfileView';
 import AdminPanel from './components/AdminPanel';
 import SquadManagementModal from './components/SquadManagementModal';
+import RewardsLeaderboardView from './components/RewardsLeaderboardView';
+import LoadingScreen from './components/LoadingScreen';
+import ProfileModal from './components/ProfileModal';
+import BackgroundMusic from './components/BackgroundMusic';
 
 export default function App() {
   // Global Data State
@@ -176,6 +180,8 @@ export default function App() {
   const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('login');
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [showSquadModal, setShowSquadModal] = useState<boolean>(false);
+  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [alertNotification, setAlertNotification] = useState<string | null>(null);
 
   // Sync to LocalStorage
@@ -288,6 +294,14 @@ export default function App() {
   return (
     <div className="bg-[#030611] text-slate-100 min-h-screen relative font-sans dir-rtl">
       
+      {/* Loading Screen with Radar & Logo */}
+      {isLoading && (
+        <LoadingScreen onComplete={() => setIsLoading(false)} />
+      )}
+
+      {/* Background Epic Music Toggle */}
+      <BackgroundMusic />
+
       {/* Background Cyber Radar Grid Accent */}
       <div className="fixed inset-0 bg-[linear-gradient(rgba(220,38,38,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(220,38,38,0.015)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none z-0" />
 
@@ -509,8 +523,23 @@ export default function App() {
                     <JourneyView 
                       currentUser={currentUser}
                       onEnterDashboard={(stageId) => {
-                        setActiveTab('Dashboard');
+                        handleTabChange('Dashboard');
                       }}
+                      onNavigateTab={(tab) => {
+                        handleTabChange(tab);
+                      }}
+                      triggerAlert={triggerAlert}
+                      onOpenProfile={() => setShowProfileModal(true)}
+                      onOpenNotifications={() => triggerAlert('صندوق اعلانات و پیام‌ها باز شد.')}
+                    />
+                  )}
+
+                  {activeTab === 'RewardsLeaderboard' && (
+                    <RewardsLeaderboardView 
+                      users={users}
+                      groups={groups}
+                      medals={medals}
+                      userMedals={userMedals}
                       triggerAlert={triggerAlert}
                     />
                   )}
@@ -568,6 +597,23 @@ export default function App() {
                 groups={groups}
                 setGroups={setGroups}
                 onClose={() => setShowSquadModal(false)}
+                triggerAlert={triggerAlert}
+              />
+            )}
+
+            {/* Profile & Avatar Selection Modal */}
+            {showProfileModal && currentUser && (
+              <ProfileModal 
+                isOpen={showProfileModal}
+                onClose={() => setShowProfileModal(false)}
+                currentUser={currentUser}
+                onUpdateAvatar={(newUrl) => {
+                  const updated = { ...currentUser, avatar_url: newUrl };
+                  setCurrentUser(updated);
+                  setUsers(users.map(u => u.id === updated.id ? updated : u));
+                }}
+                medals={medals}
+                userMedals={userMedals}
                 triggerAlert={triggerAlert}
               />
             )}

@@ -26,6 +26,8 @@ export interface User {
   postal_code?: string;
   address?: string;
   avatar_url?: string;
+  level?: number;
+  points?: number;
 }
 
 export interface Group {
