@@ -1,0 +1,429 @@
+import React, { useState } from 'react';
+import { 
+  Gift, 
+  Sparkles, 
+  Gem, 
+  Lock, 
+  CheckCircle, 
+  ArrowLeft, 
+  Trophy, 
+  Zap, 
+  Flame, 
+  Star, 
+  CreditCard, 
+  HelpCircle,
+  Clock,
+  ShieldAlert,
+  Coins
+} from 'lucide-react';
+import { User } from '../types';
+import { formatToPersianDigits } from '../utils/jalali';
+
+interface PrizesPointsViewProps {
+  currentUser: User | null;
+  triggerAlert: (msg: string) => void;
+}
+
+export interface PrizeItem {
+  id: string;
+  title: string;
+  category: string;
+  requiredPoints: number;
+  imageUrl: string;
+  tag: string;
+  isAvailable: boolean;
+  stockCount: number;
+}
+
+export default function PrizesPointsView({
+  currentUser,
+  triggerAlert
+}: PrizesPointsViewProps) {
+  const [activeSubTab, setActiveSubTab] = useState<'prizes' | 'points'>('prizes');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedPrize, setSelectedPrize] = useState<PrizeItem | null>(null);
+
+  const isGirls = currentUser?.gender === 'دختر' || localStorage.getItem('hisstory_theme_mode') === 'girls';
+  const userPoints = currentUser ? 1850 : 500; // Mock current points
+
+  // Grid of 9 specified high-end prizes with images and required points
+  const prizesList: PrizeItem[] = [
+    {
+      id: 'p1',
+      title: 'ساعت هوشمند اسپرت (Smartwatch)',
+      category: 'gadgets',
+      requiredPoints: 2500,
+      imageUrl: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80',
+      tag: 'محبوب‌ترین',
+      isAvailable: true,
+      stockCount: 120
+    },
+    {
+      id: 'p2',
+      title: 'کنسول بازی نسل ۹ (Xbox Series X)',
+      category: 'gaming',
+      requiredPoints: 9500,
+      imageUrl: 'https://images.unsplash.com/photo-1605901309584-818e25960a8f?auto=format&fit=crop&w=600&q=80',
+      tag: 'جایزه ویژه فرمانده',
+      isAvailable: true,
+      stockCount: 15
+    },
+    {
+      id: 'p3',
+      title: 'تبلت دانش‌آموزی ۱۰ اینچ با قلم',
+      category: 'digital',
+      requiredPoints: 6000,
+      imageUrl: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=600&q=80',
+      tag: 'کمک‌آموزشی',
+      isAvailable: true,
+      stockCount: 45
+    },
+    {
+      id: 'p4',
+      title: 'دوربین عکاسی و فیلمبرداری دیجیتال',
+      category: 'digital',
+      requiredPoints: 5200,
+      imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80',
+      tag: 'تولید محتوا',
+      isAvailable: true,
+      stockCount: 30
+    },
+    {
+      id: 'p5',
+      title: 'هدست واقعیت مجازی (VR Headset)',
+      category: 'gaming',
+      requiredPoints: 7800,
+      imageUrl: 'https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?auto=format&fit=crop&w=600&q=80',
+      tag: 'هیجان متاورس',
+      isAvailable: true,
+      stockCount: 20
+    },
+    {
+      id: 'p6',
+      title: 'کوادکوپتر تصویربرداری هوایی (Drone)',
+      category: 'gadgets',
+      requiredPoints: 8500,
+      imageUrl: 'https://images.unsplash.com/photo-1507582020474-9a35b7d455d9?auto=format&fit=crop&w=600&q=80',
+      tag: 'اکتشافی',
+      isAvailable: true,
+      stockCount: 25
+    },
+    {
+      id: 'p7',
+      title: 'هدفون گیمینگ بلوتوثی نویزکنسلینگ',
+      category: 'gaming',
+      requiredPoints: 3400,
+      imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
+      tag: 'صدای ۳ بعدی',
+      isAvailable: true,
+      stockCount: 80
+    },
+    {
+      id: 'p8',
+      title: 'کوله تاکتیکی و پک امدادی اتاق جنگ',
+      category: 'gear',
+      requiredPoints: 1900,
+      imageUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80',
+      tag: 'تجهیزات رزم',
+      isAvailable: true,
+      stockCount: 150
+    },
+    {
+      id: 'p9',
+      title: 'تلسکوپ نجومی آماتوری رصد ستارگان',
+      category: 'gear',
+      requiredPoints: 4800,
+      imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
+      tag: 'علمی و نجومی',
+      isAvailable: true,
+      stockCount: 40
+    }
+  ];
+
+  const filteredPrizes = selectedCategory === 'all' 
+    ? prizesList 
+    : prizesList.filter(p => p.category === selectedCategory);
+
+  const handleClaimPrize = (prize: PrizeItem) => {
+    if (userPoints < prize.requiredPoints) {
+      triggerAlert(`امتیاز فعلی شما (${formatToPersianDigits(userPoints)}) برای دریافت این جایزه (${formatToPersianDigits(prize.requiredPoints)}) کافی نیست. مراحل بعدی را تکمیل کنید!`);
+      return;
+    }
+    triggerAlert(`درخواست دریافت «${prize.title}» ثبت شد و برای تایید داوری ارسال گردید.`);
+    setSelectedPrize(null);
+  };
+
+  return (
+    <div className="space-y-6 dir-rtl pb-28 max-w-5xl mx-auto px-3 sm:px-6 pt-4 font-sans select-none">
+      
+      {/* 1. Header Banner & Points Balance */}
+      <div className={`p-5 sm:p-7 rounded-3xl relative overflow-hidden shadow-2xl border transition-all duration-500 ${
+        isGirls
+          ? 'bg-gradient-to-r from-[#1d091e] via-[#120513] to-[#080208] border-pink-500/40 shadow-[0_0_30px_rgba(244,63,94,0.2)]'
+          : 'bg-gradient-to-r from-[#07132b] via-[#050c1c] to-[#02060e] border-cyan-400/40 shadow-[0_0_30px_rgba(6,182,212,0.2)]'
+      }`}>
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1 text-center sm:text-right">
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono border ${
+              isGirls 
+                ? 'bg-pink-950/80 text-pink-300 border-pink-500/50' 
+                : 'bg-cyan-950/80 text-cyan-300 border-cyan-500/50'
+            }`}>
+              WAR ROOM REWARDS & CRYSTALS
+            </span>
+            <h1 className="text-xl sm:text-2xl font-black text-white">
+              ویترین جوایز و امتیازات اتاق جنگ
+            </h1>
+            <p className="text-xs text-slate-300 max-w-md">
+              با تکمیل مراحل هفت‌خوان و کسب کریستال‌های امتیاز، قفل جوایز دلخواه خود را باز کنید.
+            </p>
+          </div>
+
+          {/* User Current Crystals / Points Card */}
+          <div className={`p-4 rounded-2xl border flex items-center gap-3 backdrop-blur-md shadow-xl ${
+            isGirls
+              ? 'bg-pink-950/60 border-pink-500/50 text-pink-200'
+              : 'bg-cyan-950/60 border-cyan-400/50 text-cyan-200'
+          }`}>
+            <div className={`p-2.5 rounded-xl ${isGirls ? 'bg-pink-500/20 text-pink-400' : 'bg-cyan-500/20 text-cyan-400'}`}>
+              <Gem size={26} className="animate-pulse" />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 block font-bold">موجودی کریستال شما</span>
+              <div className="flex items-center gap-1">
+                <span className="text-xl sm:text-2xl font-black text-white font-mono">
+                  {formatToPersianDigits(userPoints)}
+                </span>
+                <span className="text-[11px] font-bold text-amber-400">کریستال</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Main Tab Switcher: "Prizes (جوایز)" vs "Points (امتیازات)" */}
+      <div className="flex items-center gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
+        <button
+          onClick={() => setActiveSubTab('prizes')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 ${
+            activeSubTab === 'prizes'
+              ? isGirls
+                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-900/50'
+                : 'bg-gradient-to-r from-cyan-400 to-blue-600 text-slate-950 shadow-lg shadow-cyan-900/50'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Gift size={16} />
+          <span>ویترین ۹ جایزه رویایی</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('points')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 ${
+            activeSubTab === 'points'
+              ? isGirls
+                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-900/50'
+                : 'bg-gradient-to-r from-cyan-400 to-blue-600 text-slate-950 shadow-lg shadow-cyan-900/50'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Coins size={16} />
+          <span>راهنمای کسب امتیاز و ترفیع</span>
+        </button>
+      </div>
+
+      {/* 3. Sub Tab 1: 9-Item Prizes Grid */}
+      {activeSubTab === 'prizes' && (
+        <div className="space-y-4">
+          
+          {/* Categories Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+            {[
+              { id: 'all', label: 'همه ۹ جایزه' },
+              { id: 'gaming', label: 'گیمینگ و کنسول' },
+              { id: 'digital', label: 'تبلت و دوربین' },
+              { id: 'gadgets', label: 'گجت‌های هوشمند' },
+              { id: 'gear', label: 'تجهیزات و رصد' }
+            ].map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition border ${
+                  selectedCategory === cat.id
+                    ? isGirls 
+                      ? 'bg-pink-950 border-pink-500 text-pink-200' 
+                      : 'bg-cyan-950 border-cyan-400 text-cyan-200'
+                    : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* 9-Item Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {filteredPrizes.map((prize) => {
+              const isUnlocked = userPoints >= prize.requiredPoints;
+              return (
+                <div
+                  key={prize.id}
+                  className={`rounded-3xl p-4 border transition-all duration-300 flex flex-col justify-between group relative overflow-hidden ${
+                    isGirls
+                      ? 'bg-[#150718]/90 border-pink-500/30 hover:border-pink-400 hover:shadow-[0_0_25px_rgba(244,63,94,0.3)]'
+                      : 'bg-[#060e22]/90 border-cyan-400/30 hover:border-cyan-300 hover:shadow-[0_0_25px_rgba(6,182,212,0.3)]'
+                  }`}
+                >
+                  {/* Tag badge */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                      {prize.tag}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      موجودی: {formatToPersianDigits(prize.stockCount)} عدد
+                    </span>
+                  </div>
+
+                  {/* Prize Image */}
+                  <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-slate-950 border border-slate-800">
+                    <img 
+                      src={prize.imageUrl} 
+                      alt={prize.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] flex items-center justify-center gap-1.5 text-slate-300 text-xs font-bold">
+                        <Lock size={16} className="text-amber-400" />
+                        <span>قفل تا سقف امتیاز</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Title & Points Info */}
+                  <div className="space-y-2 mb-4">
+                    <h3 className="text-sm font-black text-white group-hover:text-amber-300 transition line-clamp-1">
+                      {prize.title}
+                    </h3>
+                    
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400">امتیاز لازم:</span>
+                      <div className="flex items-center gap-1 text-amber-300 font-black font-mono text-sm">
+                        <Sparkles size={14} className="text-amber-400" />
+                        <span>{formatToPersianDigits(prize.requiredPoints)}</span>
+                        <span className="text-[10px] font-sans">امتیاز</span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar towards this prize */}
+                    <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                      <div 
+                        className={`h-full ${isGirls ? 'bg-pink-500' : 'bg-cyan-400'}`}
+                        style={{ width: `${Math.min(100, (userPoints / prize.requiredPoints) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <button
+                    onClick={() => setSelectedPrize(prize)}
+                    className={`w-full py-2.5 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-md ${
+                      isUnlocked
+                        ? isGirls
+                          ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white hover:from-pink-400 hover:to-rose-400 cursor-pointer'
+                          : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:from-cyan-300 hover:to-blue-400 cursor-pointer'
+                        : 'bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    {isUnlocked ? (
+                      <>
+                        <Gift size={14} />
+                        <span>درخواست تحویل جایزه</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={14} />
+                        <span>
+                          {formatToPersianDigits(prize.requiredPoints - userPoints)} امتیاز تا بازگشایی
+                        </span>
+                      </>
+                    )}
+                  </button>
+
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+      )}
+
+      {/* 4. Sub Tab 2: Points & Progression Rules */}
+      {activeSubTab === 'points' && (
+        <div className="space-y-4">
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-[#080d22] border border-cyan-500/30 p-4 rounded-2xl space-y-2">
+              <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 w-fit">
+                <Flame size={20} />
+              </div>
+              <h4 className="text-sm font-black text-white">امتیاز تکمیل مراحل</h4>
+              <p className="text-xs text-slate-300">
+                هر مرحله از هفت‌خوان بین ۳۰۰ تا ۸۰۰ امتیاز مستقیم برای شما و جوخه‌تان به همراه دارد.
+              </p>
+            </div>
+
+            <div className="bg-[#080d22] border border-amber-500/30 p-4 rounded-2xl space-y-2">
+              <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 w-fit">
+                <Star size={20} />
+              </div>
+              <h4 className="text-sm font-black text-white">پاداش‌های ویژه خلاقیت</h4>
+              <p className="text-xs text-slate-300">
+                ویدیوها و گزارش‌های دارای ستاره ۵ از طرف داوران تا ۱۰۰۰ کریستال پاداش خواهند داشت.
+              </p>
+            </div>
+
+            <div className="bg-[#080d22] border border-purple-500/30 p-4 rounded-2xl space-y-2">
+              <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400 w-fit">
+                <Zap size={20} />
+              </div>
+              <h4 className="text-sm font-black text-white">ضریب همکاری تیمی</h4>
+              <p className="text-xs text-slate-300">
+                تکمیل هماهنگ ماموریت‌ها با سایر اعضای تیم ضریب امتیاز ۱.۵ برابری به همراه دارد.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* Modal for Claiming Prize */}
+      {selectedPrize && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#0b1226] border border-amber-500/40 rounded-3xl p-6 max-w-md w-full space-y-4 text-white shadow-2xl relative">
+            <h3 className="text-base font-black text-amber-300">
+              تایید درخواست جایزه {selectedPrize.title}
+            </h3>
+            <p className="text-xs text-slate-300">
+              با تایید نهایی، مقدار {formatToPersianDigits(selectedPrize.requiredPoints)} کریستال از حساب شما کسر شده و فرم آدرس پستی برای ارسال رایگان فعال خواهد شد.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedPrize(null)}
+                className="flex-1 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:bg-slate-700"
+              >
+                انصراف
+              </button>
+              <button
+                onClick={() => handleClaimPrize(selectedPrize)}
+                className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black"
+              >
+                تایید نهایی و کسر کریستال
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}

@@ -58,6 +58,9 @@ import ProfileView from './components/ProfileView';
 import AdminPanel from './components/AdminPanel';
 import SquadManagementModal from './components/SquadManagementModal';
 import RewardsLeaderboardView from './components/RewardsLeaderboardView';
+import PrizesPointsView from './components/PrizesPointsView';
+import VitrinView from './components/VitrinView';
+import OnboardingCommanderTutorial from './components/OnboardingCommanderTutorial';
 import LoadingScreen from './components/LoadingScreen';
 import ProfileModal from './components/ProfileModal';
 import BackgroundMusic from './components/BackgroundMusic';
@@ -181,6 +184,7 @@ export default function App() {
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [showSquadModal, setShowSquadModal] = useState<boolean>(false);
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
+  const [showOnboardingTutorial, setShowOnboardingTutorial] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [alertNotification, setAlertNotification] = useState<string | null>(null);
 
@@ -280,13 +284,15 @@ export default function App() {
     } else {
       setIsAdminMode(false);
       setActiveTab('Journey'); // Immediately show the Stage Selection / Journey Map screen after registration/login
+      setShowOnboardingTutorial(true); // Launch Commander Guided Tutorial
     }
     triggerAlert(`خوش آمدید رزمنده ${user.first_name} ${user.last_name}`);
   };
 
   const handleOpenAuth = (mode: 'login' | 'register_individual' | 'register_group') => {
     setAuthMode(mode);
-    setShowPortalSelector(true);
+    setShowPortalSelector(false);
+    setShowAuthScreen(true);
   };
 
   const isPanelTab = ['Dashboard', 'Journey', 'Missions', 'Trainings', 'Profile', 'Admin'].includes(activeTab) || isAdminMode;
@@ -534,7 +540,21 @@ export default function App() {
                     />
                   )}
 
-                  {activeTab === 'RewardsLeaderboard' && (
+                  {(activeTab === 'Rewards' || activeTab === 'Prizes') && (
+                    <PrizesPointsView 
+                      currentUser={currentUser}
+                      triggerAlert={triggerAlert}
+                    />
+                  )}
+
+                  {activeTab === 'Vitrin' && (
+                    <VitrinView 
+                      currentUser={currentUser}
+                      triggerAlert={triggerAlert}
+                    />
+                  )}
+
+                  {(activeTab === 'RewardsLeaderboard' || activeTab === 'Leaderboard') && (
                     <RewardsLeaderboardView 
                       users={users}
                       groups={groups}
@@ -615,6 +635,15 @@ export default function App() {
                 medals={medals}
                 userMedals={userMedals}
                 triggerAlert={triggerAlert}
+              />
+            )}
+
+            {/* Clash of Clans Style Commander Onboarding Tutorial */}
+            {showOnboardingTutorial && (
+              <OnboardingCommanderTutorial 
+                currentUser={currentUser}
+                onComplete={() => setShowOnboardingTutorial(false)}
+                onNavigateTab={(tab) => handleTabChange(tab)}
               />
             )}
           </motion.div>

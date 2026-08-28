@@ -20,11 +20,13 @@ import {
   Info, 
   Award, 
   ChevronLeft, 
-  Sparkles,
-  ShieldCheck,
-  Flame,
-  Radio,
-  Trophy
+  Sparkles, 
+  ShieldCheck, 
+  Flame, 
+  Radio, 
+  Trophy,
+  Gift,
+  Grid
 } from 'lucide-react';
 import { User } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -87,20 +89,23 @@ export default function Navbar({
 
   // Full Desktop Navigation items (all visible on desktop/laptop)
   const desktopNavItems = [
+    { id: 'Journey', label: 'نقشه مراحل بازی (Game Map)', icon: Gamepad2 },
+    { id: 'Rewards', label: 'جوایز و امتیازات (Prizes)', icon: Gift },
+    { id: 'Vitrin', label: 'ویترین و اکسپلور (Vitrin)', icon: Grid },
+    { id: 'Leaderboard', label: 'جدول رده‌بندی (Leaderboard)', icon: Trophy },
     { id: 'Dashboard', label: 'داشبورد عملیات', icon: LayoutDashboard },
-    { id: 'Journey', label: 'نقشه و مراحل بازی', icon: Gamepad2 },
-    { id: 'Missions', label: 'مأموریت‌ها', icon: Target },
     { id: 'Trainings', label: 'آموزش‌ها', icon: BookOpen },
     { id: 'Profile', label: 'پروفایل و نشان‌ها', icon: Award },
     { id: 'Support', label: 'پشتیبانی و تیکت‌ها', icon: Headphones, badge: unreadTicketsCount > 0 ? formatToPersianDigits(unreadTicketsCount) : undefined },
     { id: 'About', label: 'درباره ما', icon: Info },
   ];
 
-  // Android Mobile Bottom Navigation (3 Core tabs + 3-dots "سایر")
+  // Android Mobile Bottom Navigation (Core 4 tabs)
   const mobileBottomItems = [
-    { id: 'Journey', label: 'صفحه اصلی بازی', icon: Gamepad2 },
-    { id: 'RewardsLeaderboard', label: 'امتیازات و جوایز', icon: Trophy },
-    { id: 'Trainings', label: 'آموزش‌ها', icon: BookOpen },
+    { id: 'Journey', label: 'نقشه بازی', icon: Gamepad2 },
+    { id: 'Rewards', label: 'جوایز ۹‌گانه', icon: Gift },
+    { id: 'Vitrin', label: 'ویترین آثار', icon: Grid },
+    { id: 'Leaderboard', label: 'رده‌بندی', icon: Trophy },
   ];
 
   // Items shown inside the Mobile Android Bottom Sheet (More ...)

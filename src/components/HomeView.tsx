@@ -11,17 +11,17 @@ import {
 
 import TopHeader from './home/TopHeader';
 import NotificationPanel from './home/NotificationPanel';
-import UserStatusCard from './home/UserStatusCard';
-import CompetitionHero from './home/CompetitionHero';
-import QuickActionsGrid from './home/QuickActionsGrid';
-import StudentShowcaseSection from './home/StudentShowcaseSection';
+import ThemeSwitcherHeader from './home/ThemeSwitcherHeader';
+import AdventureHeroSection from './home/AdventureHeroSection';
+import GenderRegistrationBanners from './home/GenderRegistrationBanners';
+import PrizesAwardsBanner from './home/PrizesAwardsBanner';
+import SocialMessengersWidgets from './home/SocialMessengersWidgets';
 import AnnouncementsList from './home/AnnouncementsList';
 import AboutSection from './home/AboutSection';
 import StatsStrip from './home/StatsStrip';
 import FaqAccordion from './home/FaqAccordion';
 import Footer from './home/Footer';
-import BottomNavigation from './home/BottomNavigation';
-import { Shield, RefreshCw } from 'lucide-react';
+import { Shield, BookOpen, Sparkles, X, CheckCircle, Gem, Trophy } from 'lucide-react';
 
 interface HomeViewProps {
   currentUser: User | null;
@@ -56,11 +56,27 @@ export default function HomeView({
   homeStats,
   faqs
 }: HomeViewProps) {
+  // Theme Switching State: 'girls' (feminine pastel/pink) vs 'boys' (masculine cyan/blue/amber)
+  const [themeMode, setThemeMode] = useState<'girls' | 'boys'>(() => {
+    if (currentUser?.gender === 'دختر') return 'girls';
+    const saved = localStorage.getItem('hisstory_theme_mode');
+    return (saved === 'girls' || saved === 'boys') ? saved : 'boys';
+  });
+
+  const handleThemeChange = (mode: 'girls' | 'boys') => {
+    setThemeMode(mode);
+    localStorage.setItem('hisstory_theme_mode', mode);
+    triggerAlert(mode === 'girls' ? 'پوسته ویژه دختران فعال شد.' : 'پوسته ویژه پسران فعال شد.');
+  };
+
   // Notification Panel Drawer state
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [announcements, setAnnouncements] = useState<HomeAnnouncement[]>(() => {
     return homeAnnouncements || initialHomeAnnouncements;
   });
+
+  // Modal states
+  const [showGuideModal, setShowGuideModal] = useState(false);
 
   // Keep state updated if props change
   useEffect(() => {
@@ -69,55 +85,42 @@ export default function HomeView({
     }
   }, [homeAnnouncements]);
 
-  // Simulated API Loading & Error states
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
+  const isGirls = themeMode === 'girls';
 
-  // About Modal state
-  const [showAboutModal, setShowAboutModal] = useState(false);
-
-  const activeUserGroup = currentUser?.group_id 
-    ? groups.find(g => g.id === currentUser.group_id) || null
-    : null;
-
-  const handleProtectedAction = (targetTab: string) => {
-    if (!currentUser) {
-      triggerAlert('جهت دسترسی به این بخش، ابتدا وارد سامانه شوید.');
-      onOpenAuth('login');
-    } else {
-      setActiveTab(targetTab);
-    }
-  };
-
-  const handleRetryApi = () => {
-    setIsLoading(true);
-    setIsError(false);
-    setTimeout(() => {
-      setIsLoading(false);
-      triggerAlert('اطلاعات سامانه همگام‌سازی شد.');
-    }, 600);
+  const handleStartMission = () => {
+    setActiveTab('Journey');
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#030610] text-slate-100 flex justify-center font-sans p-0 md:p-4 lg:p-6">
+    <div className={`w-full min-h-screen transition-colors duration-500 font-sans p-0 md:p-4 lg:p-6 flex justify-center ${
+      isGirls ? 'bg-[#0e0410] text-pink-50' : 'bg-[#030712] text-slate-100'
+    }`}>
       
-      {/* Responsive Container: Compact on Mobile, Multi-Column Website on Desktop */}
-      <div className="w-full max-w-[480px] md:max-w-6xl min-h-screen md:min-h-0 cyber-grid-bg relative shadow-[0_0_60px_rgba(0,0,0,0.95)] border-x md:border border-cyan-500/25 md:rounded-3xl flex flex-col pb-16 md:pb-6 overflow-hidden">
+      {/* Dynamic Background Ambient Aura */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className={`absolute -top-40 right-1/2 translate-x-1/2 w-[700px] h-[500px] blur-[160px] rounded-full transition-all duration-700 ${
+          isGirls ? 'bg-pink-600/15' : 'bg-cyan-500/15'
+        }`} />
+        <div className={`absolute bottom-0 right-10 w-[500px] h-[400px] blur-[150px] rounded-full transition-all duration-700 ${
+          isGirls ? 'bg-purple-600/15' : 'bg-amber-500/10'
+        }`} />
+      </div>
+
+      {/* Responsive Container: Mobile-Optimized + Full Desktop Experience */}
+      <div className={`w-full max-w-[500px] md:max-w-6xl min-h-screen md:min-h-0 relative shadow-[0_0_60px_rgba(0,0,0,0.95)] border-x md:border md:rounded-3xl flex flex-col pb-16 md:pb-6 overflow-hidden z-10 transition-colors duration-500 ${
+        isGirls 
+          ? 'bg-[#120516]/95 border-pink-500/30' 
+          : 'bg-[#050b18]/95 border-cyan-500/25'
+      }`}>
         
         <div className="relative z-10 flex-1 flex flex-col">
 
-          {/* 1. Top Header */}
+          {/* 1. Top Global Navigation Header */}
           <TopHeader 
             currentUser={currentUser}
             activeAnnouncementsCount={unreadNotificationsCount || announcements.filter(a => a.isActive).length}
             activeTab={activeTab}
-            setActiveTab={(tab) => {
-              if (tab === 'Missions' || tab === 'Trainings') {
-                handleProtectedAction(tab);
-              } else {
-                setActiveTab(tab);
-              }
-            }}
+            setActiveTab={(tab) => setActiveTab(tab)}
             onToggleNotifications={onOpenNotifications || (() => setIsNotificationsOpen(prev => !prev))}
             onOpenLogin={() => onOpenAuth('login')}
             onOpenRegister={() => onOpenAuth('register_individual')}
@@ -125,161 +128,167 @@ export default function HomeView({
             onOpenProfile={() => setActiveTab('Profile')}
           />
 
-          {/* Simulated API Error Banner if error state active */}
-          {isError && (
-            <div className="mx-4 my-2 p-3 rounded-xl bg-red-950/80 border border-red-600/60 text-right flex items-center justify-between text-xs text-red-200 shadow-lg">
-              <span>خطا در دریافت آخرین اطلاعات سامانه</span>
-              <button 
-                onClick={handleRetryApi}
-                className="px-2.5 py-1 rounded-lg bg-red-900 hover:bg-red-800 text-white font-bold flex items-center gap-1 transition"
-              >
-                <RefreshCw size={12} />
-                <span>تلاش مجدد</span>
-              </button>
-            </div>
-          )}
+          {/* Main Landing Content */}
+          <div className="p-3 sm:p-5 md:p-6 space-y-6 sm:space-y-8">
+            
+            {/* 2. Header Section: Side-by-Side Dynamic Theme Switcher Banners (Girls & Boys) */}
+            <section aria-label="انتخاب پوسته و بخش دختران و پسران">
+              <ThemeSwitcherHeader 
+                themeMode={themeMode}
+                setThemeMode={handleThemeChange}
+                onOpenRegister={(gender) => onOpenAuth('register_individual')}
+              />
+            </section>
 
-          {isLoading ? (
-            /* Skeleton Loading State */
-            <div className="p-4 space-y-4 animate-pulse">
-              <div className="h-12 bg-slate-900/60 rounded-xl" />
-              <div className="h-48 bg-slate-900/60 rounded-xl" />
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="h-20 bg-slate-900/60 rounded-xl" />
-                <div className="h-20 bg-slate-900/60 rounded-xl" />
-                <div className="h-20 bg-slate-900/60 rounded-xl" />
-                <div className="h-20 bg-slate-900/60 rounded-xl" />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col space-y-2">
-              
-              {/* Desktop Responsive Layout (Grid on md+, Stack on mobile) */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:p-4">
-                
-                {/* Main Hero & Actions Column */}
-                <div className="md:col-span-7 lg:col-span-8 space-y-4">
-                  {/* 2. User Status Card */}
-                  <UserStatusCard 
-                    currentUser={currentUser}
-                    userGroup={activeUserGroup}
-                    onOpenRegister={() => onOpenAuth('register_individual')}
-                    onOpenLogin={() => onOpenAuth('login')}
-                    onOpenSquadModal={onOpenSquadModal}
-                  />
+            {/* 3. Adventure Hero Section (هیس‌طوری! این پرونده هنوز بازه! + شروع ماموریت) */}
+            <section aria-label="بخش معرفی مسابقه هیس‌طوری">
+              <AdventureHeroSection 
+                themeMode={themeMode}
+                currentUser={currentUser}
+                onStartMission={handleStartMission}
+              />
+            </section>
 
-                  {/* 3. Competition Hero Section */}
-                  <CompetitionHero 
-                    currentUser={currentUser}
-                    onPrimaryAction={() => {
-                      if (currentUser) {
-                        setActiveTab('Missions');
-                      } else {
-                        onOpenAuth('register_individual');
-                      }
-                    }}
-                    onSecondaryAction={() => setActiveTab('About')}
-                    siteSettings={siteSettings}
-                  />
+            {/* 4. Gender Registration Banners (Registration for Girls / Boys) */}
+            <section aria-label="درگاه‌های ثبت‌نام تفکیکی">
+              <GenderRegistrationBanners 
+                themeMode={themeMode}
+                onOpenRegister={(type) => onOpenAuth('register_individual')}
+              />
+            </section>
 
-                  {/* 4. Quick Actions Grid */}
-                  <QuickActionsGrid 
-                    onNavigate={(tab) => {
-                      if (tab === 'Missions' || tab === 'Trainings') {
-                        handleProtectedAction(tab);
-                      } else {
-                        setActiveTab(tab);
-                      }
-                    }}
-                    onOpenAbout={() => setActiveTab('About')}
-                  />
-                </div>
+            {/* 5. Dedicated Banner for Prizes & Awards (جایزه‌ها) */}
+            <section aria-label="جوایز و هدایای مسابقه">
+              <PrizesAwardsBanner 
+                themeMode={themeMode}
+                onExplorePrizes={() => setActiveTab('RewardsLeaderboard')}
+              />
+            </section>
 
-                {/* Sidebar Column for Desktop */}
-                <div className="md:col-span-5 lg:col-span-4 space-y-4">
-                  {/* 5. Headquarters Announcements */}
-                  <AnnouncementsList 
-                    announcements={announcements}
-                    onOpenAll={() => setIsNotificationsOpen(true)}
-                  />
+            {/* 6. Social Media Widgets: Local Messengers (Bale & Eitaa) + Stages & Guide */}
+            <section aria-label="شبکه‌های اجتماعی و پیام‌رسان‌های بله و ایتا">
+              <SocialMessengersWidgets 
+                themeMode={themeMode}
+                onOpenStages={() => setActiveTab('Journey')}
+                onOpenGuide={() => setShowGuideModal(true)}
+                triggerAlert={triggerAlert}
+              />
+            </section>
 
-                  {/* 6. Short About Section */}
-                  <AboutSection 
-                    onOpenMore={() => setActiveTab('About')}
-                  />
-
-                  {/* 7. Stats Strip */}
-                  <StatsStrip 
-                    stats={homeStats || homeStatsData}
-                  />
-                </div>
-
-              </div>
-
-              {/* Student Portfolio / Showcase on Scroll */}
-              <div className="w-full">
-                <StudentShowcaseSection onOpenAuth={onOpenAuth} />
-              </div>
-
-              {/* FAQ Section across full width */}
-              <div className="md:px-4">
-                {/* 8. FAQ Accordion */}
-                <FaqAccordion 
-                  faqs={faqs || faqsData}
+            {/* Desktop 2-Column Auxiliary Widgets (Announcements + Fast Stats) */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-2">
+              <div className="md:col-span-7">
+                <AnnouncementsList 
+                  announcements={announcements}
+                  onOpenAll={() => setIsNotificationsOpen(true)}
                 />
               </div>
-
-              {/* 9. Footer */}
-              <Footer 
-                onNavigate={(tab) => {
-                  setActiveTab(tab);
-                }}
-                onOpenAbout={() => setActiveTab('About')}
-              />
+              <div className="md:col-span-5">
+                <StatsStrip stats={homeStats || homeStatsData} />
+              </div>
             </div>
-          )}
+
+            {/* FAQ Accordion */}
+            <section aria-label="پرسش‌های متداول">
+              <FaqAccordion faqs={faqs || faqsData} />
+            </section>
+
+            {/* 7. About Us Section (درباره ما) */}
+            <section aria-label="درباره ما">
+              <AboutSection onOpenMore={() => setActiveTab('About')} />
+            </section>
+
+            {/* 8. Footer at the Very Bottom */}
+            <Footer 
+              onNavigate={(tab) => setActiveTab(tab)}
+              onOpenAbout={() => setActiveTab('About')}
+            />
+
+          </div>
 
         </div>
 
-        {/* 10. Notification Panel (Drawer / Popover) */}
+        {/* Notification Panel Drawer */}
         <NotificationPanel 
           isOpen={isNotificationsOpen}
           onClose={() => setIsNotificationsOpen(false)}
           announcements={announcements}
         />
 
-        {/* Modal for "درباره مسابقه / قوانین" */}
-        {showAboutModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 dir-rtl">
-            <div className="bg-[#0a0f24]/90 border border-cyan-500/40 rounded-2xl p-5 max-w-sm w-full space-y-4 text-right shadow-[0_0_40px_rgba(6,182,212,0.3)] relative">
-              <div className="flex items-center gap-2 border-b border-cyan-500/25 pb-3">
-                <Shield size={20} className="text-cyan-400 animate-pulse" />
-                <h3 className="text-sm font-black text-white">
-                  راهنما و قوانین مسابقات اتاق جنگ
-                </h3>
-              </div>
-
-              <div className="space-y-2 text-xs text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pl-1">
-                <p>
-                  <strong>۱. شرایط شرکت:</strong> کلیه دانش‌آموزان مقاطع تحصیلی می‌توانند به‌صورت انفرادی یا در قالب جوخه‌های ۲ تا ۶ نفره ثبت‌نام کنند.
-                </p>
-                <p>
-                  <strong>۲. ارسال مأموریت‌ها:</strong> پاسخ مأموریت‌ها باید قبل از اتمام مهلت زمان‌بندی شده در فرمت‌های مشخص بارگذاری شوند.
-                </p>
-                <p>
-                  <strong>۳. داوری و امتیازدهی:</strong> امتیازها بر اساس صحت پاسخ، دقت عملیاتی و سرعت عمل جوخه‌ها محاسبه و مدال‌های مربوطه صادر می‌شود.
-                </p>
-                <p>
-                  <strong>۴. پشتیبانی:</strong> در صورت بروز سوالات یا مشکلات فنی، تیکت پشتیبانی ارسال فرمایید.
-                </p>
-              </div>
-
+        {/* Competition Guide & Rules Modal */}
+        {showGuideModal && (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 dir-rtl">
+            <div className={`border rounded-3xl p-5 sm:p-6 max-w-md w-full text-right relative space-y-4 shadow-2xl ${
+              isGirls 
+                ? 'bg-[#150718] border-pink-500/50 shadow-pink-900/40 text-pink-50' 
+                : 'bg-[#081224] border-cyan-500/50 shadow-cyan-900/40 text-slate-100'
+            }`}>
+              
               <button
-                onClick={() => setShowAboutModal(false)}
-                className="w-full py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-xs shadow-[0_0_15px_rgba(34,211,238,0.5)] transition-colors"
+                onClick={() => setShowGuideModal(false)}
+                className="absolute top-4 left-4 p-1.5 rounded-full bg-slate-800/80 text-slate-400 hover:text-white transition"
               >
-                متوجه شدم
+                <X size={18} />
               </button>
+
+              <div className="flex items-center gap-2.5 border-b border-slate-700/50 pb-3">
+                <div className={`p-2 rounded-xl ${isGirls ? 'bg-pink-950 text-pink-400' : 'bg-cyan-950 text-cyan-400'}`}>
+                  <BookOpen size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-white">راهنما و قوانین ماجراجویی اتاق جنگ</h3>
+                  <span className="text-[10px] text-amber-300 font-mono">پرونده بزرگ هفت‌خوان</span>
+                </div>
+              </div>
+
+              <div className="space-y-3 text-xs text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pl-1">
+                <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1">
+                  <strong className="text-white flex items-center gap-1.5">
+                    <CheckCircle size={14} className="text-emerald-400" />
+                    <span>۱. ساختار هفت مرحله مسابقه:</span>
+                  </strong>
+                  <p className="text-slate-300 text-[11px]">
+                    مسابقه شامل ۷ مرحله داستانی به سبک کارآگاهی است. با اتمام هر مرحله کریستال‌های امتیاز آزاد شده و مرحله بعدی باز می‌شود.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1">
+                  <strong className="text-white flex items-center gap-1.5">
+                    <Gem size={14} className="text-cyan-400" />
+                    <span>۲. کریستال‌ها و رده‌بندی:</span>
+                  </strong>
+                  <p className="text-slate-300 text-[11px]">
+                    کریستال‌ها بر اساس دقت در پاسخ، حل چالش‌ها و سرعت عمل تعلق می‌گیرد. برترین‌های کشور و استان مشمول جوایز ۵۰ میلیارد ریالی خواهند شد.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1">
+                  <strong className="text-white flex items-center gap-1.5">
+                    <Trophy size={14} className="text-amber-400" />
+                    <span>۳. جوایز و کدهای تخفیف:</span>
+                  </strong>
+                  <p className="text-slate-300 text-[11px]">
+                    علاوه بر کنسول‌های بازی، تبلت و تلفن هوشمند، بیش از ۱۰۰ هزار کد تخفیف فروشگاهی به کلیه شرکت‌کنندگان اهدا می‌گردد.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => {
+                    setShowGuideModal(false);
+                    setActiveTab('Journey');
+                  }}
+                  className={`w-full py-3 rounded-2xl font-black text-xs text-slate-950 transition flex items-center justify-center gap-2 ${
+                    isGirls 
+                      ? 'bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-300' 
+                      : 'bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300'
+                  }`}
+                >
+                  <span>ورود به نقشه مراحل مسابقه</span>
+                </button>
+              </div>
+
             </div>
           </div>
         )}
