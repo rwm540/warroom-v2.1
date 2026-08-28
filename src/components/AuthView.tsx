@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User as UserIcon, 
   IdCard, 
@@ -30,6 +30,7 @@ import {
   normalizeToEnglishDigits, 
   formatToPersianDigits 
 } from '../utils/jalali';
+import PersianDatePicker from './PersianDatePicker';
 import warroomLogoJpg from '../assets/images/warroom_logo_1787906676836.jpg';
 
 interface AuthViewProps {
@@ -41,6 +42,8 @@ interface AuthViewProps {
   triggerAlert: (msg: string) => void;
   onBackToHome?: () => void;
   initialAuthMode?: 'login' | 'register_individual' | 'register_group';
+  campaignTheme?: 'girls' | 'boys';
+  onChangeCampaign?: () => void;
 }
 
 export default function AuthView({
@@ -51,18 +54,39 @@ export default function AuthView({
   onLoginSuccess,
   triggerAlert,
   onBackToHome,
-  initialAuthMode = 'register_individual'
+  initialAuthMode = 'register_individual',
+  campaignTheme,
+  onChangeCampaign
 }: AuthViewProps) {
   // Tab state: 'register' vs 'login'
   const [activeTab, setActiveTab] = useState<'register' | 'login'>(
     initialAuthMode === 'login' ? 'login' : 'register'
   );
 
-  // Theme detection
+  // Theme detection from prop or localStorage
   const [selectedGender, setSelectedGender] = useState<Gender>(() => {
+    if (campaignTheme) {
+      return campaignTheme === 'girls' ? 'دختر' : 'پسر';
+    }
     const savedTheme = localStorage.getItem('hisstory_theme_mode');
     return savedTheme === 'girls' ? 'دختر' : 'پسر';
   });
+
+  useEffect(() => {
+    if (initialAuthMode === 'login') {
+      setActiveTab('login');
+    } else {
+      setActiveTab('register');
+    }
+  }, [initialAuthMode]);
+
+  useEffect(() => {
+    if (campaignTheme) {
+      const g: Gender = campaignTheme === 'girls' ? 'دختر' : 'پسر';
+      setSelectedGender(g);
+      setRegisterForm(prev => ({ ...prev, gender: g }));
+    }
+  }, [campaignTheme]);
 
   const isGirls = selectedGender === 'دختر';
 
@@ -239,9 +263,9 @@ export default function AuthView({
         }`} />
       </div>
 
-      {/* Top Back to Home Button */}
-      {onBackToHome && (
-        <div className="w-full max-w-md mb-3 flex items-center justify-between z-10">
+      {/* Top Back / Change Campaign Header */}
+      <div className="w-full max-w-md mb-3 flex items-center justify-between z-10">
+        {onBackToHome && (
           <button
             onClick={onBackToHome}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-600 text-xs font-bold transition shadow-sm"
@@ -249,13 +273,28 @@ export default function AuthView({
             <ArrowRight size={14} />
             <span>صفحه اصلی</span>
           </button>
-          
+        )}
+
+        {onChangeCampaign ? (
+          <button
+            type="button"
+            onClick={onChangeCampaign}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition ${
+              isGirls
+                ? 'bg-pink-950/80 border-pink-500/60 text-pink-300 hover:bg-pink-900/80 shadow-[0_0_12px_rgba(244,63,94,0.3)]'
+                : 'bg-cyan-950/80 border-cyan-500/60 text-cyan-300 hover:bg-cyan-900/80 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+            }`}
+          >
+            <RefreshCw size={13} className="animate-spin-slow" />
+            <span>تغییر پویش ({isGirls ? 'دختران' : 'پسران'})</span>
+          </button>
+        ) : (
           <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
             <Shield size={14} className={isGirls ? 'text-pink-400' : 'text-cyan-400'} />
-            <span>WAR ROOM SECURE AUTH</span>
+            <span>{isGirls ? 'پویش دختران' : 'پویش پسران'}</span>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Main Card */}
       <div className={`w-full max-w-md rounded-3xl p-5 sm:p-7 backdrop-blur-2xl relative z-10 border transition-all duration-300 shadow-2xl ${
@@ -334,41 +373,21 @@ export default function AuthView({
               </div>
             )}
 
-            {/* Gender Selection */}
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedGender('دختر');
-                  setRegisterForm(prev => ({ ...prev, gender: 'دختر' }));
-                  localStorage.setItem('hisstory_theme_mode', 'girls');
-                }}
-                className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${
-                  isGirls
-                    ? 'bg-pink-950/90 border-pink-500 text-pink-200 shadow-[0_0_15px_rgba(244,63,94,0.4)]'
-                    : 'bg-slate-900/60 border-slate-800 text-slate-400'
-                }`}
-              >
-                <Heart size={14} className={isGirls ? 'fill-pink-400 text-pink-400' : ''} />
-                <span>پویش دختران</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedGender('پسر');
-                  setRegisterForm(prev => ({ ...prev, gender: 'پسر' }));
-                  localStorage.setItem('hisstory_theme_mode', 'boys');
-                }}
-                className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${
-                  !isGirls
-                    ? 'bg-cyan-950/90 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                    : 'bg-slate-900/60 border-slate-800 text-slate-400'
-                }`}
-              >
-                <Zap size={14} className={!isGirls ? 'fill-cyan-400 text-cyan-400' : ''} />
-                <span>پویش پسران</span>
-              </button>
+            {/* Active Campaign Header Tag */}
+            <div className={`p-2.5 rounded-2xl border flex items-center justify-between text-xs font-bold ${
+              isGirls
+                ? 'bg-pink-950/70 border-pink-500/50 text-pink-200'
+                : 'bg-cyan-950/70 border-cyan-500/50 text-cyan-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                {isGirls ? (
+                  <Heart size={16} className="fill-pink-400 text-pink-400" />
+                ) : (
+                  <Zap size={16} className="fill-cyan-400 text-cyan-400" />
+                )}
+                <span>ثبت‌نام در {isGirls ? 'پویش دختران (سیندخت)' : 'پویش پسران (نوید)'}</span>
+              </div>
+              <span className="text-[10px] font-mono opacity-80">ظرفیت فعال</span>
             </div>
 
             {/* Name & Surname */}
@@ -415,13 +434,11 @@ export default function AuthView({
 
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-slate-300 block">تاریخ تولد (شمسی)</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="1388/06/20"
+                <PersianDatePicker
                   value={registerForm.birthDate}
-                  onChange={(e) => setRegisterForm({ ...registerForm, birthDate: e.target.value })}
-                  className="w-full py-2 px-3 rounded-xl bg-slate-950/70 border border-slate-700/80 focus:border-cyan-400 text-xs text-white font-mono placeholder:text-slate-500 focus:outline-none transition text-left"
+                  onChange={(val) => setRegisterForm({ ...registerForm, birthDate: val })}
+                  isGirls={isGirls}
+                  required
                 />
               </div>
             </div>

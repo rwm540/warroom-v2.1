@@ -45,7 +45,7 @@ import {
 import HomeView from './components/HomeView';
 import Navbar from './components/Navbar';
 import BottomNavigation from './components/home/BottomNavigation';
-import PortalSelectorView from './components/PortalSelectorView';
+import CampaignSelectScreen from './components/CampaignSelectScreen';
 import AuthView from './components/AuthView';
 import DashboardView from './components/DashboardView';
 import JourneyView from './components/JourneyView';
@@ -165,22 +165,47 @@ export default function App() {
     return null;
   });
 
+  // Active Campaign Theme: 'girls' vs 'boys' (stored in localStorage)
+  const [campaignTheme, setCampaignTheme] = useState<'girls' | 'boys'>(() => {
+    const saved = localStorage.getItem('hisstory_theme_mode');
+    return (saved === 'girls' || saved === 'boys') ? saved : 'boys';
+  });
+
   // UI Navigation State
   const [activeTab, setActiveTab] = useState<string>('Home');
+  const [showCampaignSelector, setShowCampaignSelector] = useState<boolean>(() => {
+    // Show campaign selection first if user hasn't chosen a campaign yet or is visiting fresh
+    const saved = localStorage.getItem('hisstory_theme_mode');
+    return !saved;
+  });
+  const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('register_individual');
+
+  const handleSelectCampaign = (campaign: 'girls' | 'boys', mode: 'login' | 'register' = 'register') => {
+    setCampaignTheme(campaign);
+    localStorage.setItem('hisstory_theme_mode', campaign);
+    setShowCampaignSelector(false);
+    setAuthMode(mode === 'login' ? 'login' : 'register_individual');
+    setShowAuthScreen(true);
+    triggerAlert(campaign === 'girls' ? 'پویش دختران انتخاب شد.' : 'پویش پسران انتخاب شد.');
+  };
+
+  const handleDirectLogin = () => {
+    setShowCampaignSelector(false);
+    setAuthMode('login');
+    setShowAuthScreen(true);
+  };
 
   const handleTabChange = (tab: string) => {
-    setShowPortalSelector(false);
+    setShowCampaignSelector(false);
     setShowAuthScreen(false);
-    if (tab === 'PortalSelector' || tab === 'GameSelection') {
-      setShowPortalSelector(true);
+    if (tab === 'PortalSelector' || tab === 'GameSelection' || tab === 'CampaignSelect') {
+      setShowCampaignSelector(true);
     } else {
       setIsAdminMode(tab === 'Admin');
       setActiveTab(tab);
     }
   };
-  const [showPortalSelector, setShowPortalSelector] = useState<boolean>(false);
-  const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('login');
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [showSquadModal, setShowSquadModal] = useState<boolean>(false);
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
@@ -269,15 +294,22 @@ export default function App() {
     setCurrentUser(null);
     setIsAdminMode(false);
     setActiveTab('Home');
-    setShowPortalSelector(false);
+    setShowCampaignSelector(false);
     setShowAuthScreen(false);
     triggerAlert('خروج از سامانه اتاق جنگ با موفقیت انجام شد.');
   };
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
-    setShowPortalSelector(false);
+    setShowCampaignSelector(false);
     setShowAuthScreen(false);
+    if (user.gender === 'دختر') {
+      setCampaignTheme('girls');
+      localStorage.setItem('hisstory_theme_mode', 'girls');
+    } else if (user.gender === 'پسر') {
+      setCampaignTheme('boys');
+      localStorage.setItem('hisstory_theme_mode', 'boys');
+    }
     if (user.role === 'admin') {
       setIsAdminMode(true);
       setActiveTab('Dashboard');
@@ -291,7 +323,7 @@ export default function App() {
 
   const handleOpenAuth = (mode: 'login' | 'register_individual' | 'register_group') => {
     setAuthMode(mode);
-    setShowPortalSelector(false);
+    setShowCampaignSelector(false);
     setShowAuthScreen(true);
   };
 
@@ -365,25 +397,18 @@ export default function App() {
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {showPortalSelector ? (
-          /* Preliminary Portal Selector / Choice Menu Screen */
+        {showCampaignSelector ? (
+          /* Preliminary Campaign Selection Screen (Girls vs Boys) */
           <motion.div
-            key="portal-selector"
+            key="campaign-selector"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.3 }}
           >
-            <PortalSelectorView 
-              onSelectWarRoom={() => {
-                setShowPortalSelector(false);
-                if (currentUser) {
-                  setActiveTab('Journey');
-                } else {
-                  setShowAuthScreen(true);
-                }
-              }}
-              onBackToHome={() => setShowPortalSelector(false)}
+            <CampaignSelectScreen 
+              onSelectCampaign={handleSelectCampaign}
+              onDirectLogin={handleDirectLogin}
             />
           </motion.div>
         ) : showAuthScreen ? (
@@ -404,9 +429,14 @@ export default function App() {
               triggerAlert={triggerAlert}
               onBackToHome={() => {
                 setShowAuthScreen(false);
-                setShowPortalSelector(true);
+                setActiveTab('Home');
               }}
               initialAuthMode={authMode}
+              campaignTheme={campaignTheme}
+              onChangeCampaign={() => {
+                setShowAuthScreen(false);
+                setShowCampaignSelector(true);
+              }}
             />
           </motion.div>
         ) : activeTab === 'Home' ? (
@@ -431,6 +461,8 @@ export default function App() {
               homeAnnouncements={homeAnnouncements}
               homeStats={homeStats}
               faqs={faqs}
+              campaignTheme={campaignTheme}
+              onChangeCampaign={() => setShowCampaignSelector(true)}
             />
           </motion.div>
         ) : (activeTab === 'Support' || activeTab === 'Contact') ? (
@@ -651,13 +683,13 @@ export default function App() {
       </AnimatePresence>
 
       {/* Global Android Mobile Bottom Navigation for Home/Public Views */}
-      {!showAuthScreen && !showPortalSelector && !isPanelTab && (
+      {!showAuthScreen && !showCampaignSelector && !isPanelTab && (
         <BottomNavigation 
           activeTab={isAdminMode ? 'Admin' : activeTab}
           setActiveTab={(tab) => {
             if (tab === 'WarRoom') {
               setIsAdminMode(false);
-              handleTabChange('PortalSelector');
+              handleTabChange('CampaignSelect');
             } else if (tab === 'Admin') {
               setIsAdminMode(true);
             } else {

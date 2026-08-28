@@ -13,7 +13,6 @@ import TopHeader from './home/TopHeader';
 import NotificationPanel from './home/NotificationPanel';
 import ThemeSwitcherHeader from './home/ThemeSwitcherHeader';
 import AdventureHeroSection from './home/AdventureHeroSection';
-import GenderRegistrationBanners from './home/GenderRegistrationBanners';
 import PrizesAwardsBanner from './home/PrizesAwardsBanner';
 import SocialMessengersWidgets from './home/SocialMessengersWidgets';
 import AnnouncementsList from './home/AnnouncementsList';
@@ -38,6 +37,8 @@ interface HomeViewProps {
   homeAnnouncements?: HomeAnnouncement[];
   homeStats?: HomeStats;
   faqs?: FaqItem[];
+  campaignTheme?: 'girls' | 'boys';
+  onChangeCampaign?: () => void;
 }
 
 export default function HomeView({
@@ -54,14 +55,23 @@ export default function HomeView({
   siteSettings,
   homeAnnouncements,
   homeStats,
-  faqs
+  faqs,
+  campaignTheme = 'boys',
+  onChangeCampaign
 }: HomeViewProps) {
   // Theme Switching State: 'girls' (feminine pastel/pink) vs 'boys' (masculine cyan/blue/amber)
   const [themeMode, setThemeMode] = useState<'girls' | 'boys'>(() => {
+    if (campaignTheme) return campaignTheme;
     if (currentUser?.gender === 'دختر') return 'girls';
     const saved = localStorage.getItem('hisstory_theme_mode');
     return (saved === 'girls' || saved === 'boys') ? saved : 'boys';
   });
+
+  useEffect(() => {
+    if (campaignTheme) {
+      setThemeMode(campaignTheme);
+    }
+  }, [campaignTheme]);
 
   const handleThemeChange = (mode: 'girls' | 'boys') => {
     setThemeMode(mode);
@@ -149,15 +159,7 @@ export default function HomeView({
               />
             </section>
 
-            {/* 4. Gender Registration Banners (Registration for Girls / Boys) */}
-            <section aria-label="درگاه‌های ثبت‌نام تفکیکی">
-              <GenderRegistrationBanners 
-                themeMode={themeMode}
-                onOpenRegister={(type) => onOpenAuth('register_individual')}
-              />
-            </section>
-
-            {/* 5. Dedicated Banner for Prizes & Awards (جایزه‌ها) */}
+            {/* 4. Dedicated Banner for Prizes & Awards (جایزه‌ها) */}
             <section aria-label="جوایز و هدایای مسابقه">
               <PrizesAwardsBanner 
                 themeMode={themeMode}

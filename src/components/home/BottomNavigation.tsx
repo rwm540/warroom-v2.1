@@ -28,7 +28,7 @@ export default function BottomNavigation({
   const mainItems = [
     { id: 'Home', label: 'صفحه اصلی', icon: HomeIcon },
     { id: 'Support', label: 'ارتباط با ما', icon: Headphones },
-    { id: currentUser ? 'Journey' : 'PortalSelector', label: currentUser ? 'پنل کاربری' : 'انتخاب بازی', icon: Gamepad2, isCentral: true },
+    { id: currentUser ? 'Journey' : 'CampaignSelect', label: currentUser ? 'پنل کاربری' : 'انتخاب پویش', icon: Gamepad2, isCentral: true },
     { id: 'About', label: 'درباره ما', icon: Info }
   ];
 
