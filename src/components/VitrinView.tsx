@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   Film,
   Camera,
-  Layers
+  Layers,
+  Home
 } from 'lucide-react';
 import { User } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -24,6 +25,7 @@ import { formatToPersianDigits } from '../utils/jalali';
 interface VitrinViewProps {
   currentUser: User | null;
   triggerAlert: (msg: string) => void;
+  onNavigate?: (tab: string) => void;
 }
 
 export interface VitrinPost {
@@ -47,7 +49,8 @@ export interface VitrinPost {
 
 export default function VitrinView({
   currentUser,
-  triggerAlert
+  triggerAlert,
+  onNavigate
 }: VitrinViewProps) {
   const isGirls = currentUser?.gender === 'دختر' || localStorage.getItem('hisstory_theme_mode') === 'girls';
 
@@ -247,7 +250,17 @@ export default function VitrinView({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {onNavigate && (
+              <button
+                onClick={() => onNavigate('Home')}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-slate-200 hover:text-white hover:border-cyan-500/50 text-xs font-bold transition shadow-md group shrink-0"
+              >
+                <Home size={15} className="text-cyan-400 group-hover:scale-110 transition" />
+                <span>صفحه اصلی</span>
+              </button>
+            )}
+
             <span className="text-xs text-slate-400 font-mono">
               {formatToPersianDigits(posts.length)} اثر ثبت‌شده
             </span>

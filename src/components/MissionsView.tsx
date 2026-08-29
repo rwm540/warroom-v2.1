@@ -16,7 +16,9 @@ import {
   Trash2, 
   RotateCcw,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Home,
+  ArrowLeft
 } from 'lucide-react';
 import { User, Mission, MissionSubmission } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -27,6 +29,7 @@ interface MissionsViewProps {
   submissions: MissionSubmission[];
   setSubmissions: React.Dispatch<React.SetStateAction<MissionSubmission[]>>;
   triggerAlert: (msg: string) => void;
+  onNavigate?: (tab: string) => void;
 }
 
 const ALLOWED_EXTENSIONS = [
@@ -41,7 +44,8 @@ export default function MissionsView({
   missions,
   submissions,
   setSubmissions,
-  triggerAlert
+  triggerAlert,
+  onNavigate
 }: MissionsViewProps) {
   if (!currentUser) {
     return (
@@ -196,6 +200,17 @@ export default function MissionsView({
             پاسخ‌های مأموریت را بارگذاری نمایید. ارسال فایل جدید جایگزین پاسخ‌های قبلی شما خواهد شد.
           </p>
         </div>
+
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate('Home')}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-white hover:border-red-500/50 text-xs font-bold transition shadow-md group shrink-0"
+          >
+            <Home size={14} className="text-red-400 group-hover:scale-110 transition" />
+            <span>بازگشت به صفحه اصلی</span>
+            <ArrowLeft size={14} className="text-slate-400" />
+          </button>
+        )}
       </div>
 
       {/* Main Grid: Mission Selector List (Right) + Mission Details & File Upload (Left) */}

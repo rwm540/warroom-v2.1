@@ -46,6 +46,7 @@ import HomeView from './components/HomeView';
 import Navbar from './components/Navbar';
 import BottomNavigation from './components/home/BottomNavigation';
 import CampaignSelectScreen from './components/CampaignSelectScreen';
+import PortalSelectorView from './components/PortalSelectorView';
 import AuthView from './components/AuthView';
 import DashboardView from './components/DashboardView';
 import JourneyView from './components/JourneyView';
@@ -173,21 +174,18 @@ export default function App() {
 
   // UI Navigation State
   const [activeTab, setActiveTab] = useState<string>('Home');
-  const [showCampaignSelector, setShowCampaignSelector] = useState<boolean>(() => {
-    // Show campaign selection first if user hasn't chosen a campaign yet or is visiting fresh
-    const saved = localStorage.getItem('hisstory_theme_mode');
-    return !saved;
-  });
+  const [showCampaignSelector, setShowCampaignSelector] = useState<boolean>(true);
   const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('register_individual');
 
-  const handleSelectCampaign = (campaign: 'girls' | 'boys', mode: 'login' | 'register' = 'register') => {
+  const handleSelectCampaign = (campaign: 'girls' | 'boys') => {
     setCampaignTheme(campaign);
     localStorage.setItem('hisstory_theme_mode', campaign);
     setShowCampaignSelector(false);
-    setAuthMode(mode === 'login' ? 'login' : 'register_individual');
-    setShowAuthScreen(true);
-    triggerAlert(campaign === 'girls' ? 'پویش دختران انتخاب شد.' : 'پویش پسران انتخاب شد.');
+    setShowAuthScreen(false);
+    setActiveTab('Home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    triggerAlert(campaign === 'girls' ? 'پویش دختران (سیندخت) فعال شد و وارد صفحه اصلی شدید.' : 'پویش پسران (نوید) فعال شد و وارد صفحه اصلی شدید.');
   };
 
   const handleDirectLogin = () => {
@@ -199,7 +197,7 @@ export default function App() {
   const handleTabChange = (tab: string) => {
     setShowCampaignSelector(false);
     setShowAuthScreen(false);
-    if (tab === 'PortalSelector' || tab === 'GameSelection' || tab === 'CampaignSelect') {
+    if (tab === 'CampaignSelect') {
       setShowCampaignSelector(true);
     } else {
       setIsAdminMode(tab === 'Admin');
@@ -408,7 +406,6 @@ export default function App() {
           >
             <CampaignSelectScreen 
               onSelectCampaign={handleSelectCampaign}
-              onDirectLogin={handleDirectLogin}
             />
           </motion.div>
         ) : showAuthScreen ? (
@@ -433,10 +430,30 @@ export default function App() {
               }}
               initialAuthMode={authMode}
               campaignTheme={campaignTheme}
-              onChangeCampaign={() => {
-                setShowAuthScreen(false);
-                setShowCampaignSelector(true);
+            />
+          </motion.div>
+        ) : (activeTab === 'GameSelection' || activeTab === 'PortalSelector') ? (
+          /* Standalone Dedicated Game Selection / Portal Selector Page */
+          <motion.div
+            key="gameSelectionPage"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PortalSelectorView 
+              onSelectWarRoom={(mode) => {
+                if (currentUser) {
+                  setActiveTab('Journey');
+                } else {
+                  setAuthMode(mode === 'login' ? 'login' : 'register_individual');
+                  setShowAuthScreen(true);
+                }
               }}
+              onBackToHome={() => {
+                handleTabChange('Home');
+              }}
+              isGirls={campaignTheme === 'girls'}
             />
           </motion.div>
         ) : activeTab === 'Home' ? (
@@ -554,6 +571,7 @@ export default function App() {
                   setHomeStats={setHomeStats}
                   faqs={faqs}
                   setFaqs={setFaqs}
+                  onNavigate={(tab) => handleTabChange(tab)}
                 />
               ) : (
                 <>
@@ -576,6 +594,7 @@ export default function App() {
                     <PrizesPointsView 
                       currentUser={currentUser}
                       triggerAlert={triggerAlert}
+                      onNavigate={(tab) => handleTabChange(tab)}
                     />
                   )}
 
@@ -583,6 +602,7 @@ export default function App() {
                     <VitrinView 
                       currentUser={currentUser}
                       triggerAlert={triggerAlert}
+                      onNavigate={(tab) => handleTabChange(tab)}
                     />
                   )}
 
@@ -593,6 +613,7 @@ export default function App() {
                       medals={medals}
                       userMedals={userMedals}
                       triggerAlert={triggerAlert}
+                      onNavigate={(tab) => handleTabChange(tab)}
                     />
                   )}
 
@@ -605,7 +626,7 @@ export default function App() {
                       submissions={submissions}
                       announcements={announcements}
                       news={news}
-                      onNavigate={(tab) => setActiveTab(tab)}
+                      onNavigate={(tab) => handleTabChange(tab)}
                       onOpenSquadModal={() => setShowSquadModal(true)}
                     />
                   )}
@@ -617,6 +638,7 @@ export default function App() {
                       submissions={submissions}
                       setSubmissions={setSubmissions}
                       triggerAlert={triggerAlert}
+                      onNavigate={(tab) => handleTabChange(tab)}
                     />
                   )}
 
@@ -624,6 +646,7 @@ export default function App() {
                     <TrainingsView 
                       currentUser={currentUser!}
                       trainings={trainings}
+                      onNavigate={(tab) => handleTabChange(tab)}
                     />
                   )}
 
@@ -633,6 +656,7 @@ export default function App() {
                       groups={groups}
                       medals={medals}
                       userMedals={userMedals}
+                      onNavigate={(tab) => handleTabChange(tab)}
                     />
                   )}
                 </>

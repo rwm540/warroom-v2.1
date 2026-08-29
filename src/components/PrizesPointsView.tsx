@@ -14,7 +14,8 @@ import {
   HelpCircle,
   Clock,
   ShieldAlert,
-  Coins
+  Coins,
+  Home
 } from 'lucide-react';
 import { User } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -22,6 +23,7 @@ import { formatToPersianDigits } from '../utils/jalali';
 interface PrizesPointsViewProps {
   currentUser: User | null;
   triggerAlert: (msg: string) => void;
+  onNavigate?: (tab: string) => void;
 }
 
 export interface PrizeItem {
@@ -37,7 +39,8 @@ export interface PrizeItem {
 
 export default function PrizesPointsView({
   currentUser,
-  triggerAlert
+  triggerAlert,
+  onNavigate
 }: PrizesPointsViewProps) {
   const [activeSubTab, setActiveSubTab] = useState<'prizes' | 'points'>('prizes');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -179,22 +182,34 @@ export default function PrizesPointsView({
             </p>
           </div>
 
-          {/* User Current Crystals / Points Card */}
-          <div className={`p-4 rounded-2xl border flex items-center gap-3 backdrop-blur-md shadow-xl ${
-            isGirls
-              ? 'bg-pink-950/60 border-pink-500/50 text-pink-200'
-              : 'bg-cyan-950/60 border-cyan-400/50 text-cyan-200'
-          }`}>
-            <div className={`p-2.5 rounded-xl ${isGirls ? 'bg-pink-500/20 text-pink-400' : 'bg-cyan-500/20 text-cyan-400'}`}>
-              <Gem size={26} className="animate-pulse" />
-            </div>
-            <div>
-              <span className="text-[10px] text-slate-400 block font-bold">موجودی کریستال شما</span>
-              <div className="flex items-center gap-1">
-                <span className="text-xl sm:text-2xl font-black text-white font-mono">
-                  {formatToPersianDigits(userPoints)}
-                </span>
-                <span className="text-[11px] font-bold text-amber-400">کریستال</span>
+          {/* User Current Crystals / Points Card & Back Button */}
+          <div className="flex items-center gap-3">
+            {onNavigate && (
+              <button
+                onClick={() => onNavigate('Home')}
+                className="flex items-center gap-1.5 px-3.5 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-slate-200 hover:text-white hover:border-cyan-500/50 text-xs font-bold transition shadow-md group shrink-0"
+              >
+                <Home size={15} className="text-cyan-400 group-hover:scale-110 transition" />
+                <span>صفحه اصلی</span>
+              </button>
+            )}
+
+            <div className={`p-4 rounded-2xl border flex items-center gap-3 backdrop-blur-md shadow-xl ${
+              isGirls
+                ? 'bg-pink-950/60 border-pink-500/50 text-pink-200'
+                : 'bg-cyan-950/60 border-cyan-400/50 text-cyan-200'
+            }`}>
+              <div className={`p-2.5 rounded-xl ${isGirls ? 'bg-pink-500/20 text-pink-400' : 'bg-cyan-500/20 text-cyan-400'}`}>
+                <Gem size={26} className="animate-pulse" />
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 block font-bold">موجودی کریستال شما</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-xl sm:text-2xl font-black text-white font-mono">
+                    {formatToPersianDigits(userPoints)}
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-400">کریستال</span>
+                </div>
               </div>
             </div>
           </div>

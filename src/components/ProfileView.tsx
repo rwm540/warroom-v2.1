@@ -11,7 +11,9 @@ import {
   MapPin, 
   School, 
   Calendar,
-  Lock
+  Lock,
+  Home,
+  ArrowLeft
 } from 'lucide-react';
 import { User, Group, Medal, UserMedal } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -21,13 +23,15 @@ interface ProfileViewProps {
   groups: Group[];
   medals: Medal[];
   userMedals: UserMedal[];
+  onNavigate?: (tab: string) => void;
 }
 
 export default function ProfileView({
   currentUser,
   groups,
   medals,
-  userMedals
+  userMedals,
+  onNavigate
 }: ProfileViewProps) {
   const [copied, setCopied] = useState(false);
 
@@ -64,14 +68,27 @@ export default function ProfileView({
     <div className="space-y-6 dir-rtl pb-8">
       
       {/* Title Header */}
-      <div className="border-b border-slate-800 pb-4">
-        <h2 className="text-lg md:text-xl font-black text-white flex items-center gap-2">
-          <UserIcon className="text-red-500" size={24} />
-          پروفایل رزمنده و ویترین مدال‌های افتخار
-        </h2>
-        <p className="text-xs text-slate-400 mt-1">
-          مشخصات ثبتی، اطلاعات جوخه و نشان‌های اعطا شده توسط ستاد اتاق جنگ
-        </p>
+      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div>
+          <h2 className="text-lg md:text-xl font-black text-white flex items-center gap-2">
+            <UserIcon className="text-red-500" size={24} />
+            پروفایل رزمنده و ویترین مدال‌های افتخار
+          </h2>
+          <p className="text-xs text-slate-400 mt-1">
+            مشخصات ثبتی، اطلاعات جوخه و نشان‌های اعطا شده توسط ستاد اتاق جنگ
+          </p>
+        </div>
+
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate('Home')}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-white hover:border-red-500/50 text-xs font-bold transition shadow-md group shrink-0"
+          >
+            <Home size={14} className="text-red-400 group-hover:scale-110 transition" />
+            <span>بازگشت به صفحه اصلی</span>
+            <ArrowLeft size={14} className="text-slate-400" />
+          </button>
+        )}
       </div>
 
       {/* Top Personal Profile Card */}

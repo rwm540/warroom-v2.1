@@ -241,15 +241,28 @@ export default function JourneyView({
         {/* 1. TOP HEADER (Matching the Reference Screenshot)                        */}
         {/* ========================================================================= */}
         <header className="flex items-center justify-between px-2 pt-2">
-          {/* Notification Bell */}
-          <button
-            onClick={onOpenNotifications || (() => triggerAlert('صندوق اعلانات باز شد.'))}
-            className="relative p-2.5 rounded-full bg-[#111927] border border-slate-700/60 text-slate-200 hover:text-amber-400 hover:border-amber-500/50 transition shadow-lg"
-            title="اعلان‌ها"
-          >
-            <Bell size={20} />
-            <span className="absolute 1 top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-[#070b13] animate-pulse" />
-          </button>
+          {/* Left Actions: Back to Home + Notification Bell */}
+          <div className="flex items-center gap-2">
+            {onNavigateTab && (
+              <button
+                onClick={() => onNavigateTab('Home')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#111927] border border-slate-700/70 text-slate-200 hover:text-white hover:border-cyan-500/50 text-xs font-bold transition shadow-md group"
+                title="بازگشت به صفحه اصلی"
+              >
+                <Home size={14} className="text-cyan-400 group-hover:scale-110 transition" />
+                <span>صفحه اصلی</span>
+              </button>
+            )}
+
+            <button
+              onClick={onOpenNotifications || (() => triggerAlert('صندوق اعلانات باز شد.'))}
+              className="relative p-2.5 rounded-full bg-[#111927] border border-slate-700/60 text-slate-200 hover:text-amber-400 hover:border-amber-500/50 transition shadow-lg"
+              title="اعلان‌ها"
+            >
+              <Bell size={20} />
+              <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-[#070b13] animate-pulse" />
+            </button>
+          </div>
 
           {/* User Welcome & Avatar */}
           <div className="flex items-center gap-3">

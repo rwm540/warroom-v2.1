@@ -20,7 +20,9 @@ import {
   ShieldAlert, 
   Download,
   Newspaper,
-  Check
+  Check,
+  Home,
+  ArrowLeft
 } from 'lucide-react';
 import { 
   User, 
@@ -71,6 +73,7 @@ interface AdminPanelProps {
   setHomeStats: (stats: any) => void;
   faqs: any[];
   setFaqs: React.Dispatch<React.SetStateAction<any[]>>;
+  onNavigate?: (tab: string) => void;
 }
 
 export default function AdminPanel({
@@ -104,7 +107,8 @@ export default function AdminPanel({
   homeStats,
   setHomeStats,
   faqs,
-  setFaqs
+  setFaqs,
+  onNavigate
 }: AdminPanelProps) {
   const [activeAdminTab, setActiveAdminTab] = useState<
     'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news' | 'site_editor'
@@ -344,8 +348,21 @@ export default function AdminPanel({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-xs text-amber-300 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-amber-900/60">
-          <span>داور فعال: {currentUser.first_name} {currentUser.last_name}</span>
+        <div className="flex items-center gap-3">
+          {onNavigate && (
+            <button
+              onClick={() => onNavigate('Home')}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 hover:text-white hover:border-amber-500/50 text-xs font-bold transition shadow-md group shrink-0"
+            >
+              <Home size={14} className="text-amber-400 group-hover:scale-110 transition" />
+              <span>بازگشت به صفحه اصلی</span>
+              <ArrowLeft size={14} className="text-slate-400" />
+            </button>
+          )}
+
+          <div className="flex items-center gap-2 font-mono text-xs text-amber-300 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-amber-900/60">
+            <span>داور فعال: {currentUser.first_name} {currentUser.last_name}</span>
+          </div>
         </div>
       </div>
 

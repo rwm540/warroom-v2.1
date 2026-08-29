@@ -28,7 +28,8 @@ import {
   Trophy,
   User as UserIcon,
   Search,
-  Filter
+  Filter,
+  Home
 } from 'lucide-react';
 import { User, Group, Mission, MissionSubmission, Announcement, News, Gender } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -214,27 +215,38 @@ export default function DashboardView({
             </div>
           </div>
 
-          {/* Quick Copy 9-Digit Personal Code Card */}
-          <div className="bg-[#050816]/90 border border-slate-700/80 rounded-2xl p-3 flex items-center justify-between gap-4 shadow-inner">
-            <div>
-              <span className="text-[10px] text-slate-400 block font-bold">کد اختصاصی ۹ رقمی رزمنده:</span>
-              <span className={`text-base font-black font-mono tracking-widest ${
-                isGirl ? 'text-rose-300' : 'text-cyan-300'
-              }`}>
-                {formatToPersianDigits(currentUser.personal_code)}
-              </span>
-            </div>
+          {/* Actions: Back to Home + Quick Copy 9-Digit Personal Code Card */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <button
-              onClick={copyCode}
-              className={`p-2 rounded-xl border transition ${
-                isGirl 
-                  ? 'bg-rose-950 text-rose-300 border-rose-600/50 hover:bg-rose-900' 
-                  : 'bg-cyan-950 text-cyan-300 border-cyan-600/50 hover:bg-cyan-900'
-              }`}
-              title="کپی کد اختصاصی"
+              onClick={() => onNavigate('Home')}
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-slate-200 hover:text-white hover:border-cyan-500/50 text-xs font-bold transition shadow-md group"
+              title="بازگشت به صفحه اصلی"
             >
-              {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+              <Home size={15} className="text-cyan-400 group-hover:scale-110 transition" />
+              <span>صفحه اصلی</span>
             </button>
+
+            <div className="bg-[#050816]/90 border border-slate-700/80 rounded-2xl p-3 flex items-center justify-between gap-4 shadow-inner">
+              <div>
+                <span className="text-[10px] text-slate-400 block font-bold">کد اختصاصی ۹ رقمی رزمنده:</span>
+                <span className={`text-base font-black font-mono tracking-widest ${
+                  isGirl ? 'text-rose-300' : 'text-cyan-300'
+                }`}>
+                  {formatToPersianDigits(currentUser.personal_code)}
+                </span>
+              </div>
+              <button
+                onClick={copyCode}
+                className={`p-2 rounded-xl border transition ${
+                  isGirl 
+                    ? 'bg-rose-950 text-rose-300 border-rose-600/50 hover:bg-rose-900' 
+                    : 'bg-cyan-950 text-cyan-300 border-cyan-600/50 hover:bg-cyan-900'
+                }`}
+                title="کپی کد اختصاصی"
+              >
+                {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+              </button>
+            </div>
           </div>
 
         </div>

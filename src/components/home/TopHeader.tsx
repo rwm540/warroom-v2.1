@@ -27,7 +27,7 @@ export default function TopHeader({
 }: TopHeaderProps) {
   const navItems = [
     { id: 'Home', label: 'صفحه اصلی', icon: Home },
-    { id: 'CampaignSelect', label: 'انتخاب پویش', icon: Gamepad2 },
+    { id: 'GameSelection', label: 'انتخاب بازی', icon: Gamepad2 },
     { id: 'Support', label: 'ارتباط با ما', icon: Headphones },
     { id: 'About', label: 'درباره ما', icon: Info },
   ];

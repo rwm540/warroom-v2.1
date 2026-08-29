@@ -43,7 +43,6 @@ interface AuthViewProps {
   onBackToHome?: () => void;
   initialAuthMode?: 'login' | 'register_individual' | 'register_group';
   campaignTheme?: 'girls' | 'boys';
-  onChangeCampaign?: () => void;
 }
 
 export default function AuthView({
@@ -55,8 +54,7 @@ export default function AuthView({
   triggerAlert,
   onBackToHome,
   initialAuthMode = 'register_individual',
-  campaignTheme,
-  onChangeCampaign
+  campaignTheme
 }: AuthViewProps) {
   // Tab state: 'register' vs 'login'
   const [activeTab, setActiveTab] = useState<'register' | 'login'>(
@@ -263,7 +261,7 @@ export default function AuthView({
         }`} />
       </div>
 
-      {/* Top Back / Change Campaign Header */}
+      {/* Top Back Header */}
       <div className="w-full max-w-md mb-3 flex items-center justify-between z-10">
         {onBackToHome && (
           <button
@@ -275,25 +273,10 @@ export default function AuthView({
           </button>
         )}
 
-        {onChangeCampaign ? (
-          <button
-            type="button"
-            onClick={onChangeCampaign}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition ${
-              isGirls
-                ? 'bg-pink-950/80 border-pink-500/60 text-pink-300 hover:bg-pink-900/80 shadow-[0_0_12px_rgba(244,63,94,0.3)]'
-                : 'bg-cyan-950/80 border-cyan-500/60 text-cyan-300 hover:bg-cyan-900/80 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
-            }`}
-          >
-            <RefreshCw size={13} className="animate-spin-slow" />
-            <span>تغییر پویش ({isGirls ? 'دختران' : 'پسران'})</span>
-          </button>
-        ) : (
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
-            <Shield size={14} className={isGirls ? 'text-pink-400' : 'text-cyan-400'} />
-            <span>{isGirls ? 'پویش دختران' : 'پویش پسران'}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
+          <Shield size={14} className={isGirls ? 'text-pink-400' : 'text-cyan-400'} />
+          <span>{isGirls ? 'پویش دختران' : 'پویش پسران'}</span>
+        </div>
       </div>
 
       {/* Main Card */}

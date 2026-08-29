@@ -9,7 +9,9 @@ import {
   Shield, 
   Users, 
   CheckCircle2, 
-  ChevronLeft 
+  ChevronLeft,
+  Home,
+  ArrowLeft
 } from 'lucide-react';
 import { User, Training } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -17,11 +19,13 @@ import { formatToPersianDigits } from '../utils/jalali';
 interface TrainingsViewProps {
   currentUser: User;
   trainings: Training[];
+  onNavigate?: (tab: string) => void;
 }
 
 export default function TrainingsView({
   currentUser,
-  trainings
+  trainings,
+  onNavigate
 }: TrainingsViewProps) {
   const effectiveRole = !currentUser ? 'all' : currentUser.role === 'member' ? 'user' : currentUser.role;
 
@@ -46,6 +50,17 @@ export default function TrainingsView({
             دوره آموزشی متناسب با نقش شما ({currentUser.role === 'leader' ? 'فرمانده جوخه' : 'رزمنده انفرادی'}) جهت ارتقای دانش سایبری
           </p>
         </div>
+
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate('Home')}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-white hover:border-red-500/50 text-xs font-bold transition shadow-md group shrink-0"
+          >
+            <Home size={14} className="text-red-400 group-hover:scale-110 transition" />
+            <span>بازگشت به صفحه اصلی</span>
+            <ArrowLeft size={14} className="text-slate-400" />
+          </button>
+        )}
       </div>
 
       {/* Grid Layout: Trainings Selector (Right) + Active Training Details (Left) */}

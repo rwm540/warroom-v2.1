@@ -11,7 +11,8 @@ import {
   Shield, 
   Star,
   Award,
-  Zap
+  Zap,
+  Home
 } from 'lucide-react';
 import { User, Group, Medal as MedalType, UserMedal } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -22,6 +23,7 @@ interface RewardsLeaderboardViewProps {
   medals?: MedalType[];
   userMedals?: UserMedal[];
   triggerAlert: (msg: string) => void;
+  onNavigate?: (tab: string) => void;
 }
 
 export default function RewardsLeaderboardView({
@@ -29,7 +31,8 @@ export default function RewardsLeaderboardView({
   groups,
   medals = [],
   userMedals = [],
-  triggerAlert
+  triggerAlert,
+  onNavigate
 }: RewardsLeaderboardViewProps) {
   const [rankingType, setRankingType] = useState<'squads' | 'individuals'>('squads');
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,8 +75,20 @@ export default function RewardsLeaderboardView({
             </p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.3)] animate-pulse">
-            <Trophy size={32} />
+          <div className="flex items-center gap-3">
+            {onNavigate && (
+              <button
+                onClick={() => onNavigate('Home')}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-slate-200 hover:text-white hover:border-amber-500/50 text-xs font-bold transition shadow-md group shrink-0"
+              >
+                <Home size={15} className="text-amber-400 group-hover:scale-110 transition" />
+                <span>صفحه اصلی</span>
+              </button>
+            )}
+
+            <div className="p-3.5 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.3)] animate-pulse">
+              <Trophy size={32} />
+            </div>
           </div>
         </div>
       </div>

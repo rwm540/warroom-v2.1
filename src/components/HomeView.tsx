@@ -11,7 +11,6 @@ import {
 
 import TopHeader from './home/TopHeader';
 import NotificationPanel from './home/NotificationPanel';
-import ThemeSwitcherHeader from './home/ThemeSwitcherHeader';
 import AdventureHeroSection from './home/AdventureHeroSection';
 import PrizesAwardsBanner from './home/PrizesAwardsBanner';
 import SocialMessengersWidgets from './home/SocialMessengersWidgets';
@@ -141,16 +140,7 @@ export default function HomeView({
           {/* Main Landing Content */}
           <div className="p-3 sm:p-5 md:p-6 space-y-6 sm:space-y-8">
             
-            {/* 2. Header Section: Side-by-Side Dynamic Theme Switcher Banners (Girls & Boys) */}
-            <section aria-label="انتخاب پوسته و بخش دختران و پسران">
-              <ThemeSwitcherHeader 
-                themeMode={themeMode}
-                setThemeMode={handleThemeChange}
-                onOpenRegister={(gender) => onOpenAuth('register_individual')}
-              />
-            </section>
-
-            {/* 3. Adventure Hero Section (هیس‌طوری! این پرونده هنوز بازه! + شروع ماموریت) */}
+            {/* Adventure Hero Section (هیس‌طوری! این پرونده هنوز بازه! + شروع ماموریت) */}
             <section aria-label="بخش معرفی مسابقه هیس‌طوری">
               <AdventureHeroSection 
                 themeMode={themeMode}
