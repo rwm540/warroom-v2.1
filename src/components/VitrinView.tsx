@@ -139,7 +139,7 @@ export default function VitrinView({
       authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
       squadName: 'جوخه یاس',
       title: 'گزارش روزنامه‌دیواری محله ما',
-      description: 'روزنامه دیواری ویژه دهه فجر و بازخوانی اسناد هیس‌طوری.',
+      description: 'روزنامه دیواری ویژه دهه فجر و بازخوانی اسناد اتاق جنگ.',
       mediaUrl: 'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?auto=format&fit=crop&w=800&q=80',
       mediaType: 'image',
       likesCount: 125,

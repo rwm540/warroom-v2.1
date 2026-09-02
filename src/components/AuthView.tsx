@@ -147,6 +147,11 @@ export default function AuthView({
       return;
     }
 
+    if (!registerForm.password || registerForm.password.trim().length < 4) {
+      setRegisterError('لطفاً رمز عبور را وارد نمایید (حداقل ۴ کاراکتر).');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const personalCode = generatePersonalCode();
@@ -163,7 +168,7 @@ export default function AuthView({
       grade: 'هشتم',
       gender: selectedGender,
       birth_date: birthDate,
-      password: registerForm.password || '123456',
+      password: registerForm.password.trim(),
       role: 'user',
       personal_code: personalCode,
       avatar_url: isGirls
@@ -247,7 +252,7 @@ export default function AuthView({
   };
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center p-3 sm:p-6 transition-colors duration-500 dir-rtl font-sans relative overflow-hidden ${
+    <div className={`min-h-screen flex flex-col items-center justify-center p-2.5 sm:p-4 transition-colors duration-500 dir-rtl font-sans relative overflow-x-hidden ${
       isGirls ? 'bg-[#0f0412] text-pink-50' : 'bg-[#030713] text-slate-100'
     }`}>
 
@@ -262,11 +267,11 @@ export default function AuthView({
       </div>
 
       {/* Top Back Header */}
-      <div className="w-full max-w-md mb-3 flex items-center justify-between z-10">
+      <div className="w-full max-w-md mb-2 flex items-center justify-between z-10">
         {onBackToHome && (
           <button
             onClick={onBackToHome}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-600 text-xs font-bold transition shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-600 text-xs font-bold transition shadow-sm"
           >
             <ArrowRight size={14} />
             <span>صفحه اصلی</span>
@@ -275,31 +280,31 @@ export default function AuthView({
 
         <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
           <Shield size={14} className={isGirls ? 'text-pink-400' : 'text-cyan-400'} />
-          <span>{isGirls ? 'پویش دختران' : 'پویش پسران'}</span>
+          <span>{isGirls ? 'بخش دختران' : 'بخش پسران'}</span>
         </div>
       </div>
 
       {/* Main Card */}
-      <div className={`w-full max-w-md rounded-3xl p-5 sm:p-7 backdrop-blur-2xl relative z-10 border transition-all duration-300 shadow-2xl ${
+      <div className={`w-full max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 backdrop-blur-2xl relative z-10 border transition-all duration-300 shadow-2xl my-auto ${
         isGirls
           ? 'bg-[#18081c]/95 border-pink-500/40 shadow-[0_0_50px_rgba(244,63,94,0.3)]'
           : 'bg-[#060e20]/95 border-cyan-400/40 shadow-[0_0_50px_rgba(6,182,212,0.3)]'
       }`}>
 
         {/* 1. Luminous Neon Logo Header (Clean - No unnecessary text) */}
-        <div className="flex flex-col items-center justify-center space-y-3 mb-5 text-center">
-          <div className={`relative p-2 rounded-3xl transition-transform hover:scale-105 duration-300 ${
+        <div className="flex flex-col items-center justify-center space-y-2 mb-3.5 text-center">
+          <div className={`relative p-1.5 rounded-2xl transition-transform hover:scale-105 duration-300 ${
             isGirls ? 'neon-logo-glow-pink' : 'neon-logo-glow'
           }`}>
             <img 
               src={warroomLogoJpg} 
-              alt="War Room Logo" 
+              alt="لوگوی اتاق جنگ" 
               referrerPolicy="no-referrer"
-              className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-2xl border-2 border-white/20 shadow-2xl"
+              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-2xl border-2 border-white/20 shadow-2xl"
             />
           </div>
 
-          <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${
+          <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${
             isGirls ? 'neon-text-pink' : 'neon-text-cyan'
           }`}>
             اتاق جنگ
@@ -313,7 +318,7 @@ export default function AuthView({
                 setActiveTab('register');
                 setRegisterError(null);
               }}
-              className={`py-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 ${
+              className={`py-1.5 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 ${
                 activeTab === 'register'
                   ? isGirls
                     ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-900/40'
@@ -331,7 +336,7 @@ export default function AuthView({
                 setActiveTab('login');
                 setLoginError(null);
               }}
-              className={`py-2 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 ${
+              className={`py-1.5 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 ${
                 activeTab === 'login'
                   ? isGirls
                     ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-900/40'
@@ -355,23 +360,6 @@ export default function AuthView({
                 <span>{registerError}</span>
               </div>
             )}
-
-            {/* Active Campaign Header Tag */}
-            <div className={`p-2.5 rounded-2xl border flex items-center justify-between text-xs font-bold ${
-              isGirls
-                ? 'bg-pink-950/70 border-pink-500/50 text-pink-200'
-                : 'bg-cyan-950/70 border-cyan-500/50 text-cyan-200'
-            }`}>
-              <div className="flex items-center gap-2">
-                {isGirls ? (
-                  <Heart size={16} className="fill-pink-400 text-pink-400" />
-                ) : (
-                  <Zap size={16} className="fill-cyan-400 text-cyan-400" />
-                )}
-                <span>ثبت‌نام در {isGirls ? 'پویش دختران (سیندخت)' : 'پویش پسران (نوید)'}</span>
-              </div>
-              <span className="text-[10px] font-mono opacity-80">ظرفیت فعال</span>
-            </div>
 
             {/* Name & Surname */}
             <div className="grid grid-cols-2 gap-2.5">
@@ -426,12 +414,18 @@ export default function AuthView({
               </div>
             </div>
 
-            {/* Password (Optional / Quick) */}
+            {/* Password (Required) */}
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-300 block">رمز عبور دلخواه (اختیاری)</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-slate-300 block">
+                  رمز عبور <span className="text-rose-400">*</span>
+                </label>
+                <span className="text-[10px] text-slate-500 font-sans">حداقل ۴ کاراکتر</span>
+              </div>
               <input
                 type="password"
-                placeholder="حداقل ۴ کاراکتر (پیش‌فرض: 123456)"
+                required
+                placeholder="رمز عبور خود را وارد کنید"
                 value={registerForm.password}
                 onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                 className="w-full py-2 px-3 rounded-xl bg-slate-950/70 border border-slate-700/80 focus:border-cyan-400 text-xs text-white font-mono placeholder:text-slate-500 focus:outline-none transition text-left"

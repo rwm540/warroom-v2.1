@@ -90,7 +90,7 @@ export default function AdventureHeroSection({
               ? "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80" 
               : "https://images.unsplash.com/photo-1514539079130-25950c84af65?auto=format&fit=crop&w=1200&q=80"
             } 
-            alt="ماجراجویی هیس‌طوری" 
+            alt="ماجراجویی اتاق جنگ" 
             className="w-full h-full object-cover brightness-[0.75] contrast-125"
           />
 

@@ -44,7 +44,7 @@ export default function TopHeader({
               اتاق جنگ
             </span>
             <span className="hidden md:inline-block text-[9px] text-cyan-300 font-mono font-bold bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-500/25">
-              v2.5
+              نسخه ۲.۵
             </span>
           </div>
         </div>

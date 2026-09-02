@@ -47,7 +47,7 @@ export function validateJalaliDate(inputDateStr: string): boolean {
   const day = parseInt(parts[2], 10);
 
   if (isNaN(year) || isNaN(month) || isNaN(day)) return false;
-  if (year < 1330 || year > 1403) return false;
+  if (year < 1300 || year > 1405) return false;
   if (month < 1 || month > 12) return false;
   if (month <= 6 && (day < 1 || day > 31)) return false;
   if (month > 6 && (day < 1 || day > 30)) return false;

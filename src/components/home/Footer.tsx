@@ -56,7 +56,7 @@ export default function Footer({ onNavigate, onOpenAbout }: FooterProps) {
               </div>
               <div>
                 <h2 className="text-sm font-black text-white tracking-tight">سامانه ملی «اتاق جنگ»</h2>
-                <p className="text-[10px] text-cyan-400 font-mono font-semibold">WAR ROOM STRATEGIC PLATFORM</p>
+                <p className="text-[10px] text-cyan-400 font-semibold">سامانه استراتژیک و ارزیابی اتاق جنگ</p>
               </div>
             </div>
 

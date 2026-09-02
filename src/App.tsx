@@ -185,7 +185,7 @@ export default function App() {
     setShowAuthScreen(false);
     setActiveTab('Home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    triggerAlert(campaign === 'girls' ? 'پویش دختران (سیندخت) فعال شد و وارد صفحه اصلی شدید.' : 'پویش پسران (نوید) فعال شد و وارد صفحه اصلی شدید.');
+    triggerAlert(campaign === 'girls' ? 'تم دختران فعال شد و وارد صفحه اصلی شدید.' : 'تم پسران فعال شد و وارد صفحه اصلی شدید.');
   };
 
   const handleDirectLogin = () => {
@@ -328,7 +328,7 @@ export default function App() {
   const isPanelTab = ['Dashboard', 'Journey', 'Missions', 'Trainings', 'Profile', 'Admin'].includes(activeTab) || isAdminMode;
 
   return (
-    <div className="bg-[#030611] text-slate-100 min-h-screen relative font-sans dir-rtl">
+    <div className="bg-[#030611] text-slate-100 min-h-screen w-full overflow-x-hidden flex flex-col relative font-sans dir-rtl">
       
       {/* Loading Screen with Radar & Logo */}
       {isLoading && (
