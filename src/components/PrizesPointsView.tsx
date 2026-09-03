@@ -4,24 +4,19 @@ import {
   Sparkles, 
   Gem, 
   Lock, 
-  CheckCircle, 
-  ArrowLeft, 
-  Trophy, 
-  Zap, 
-  Flame, 
-  Star, 
-  CreditCard, 
-  HelpCircle,
-  Clock,
-  ShieldAlert,
-  Coins,
-  Home
+  Trophy
 } from 'lucide-react';
-import { User } from '../types';
+import { User, Group, Medal, UserMedal } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
+import RewardsLeaderboardView from './RewardsLeaderboardView';
 
 interface PrizesPointsViewProps {
   currentUser: User | null;
+  users?: User[];
+  groups?: Group[];
+  medals?: Medal[];
+  userMedals?: UserMedal[];
+  initialSubTab?: 'prizes' | 'leaderboard';
   triggerAlert: (msg: string) => void;
   onNavigate?: (tab: string) => void;
 }
@@ -39,10 +34,15 @@ export interface PrizeItem {
 
 export default function PrizesPointsView({
   currentUser,
+  users = [],
+  groups = [],
+  medals = [],
+  userMedals = [],
+  initialSubTab = 'prizes',
   triggerAlert,
   onNavigate
 }: PrizesPointsViewProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'prizes' | 'points'>('prizes');
+  const [activeSubTab, setActiveSubTab] = useState<'prizes' | 'leaderboard'>(initialSubTab === 'leaderboard' ? 'leaderboard' : 'prizes');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPrize, setSelectedPrize] = useState<PrizeItem | null>(null);
 
@@ -182,18 +182,8 @@ export default function PrizesPointsView({
             </p>
           </div>
 
-          {/* User Current Crystals / Points Card & Back Button */}
+          {/* User Current Crystals / Points Card */}
           <div className="flex items-center gap-3">
-            {onNavigate && (
-              <button
-                onClick={() => onNavigate('Home')}
-                className="flex items-center gap-1.5 px-3.5 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-slate-200 hover:text-white hover:border-cyan-500/50 text-xs font-bold transition shadow-md group shrink-0"
-              >
-                <Home size={15} className="text-cyan-400 group-hover:scale-110 transition" />
-                <span>صفحه اصلی</span>
-              </button>
-            )}
-
             <div className={`p-4 rounded-2xl border flex items-center gap-3 backdrop-blur-md shadow-xl ${
               isGirls
                 ? 'bg-pink-950/60 border-pink-500/50 text-pink-200'
@@ -216,11 +206,11 @@ export default function PrizesPointsView({
         </div>
       </div>
 
-      {/* 2. Main Tab Switcher: "Prizes (جوایز)" vs "Points (امتیازات)" */}
-      <div className="flex items-center gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
+      {/* 2. Main Tab Switcher: "ویترین ۹ جایزه رویایی" vs "جدول رده‌بندی" */}
+      <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
         <button
           onClick={() => setActiveSubTab('prizes')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 ${
+          className={`py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-1.5 sm:gap-2 ${
             activeSubTab === 'prizes'
               ? isGirls
                 ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-900/50'
@@ -229,21 +219,21 @@ export default function PrizesPointsView({
           }`}
         >
           <Gift size={16} />
-          <span>ویترین ۹ جایزه رویایی</span>
+          <span className="truncate">ویترین ۹ جایزه رویایی</span>
         </button>
 
         <button
-          onClick={() => setActiveSubTab('points')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 ${
-            activeSubTab === 'points'
+          onClick={() => setActiveSubTab('leaderboard')}
+          className={`py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-1.5 sm:gap-2 ${
+            activeSubTab === 'leaderboard'
               ? isGirls
                 ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-900/50'
                 : 'bg-gradient-to-r from-cyan-400 to-blue-600 text-slate-950 shadow-lg shadow-cyan-900/50'
               : 'text-slate-400 hover:text-white'
           }`}
         >
-          <Coins size={16} />
-          <span>راهنمای کسب امتیاز و ترفیع</span>
+          <Trophy size={16} />
+          <span className="truncate">جدول رده‌بندی</span>
         </button>
       </div>
 
@@ -372,42 +362,17 @@ export default function PrizesPointsView({
         </div>
       )}
 
-      {/* 4. Sub Tab 2: Points & Progression Rules */}
-      {activeSubTab === 'points' && (
-        <div className="space-y-4">
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-[#080d22] border border-cyan-500/30 p-4 rounded-2xl space-y-2">
-              <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 w-fit">
-                <Flame size={20} />
-              </div>
-              <h4 className="text-sm font-black text-white">امتیاز تکمیل مراحل</h4>
-              <p className="text-xs text-slate-300">
-                هر مرحله از هفت‌خوان بین ۳۰۰ تا ۸۰۰ امتیاز مستقیم برای شما و جوخه‌تان به همراه دارد.
-              </p>
-            </div>
-
-            <div className="bg-[#080d22] border border-amber-500/30 p-4 rounded-2xl space-y-2">
-              <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 w-fit">
-                <Star size={20} />
-              </div>
-              <h4 className="text-sm font-black text-white">پاداش‌های ویژه خلاقیت</h4>
-              <p className="text-xs text-slate-300">
-                ویدیوها و گزارش‌های دارای ستاره ۵ از طرف داوران تا ۱۰۰۰ کریستال پاداش خواهند داشت.
-              </p>
-            </div>
-
-            <div className="bg-[#080d22] border border-purple-500/30 p-4 rounded-2xl space-y-2">
-              <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400 w-fit">
-                <Zap size={20} />
-              </div>
-              <h4 className="text-sm font-black text-white">ضریب همکاری تیمی</h4>
-              <p className="text-xs text-slate-300">
-                تکمیل هماهنگ ماموریت‌ها با سایر اعضای تیم ضریب امتیاز ۱.۵ برابری به همراه دارد.
-              </p>
-            </div>
-          </div>
-
+      {/* 3. Sub Tab 2: Leaderboard (جدول رده‌بندی) */}
+      {activeSubTab === 'leaderboard' && (
+        <div className="pt-1">
+          <RewardsLeaderboardView 
+            users={users}
+            groups={groups}
+            medals={medals}
+            userMedals={userMedals}
+            triggerAlert={triggerAlert}
+            onNavigate={onNavigate}
+          />
         </div>
       )}
 

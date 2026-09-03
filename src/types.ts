@@ -3,7 +3,8 @@ export type EducationLevel = 'ابتدایی' | 'متوسطه اول' | 'متو�
 export type Gender = 'پسر' | 'دختر';
 export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
 export type TicketType = 'technical' | 'content' | 'judge' | 'other';
-export type TicketStatus = 'open' | 'in_progress' | 'closed';
+export type TicketStatus = 'open' | 'in_progress' | 'answered' | 'closed';
+export type TicketPriority = 'normal' | 'important' | 'urgent';
 export type TargetRole = 'all' | 'user' | 'leader';
 
 export interface User {
@@ -117,6 +118,8 @@ export interface SupportTicket {
   message: string;
   type: TicketType;
   status: TicketStatus;
+  priority?: TicketPriority;
+  attachment_url?: string;
   admin_id?: string;
   admin_type?: TicketType | 'general';
   created_at: string;
@@ -156,6 +159,26 @@ export interface News {
   is_active: boolean;
   created_at: string;
   category?: string;
+}
+
+export type NotificationType = 'urgent' | 'mission' | 'score' | 'medal' | 'announcement' | 'squad' | 'system' | 'custom';
+export type NotificationTarget = 'all' | 'girls' | 'boys' | 'leaders' | 'users' | 'specific_user' | 'specific_squad';
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  target: NotificationTarget;
+  target_user_id?: string;
+  target_personal_code?: string;
+  target_group_id?: string;
+  action_tab?: string;
+  action_label?: string;
+  sender_name: string;
+  is_read_by: string[];
+  created_at: string;
+  timestamp: number;
 }
 
 export interface StudentShowcase {

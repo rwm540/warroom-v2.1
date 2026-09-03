@@ -200,6 +200,26 @@ body, html {
   border-radius: 50%;
 }
 
+.radar-sweep-green {
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(16, 185, 129, 0) 0deg,
+    rgba(16, 185, 129, 0) 240deg,
+    rgba(5, 150, 105, 0.08) 280deg,
+    rgba(16, 185, 129, 0.28) 335deg,
+    rgba(52, 211, 153, 0.85) 360deg
+  );
+  animation: radar-spin 2.6s linear infinite;
+  border-radius: 50%;
+}
+
+.radar-grid-green {
+  background-size: 24px 24px;
+  background-image: 
+    linear-gradient(to right, rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
+}
+
 .level-pulse {
   animation: level-glow 2s infinite ease-in-out;
 }

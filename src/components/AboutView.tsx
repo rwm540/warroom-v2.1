@@ -89,17 +89,6 @@ export default function AboutView({ onNavigate, siteSettings, homeStats }: About
             <p className="text-[11px] text-amber-300/80 font-bold">معرفی اهداف، چشم‌انداز و دستاوردهای سامانه</p>
           </div>
         </div>
-
-        {onNavigate && (
-          <button
-            onClick={() => onNavigate('Home')}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.4)] transition"
-          >
-            <Home size={15} />
-            <span>بازگشت به صفحه اصلی</span>
-            <ArrowLeft size={15} />
-          </button>
-        )}
       </div>
       
       {/* Hero Banner */}
@@ -242,21 +231,6 @@ export default function AboutView({ onNavigate, siteSettings, homeStats }: About
           ))}
         </div>
       </div>
-
-      {/* Bottom Back Button */}
-      {onNavigate && (
-        <div className="pt-4 flex justify-center">
-          <button
-            onClick={() => onNavigate('Home')}
-            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.4)] transition"
-          >
-            <Home size={18} />
-            <span>بازگشت به صفحه اصلی</span>
-            <ArrowLeft size={18} />
-          </button>
-        </div>
-      )}
-
     </motion.div>
   );
 }

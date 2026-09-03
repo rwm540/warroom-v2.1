@@ -14,7 +14,8 @@ import {
   SupportTicket, 
   SupportReply, 
   Announcement, 
-  News 
+  News,
+  AppNotification 
 } from './types';
 
 // Mock Data
@@ -29,7 +30,8 @@ import {
   initialSupportTickets, 
   initialSupportReplies, 
   initialAnnouncements, 
-  initialNews 
+  initialNews,
+  initialNotifications 
 } from './data';
 
 import { 
@@ -63,6 +65,8 @@ import OnboardingCommanderTutorial from './components/OnboardingCommanderTutoria
 import LoadingScreen from './components/LoadingScreen';
 import ProfileModal from './components/ProfileModal';
 import BackgroundMusic from './components/BackgroundMusic';
+import NotificationCenterModal from './components/NotificationCenterModal';
+import LiveNotificationToast from './components/LiveNotificationToast';
 
 export default function App() {
   // Global Data State
@@ -121,6 +125,14 @@ export default function App() {
     return saved ? JSON.parse(saved) : initialNews;
   });
 
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
+    const saved = localStorage.getItem('warroom_notifications');
+    return saved ? JSON.parse(saved) : initialNotifications;
+  });
+
+  const [showNotificationCenter, setShowNotificationCenter] = useState<boolean>(false);
+  const [liveToastNotification, setLiveToastNotification] = useState<AppNotification | null>(null);
+
   // Dynamic CMS States
   const [siteSettings, setSiteSettings] = useState(() => {
     const saved = localStorage.getItem('warroom_site_settings');
@@ -153,16 +165,33 @@ export default function App() {
     return saved ? JSON.parse(saved) : faqsData;
   });
 
-  // Current Logged-in User
+  // Current Logged-in User with Full Persistence
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const savedId = localStorage.getItem('warroom_current_user_id');
-    if (savedId) {
-      const found = users.find(u => u.id === savedId);
-      if (found) return found;
+    try {
+      const savedUserData = localStorage.getItem('warroom_current_user_data');
+      if (savedUserData) {
+        return JSON.parse(savedUserData);
+      }
+      const savedId = localStorage.getItem('warroom_current_user_id');
+      if (savedId) {
+        const savedUsersStr = localStorage.getItem('warroom_users');
+        const allUsers: User[] = savedUsersStr ? JSON.parse(savedUsersStr) : initialUsers;
+        const found = allUsers.find(u => u.id === savedId);
+        if (found) return found;
+      }
+    } catch (e) {
+      console.error('Session restore error:', e);
     }
-    // Default to guest mode so user experiences the new landing page first
     return null;
   });
+
+  // Keep localStorage in sync when currentUser data updates
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('warroom_current_user_id', currentUser.id);
+      localStorage.setItem('warroom_current_user_data', JSON.stringify(currentUser));
+    }
+  }, [currentUser]);
 
   // Active Campaign Theme: 'girls' vs 'boys' (stored in localStorage)
   const [campaignTheme, setCampaignTheme] = useState<'girls' | 'boys'>(() => {
@@ -186,8 +215,29 @@ export default function App() {
     };
   }, []);
 
-  // UI Navigation State
-  const [activeTab, setActiveTab] = useState<string>('Home');
+  // UI Navigation State - restore activeTab or default to Journey if logged in!
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    try {
+      const savedUser = localStorage.getItem('warroom_current_user_id') || localStorage.getItem('warroom_current_user_data');
+      if (savedUser) {
+        const savedTab = localStorage.getItem('warroom_active_tab');
+        return savedTab || 'Journey';
+      }
+    } catch (e) {}
+    return 'Home';
+  });
+
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(() => {
+    try {
+      const savedUserData = localStorage.getItem('warroom_current_user_data');
+      if (savedUserData) {
+        const parsed = JSON.parse(savedUserData);
+        return parsed?.role === 'admin';
+      }
+    } catch (e) {}
+    return false;
+  });
+
   const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('register_individual');
 
@@ -200,8 +250,8 @@ export default function App() {
     setShowAuthScreen(false);
     setIsAdminMode(tab === 'Admin');
     setActiveTab(tab);
+    localStorage.setItem('warroom_active_tab', tab);
   };
-  const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [showSquadModal, setShowSquadModal] = useState<boolean>(false);
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
   const [showOnboardingTutorial, setShowOnboardingTutorial] = useState<boolean>(false);
@@ -270,6 +320,64 @@ export default function App() {
   }, [faqs]);
 
   useEffect(() => {
+    localStorage.setItem('warroom_notifications', JSON.stringify(notifications));
+  }, [notifications]);
+
+  // Eligibility checker for real-time notifications
+  const isEligibleForNotification = (notif: AppNotification, user: User | null) => {
+    if (!user) return notif.target === 'all';
+    if (notif.target === 'all') return true;
+    if (notif.target === 'girls' && user.gender === 'دختر') return true;
+    if (notif.target === 'boys' && user.gender === 'پسر') return true;
+    if (notif.target === 'leaders' && user.role === 'leader') return true;
+    if (notif.target === 'users' && user.role === 'user') return true;
+    if (notif.target === 'specific_user' && (notif.target_user_id === user.id || notif.target_personal_code === user.personal_code)) return true;
+    if (notif.target === 'specific_squad' && user.group_id && notif.target_group_id === user.group_id) return true;
+    if (user.role === 'admin') return true;
+    return false;
+  };
+
+  // Real-time notification broadcaster & listener across browser tabs
+  useEffect(() => {
+    const handleBroadcastEvent = (e: any) => {
+      const notif: AppNotification = e.detail;
+      if (notif && isEligibleForNotification(notif, currentUser)) {
+        setLiveToastNotification(notif);
+      }
+    };
+
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'warroom_last_live_notification' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed?.notif && isEligibleForNotification(parsed.notif, currentUser)) {
+            setLiveToastNotification(parsed.notif);
+          }
+        } catch (err) {}
+      }
+      if (e.key === 'warroom_notifications' && e.newValue) {
+        try {
+          setNotifications(JSON.parse(e.newValue));
+        } catch (err) {}
+      }
+    };
+
+    window.addEventListener('warroom_live_broadcast', handleBroadcastEvent);
+    window.addEventListener('storage', handleStorageEvent);
+    return () => {
+      window.removeEventListener('warroom_live_broadcast', handleBroadcastEvent);
+      window.removeEventListener('storage', handleStorageEvent);
+    };
+  }, [currentUser]);
+
+  // Calculate unread notifications count for current user
+  const unreadNotificationsCount = notifications.filter(n => {
+    if (!currentUser) return false;
+    if (!isEligibleForNotification(n, currentUser)) return false;
+    return !n.is_read_by.includes(currentUser.id);
+  }).length;
+
+  useEffect(() => {
     if (currentUser) {
       localStorage.setItem('warroom_current_user_id', currentUser.id);
     } else {
@@ -290,12 +398,18 @@ export default function App() {
     setIsAdminMode(false);
     setActiveTab('Home');
     setShowAuthScreen(false);
+    localStorage.removeItem('warroom_current_user_id');
+    localStorage.removeItem('warroom_current_user_data');
+    localStorage.removeItem('warroom_active_tab');
     triggerAlert('خروج از سامانه اتاق جنگ با موفقیت انجام شد.');
   };
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     setShowAuthScreen(false);
+    localStorage.setItem('warroom_current_user_id', user.id);
+    localStorage.setItem('warroom_current_user_data', JSON.stringify(user));
+
     if (user.gender === 'دختر') {
       setCampaignTheme('girls');
       localStorage.setItem('hisstory_theme_mode', 'girls');
@@ -306,9 +420,11 @@ export default function App() {
     if (user.role === 'admin') {
       setIsAdminMode(true);
       setActiveTab('Dashboard');
+      localStorage.setItem('warroom_active_tab', 'Dashboard');
     } else {
       setIsAdminMode(false);
       setActiveTab('Journey');
+      localStorage.setItem('warroom_active_tab', 'Journey');
       setShowOnboardingTutorial(true); // Launch Commander Guided Tutorial
     }
     triggerAlert(`خوش آمدید رزمنده ${user.first_name} ${user.last_name}`);
@@ -318,8 +434,6 @@ export default function App() {
     setAuthMode(mode);
     setShowAuthScreen(true);
   };
-
-  const isPanelTab = ['Dashboard', 'Journey', 'Missions', 'Trainings', 'Profile', 'Admin'].includes(activeTab) || isAdminMode;
 
   return (
     <div className="bg-[#030611] text-slate-100 min-h-screen w-full overflow-x-hidden flex flex-col relative font-sans dir-rtl">
@@ -484,7 +598,7 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="min-h-screen flex flex-col relative z-10"
+            className={`min-h-screen flex flex-col relative z-10 ${activeTab === 'Journey' ? 'lg:h-screen lg:max-h-screen lg:overflow-hidden' : ''}`}
           >
             {/* Top Navigation Bar */}
             <Navbar 
@@ -493,12 +607,18 @@ export default function App() {
               setCurrentTab={handleTabChange}
               onLogout={handleLogout}
               onOpenSquadModal={() => setShowSquadModal(true)}
+              onOpenNotifications={() => setShowNotificationCenter(true)}
+              unreadNotificationsCount={unreadNotificationsCount}
               isAdminView={isAdminMode}
               setIsAdminView={setIsAdminMode}
             />
 
             {/* Main Content Body */}
-            <main className="flex-1 max-w-7xl w-full mx-auto px-4 md:px-8 pt-5 pb-24 md:pb-8">
+            <main className={`flex-1 w-full mx-auto ${
+              activeTab === 'Journey'
+                ? 'max-w-7xl px-2 sm:px-4 py-1 flex flex-col min-h-0 lg:h-[calc(100vh-86px)] lg:max-h-[calc(100vh-86px)] lg:overflow-hidden'
+                : 'max-w-7xl px-4 md:px-8 pt-5 pb-24 md:pb-8'
+            }`}>
               
               {isAdminMode ? (
                 <AdminPanel 
@@ -524,6 +644,11 @@ export default function App() {
                   setAnnouncements={setAnnouncements}
                   news={news}
                   setNews={setNews}
+                  notifications={notifications}
+                  setNotifications={setNotifications}
+                  onBroadcastNotification={(notif) => {
+                    setLiveToastNotification(notif);
+                  }}
                   triggerAlert={triggerAlert}
                   siteSettings={siteSettings}
                   setSiteSettings={setSiteSettings}
@@ -537,9 +662,13 @@ export default function App() {
                 />
               ) : (
                 <>
-                  {activeTab === 'Journey' && (
+                  {(activeTab === 'Journey' || activeTab === 'Profile') && (
                     <JourneyView 
                       currentUser={currentUser}
+                      groups={groups}
+                      medals={medals}
+                      userMedals={userMedals}
+                      initialOpenProfile={activeTab === 'Profile'}
                       onEnterDashboard={(stageId) => {
                         handleTabChange('Dashboard');
                       }}
@@ -548,13 +677,25 @@ export default function App() {
                       }}
                       triggerAlert={triggerAlert}
                       onOpenProfile={() => setShowProfileModal(true)}
-                      onOpenNotifications={() => triggerAlert('صندوق اعلانات و پیام‌ها باز شد.')}
+                      onOpenNotifications={() => setShowNotificationCenter(true)}
+                      onUpdateAvatar={(newUrl) => {
+                        if (currentUser) {
+                          const updated = { ...currentUser, avatar_url: newUrl };
+                          setCurrentUser(updated);
+                          setUsers(users.map(u => u.id === updated.id ? updated : u));
+                        }
+                      }}
                     />
                   )}
 
-                  {(activeTab === 'Rewards' || activeTab === 'Prizes') && (
+                  {(activeTab === 'Rewards' || activeTab === 'Prizes' || activeTab === 'RewardsLeaderboard' || activeTab === 'Leaderboard') && (
                     <PrizesPointsView 
                       currentUser={currentUser}
+                      users={users}
+                      groups={groups}
+                      medals={medals}
+                      userMedals={userMedals}
+                      initialSubTab={activeTab === 'Leaderboard' || activeTab === 'RewardsLeaderboard' ? 'leaderboard' : 'prizes'}
                       triggerAlert={triggerAlert}
                       onNavigate={(tab) => handleTabChange(tab)}
                     />
@@ -563,17 +704,6 @@ export default function App() {
                   {activeTab === 'Vitrin' && (
                     <VitrinView 
                       currentUser={currentUser}
-                      triggerAlert={triggerAlert}
-                      onNavigate={(tab) => handleTabChange(tab)}
-                    />
-                  )}
-
-                  {(activeTab === 'RewardsLeaderboard' || activeTab === 'Leaderboard') && (
-                    <RewardsLeaderboardView 
-                      users={users}
-                      groups={groups}
-                      medals={medals}
-                      userMedals={userMedals}
                       triggerAlert={triggerAlert}
                       onNavigate={(tab) => handleTabChange(tab)}
                     />
@@ -619,6 +749,7 @@ export default function App() {
                       medals={medals}
                       userMedals={userMedals}
                       onNavigate={(tab) => handleTabChange(tab)}
+                      triggerAlert={triggerAlert}
                     />
                   )}
                 </>
@@ -653,6 +784,7 @@ export default function App() {
                 medals={medals}
                 userMedals={userMedals}
                 triggerAlert={triggerAlert}
+                onNavigateTab={(tab) => handleTabChange(tab)}
               />
             )}
 
@@ -668,27 +800,54 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Global Android Mobile Bottom Navigation for Home/Public Views */}
-      {!showAuthScreen && !isPanelTab && activeTab !== 'Home' && (
+      {/* Global Floating Android Mobile Bottom Navigation (Visible in all sections: User views & Admin) */}
+      {!showAuthScreen && currentUser && (
         <BottomNavigation 
           activeTab={isAdminMode ? 'Admin' : activeTab}
           setActiveTab={(tab) => {
-            if (tab === 'WarRoom') {
-              setIsAdminMode(false);
-              handleTabChange('Home');
-            } else if (tab === 'Admin') {
-              setIsAdminMode(true);
-            } else {
-              setIsAdminMode(false);
-              handleTabChange(tab);
-            }
+            setIsAdminMode(false);
+            handleTabChange(tab);
           }}
           currentUser={currentUser}
-          onOpenSquadModal={() => setShowSquadModal(true)}
-          onLogout={handleLogout}
           isAdminMode={isAdminMode}
           setIsAdminMode={setIsAdminMode}
-          unreadTicketsCount={tickets.filter(t => t.status === 'open').length}
+          campaignTheme={campaignTheme}
+        />
+      )}
+
+      {/* Global Real-Time Live Notification Floating Toast */}
+      <LiveNotificationToast 
+        notification={liveToastNotification}
+        onDismiss={() => setLiveToastNotification(null)}
+        onOpenCenter={() => {
+          setLiveToastNotification(null);
+          setShowNotificationCenter(true);
+        }}
+        onActionClick={(tab) => {
+          if (liveToastNotification && currentUser) {
+            setNotifications(prev => prev.map(n => 
+              n.id === liveToastNotification.id && !n.is_read_by.includes(currentUser.id)
+                ? { ...n, is_read_by: [...n.is_read_by, currentUser.id] }
+                : n
+            ));
+          }
+          setLiveToastNotification(null);
+          handleTabChange(tab);
+        }}
+      />
+
+      {/* Global Comprehensive Notification Center Modal */}
+      {showNotificationCenter && (
+        <NotificationCenterModal 
+          isOpen={showNotificationCenter}
+          onClose={() => setShowNotificationCenter(false)}
+          notifications={notifications}
+          setNotifications={setNotifications}
+          currentUser={currentUser}
+          onNavigate={(tab) => {
+            setShowNotificationCenter(false);
+            handleTabChange(tab);
+          }}
         />
       )}
 

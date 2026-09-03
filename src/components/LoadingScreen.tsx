@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Shield, Radio, Sparkles, Activity } from 'lucide-react';
+import { Shield, Activity, Sparkles, CheckCircle2 } from 'lucide-react';
 import warroomLogoJpg from '../assets/images/warroom_logo_1787906676836.jpg';
 
 interface LoadingScreenProps {
@@ -15,89 +15,131 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(onComplete, 400);
+          setTimeout(onComplete, 350);
           return 100;
         }
-        return prev + 12;
+        return prev + 14;
       });
-    }, 120);
+    }, 110);
 
     return () => clearInterval(interval);
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#030712] text-white flex flex-col items-center justify-center p-6 dir-rtl font-sans select-none overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-[#020804] text-white flex flex-col items-center justify-center p-4 dir-rtl font-sans select-none overflow-hidden touch-none">
       
-      {/* Background Radar Scanner Animation */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden radar-grid">
+      {/* Background Subtle Tactical Green Radar Grid */}
+      <div className="absolute inset-0 radar-grid-green opacity-40 pointer-events-none" />
+
+      {/* Dynamic Military Radar Scanner Animation (Android & Mobile Optimized) */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
         
-        {/* Outer concentric radar rings */}
-        <div className="w-[580px] h-[580px] rounded-full border border-cyan-500/15 absolute animate-pulse" />
-        <div className="w-[440px] h-[440px] rounded-full border border-cyan-500/25 absolute" />
-        <div className="w-[300px] h-[300px] rounded-full border border-cyan-500/35 absolute" />
-        <div className="w-[160px] h-[160px] rounded-full border border-cyan-500/45 absolute" />
+        {/* Deep Green Ambient Center Glow */}
+        <div className="w-64 h-64 sm:w-80 sm:h-80 bg-emerald-600/20 blur-[90px] rounded-full absolute" />
 
-        {/* Crosshair lines */}
-        <div className="w-[600px] h-[1px] bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent absolute" />
-        <div className="h-[600px] w-[1px] bg-gradient-to-b from-transparent via-cyan-500/30 to-transparent absolute" />
+        {/* Outer Rotating Compass & Degrees Ring */}
+        <motion.div
+          animate={{ rotate: -360 }}
+          transition={{ repeat: Infinity, duration: 32, ease: "linear" }}
+          className="w-[290px] h-[290px] sm:w-[370px] sm:h-[370px] rounded-full border border-dashed border-emerald-500/25 absolute pointer-events-none"
+        >
+          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[8px] font-mono text-emerald-400/80 font-bold bg-[#020804] px-1">000°</span>
+          <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-[8px] font-mono text-emerald-400/80 font-bold bg-[#020804] px-1">180°</span>
+          <span className="absolute top-1/2 -right-3 -translate-y-1/2 text-[8px] font-mono text-emerald-400/80 font-bold bg-[#020804] px-1">090°</span>
+          <span className="absolute top-1/2 -left-3 -translate-y-1/2 text-[8px] font-mono text-emerald-400/80 font-bold bg-[#020804] px-1">270°</span>
+        </motion.div>
 
-        {/* 360-degree Rotating Conic Radar Sweep */}
-        <div className="w-[500px] h-[500px] radar-sweep absolute pointer-events-none opacity-80" />
+        {/* Expanding Radar Sonar Pulse Wave */}
+        <motion.div
+          animate={{ scale: [0.6, 1.28], opacity: [0.65, 0] }}
+          transition={{ repeat: Infinity, duration: 2.2, ease: "easeOut" }}
+          className="w-[270px] h-[270px] sm:w-[350px] sm:h-[350px] rounded-full border border-emerald-400/50 absolute pointer-events-none shadow-[0_0_15px_rgba(16,185,129,0.35)]"
+        />
 
-        {/* Target Blips */}
-        <div className="absolute top-[32%] right-[38%] w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-        <div className="absolute bottom-[35%] left-[40%] w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-        <div className="absolute top-[42%] left-[32%] w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+        {/* Concentric Static Radar Range Rings */}
+        <div className="w-[270px] h-[270px] sm:w-[350px] sm:h-[350px] rounded-full border border-emerald-500/30 absolute" />
+        <div className="w-[200px] h-[200px] sm:w-[260px] sm:h-[260px] rounded-full border border-emerald-500/25 absolute" />
+        <div className="w-[130px] h-[130px] sm:w-[170px] sm:h-[170px] rounded-full border border-emerald-400/35 absolute" />
 
-        {/* Center Glow */}
-        <div className="w-80 h-80 bg-cyan-500/15 blur-[120px] rounded-full absolute" />
+        {/* Active Rotating Radar Sweeper (Beam + Conic Gradient) */}
+        <div className="w-[270px] h-[270px] sm:w-[350px] sm:h-[350px] rounded-full absolute pointer-events-none overflow-hidden">
+          {/* Conic Sweeper Disc */}
+          <div className="w-full h-full rounded-full radar-sweep-green" />
+
+          {/* Synchronously Rotating Glowing Beam Needle */}
+          <div className="absolute inset-0 animate-[radar-spin_2.6s_linear_infinite] pointer-events-none">
+            <div className="absolute top-0 right-1/2 translate-x-1/2 w-[2px] h-1/2 bg-gradient-to-t from-emerald-400 via-green-300 to-emerald-100 shadow-[0_0_12px_#34d399,0_0_24px_#10b981]" />
+          </div>
+        </div>
+
+        {/* Crosshair Axes */}
+        <div className="w-[300px] sm:w-[380px] h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent absolute" />
+        <div className="h-[300px] sm:h-[380px] w-[1px] bg-gradient-to-b from-transparent via-emerald-500/50 to-transparent absolute" />
+
+        {/* Tactical Radar Blips (Targets) */}
+        <div className="absolute top-[34%] right-[32%] flex items-center justify-center">
+          <span className="w-3 h-3 rounded-full bg-emerald-400/60 animate-ping absolute" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 shadow-[0_0_8px_#34d399]" />
+          <span className="text-[7px] font-mono text-emerald-400 absolute -bottom-3 right-0 font-bold whitespace-nowrap">T-01</span>
+        </div>
+
+        <div className="absolute bottom-[36%] left-[34%] flex items-center justify-center">
+          <span className="w-2.5 h-2.5 rounded-full bg-green-400/60 animate-ping absolute" />
+          <span className="w-1.5 h-1.5 rounded-full bg-green-300 shadow-[0_0_6px_#4ade80]" />
+          <span className="text-[7px] font-mono text-green-400 absolute -bottom-3 left-0 font-bold whitespace-nowrap">S-09</span>
+        </div>
+
+        <div className="absolute top-[58%] right-[24%] flex items-center justify-center">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse absolute" />
+          <span className="w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+        </div>
       </div>
 
-      {/* Main Center Content */}
-      <div className="relative z-10 flex flex-col items-center space-y-6 max-w-xs w-full text-center">
+      {/* Main Center Content (Compact & Android Friendly) */}
+      <div className="relative z-10 flex flex-col items-center space-y-4 max-w-[260px] sm:max-w-xs w-full text-center">
         
-        {/* War Room Neon Logo over Radar */}
+        {/* War Room Logo in Deep Vibrant Green Neon Ring */}
         <div className="relative">
-          <div className="p-2 rounded-3xl neon-logo-glow bg-gradient-to-tr from-cyan-500/30 via-slate-900 to-blue-600/30 border border-cyan-400/50 shadow-[0_0_35px_rgba(6,182,212,0.6)]">
+          <div className="p-1.5 rounded-2xl bg-gradient-to-tr from-emerald-600 via-slate-950 to-green-500 border-2 border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.8)]">
             <img 
               src={warroomLogoJpg} 
               alt="War Room Logo" 
               referrerPolicy="no-referrer"
-              className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-2xl border border-white/20 shadow-2xl"
+              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl border border-emerald-300/40 shadow-xl"
             />
           </div>
 
           {/* Tactical Badge */}
-          <div className="absolute -bottom-2 right-1/2 translate-x-1/2 px-3 py-0.5 rounded-full bg-slate-950 border border-cyan-400/60 text-[10px] font-black text-cyan-300 font-mono tracking-widest uppercase shadow-md whitespace-nowrap">
-            WAR ROOM RADAR
+          <div className="absolute -bottom-2.5 right-1/2 translate-x-1/2 px-2.5 py-0.5 rounded-full bg-slate-950 border border-emerald-400 text-[9px] font-black text-emerald-300 font-mono tracking-wider uppercase shadow-md whitespace-nowrap">
+            سامانه اتاق جنگ
           </div>
         </div>
 
-        {/* Clean, Minimalist Text */}
-        <div className="space-y-1 pt-1">
-          <h2 className="text-xl font-black text-white tracking-wide drop-shadow-md">
+        {/* Text */}
+        <div className="space-y-0.5 pt-1">
+          <h2 className="text-lg sm:text-xl font-black text-white tracking-wide drop-shadow-[0_2px_10px_rgba(16,185,129,0.4)]">
             اتاق جنگ
           </h2>
-          <p className="text-xs text-cyan-300/80 font-mono flex items-center justify-center gap-1.5">
-            <Activity size={13} className="animate-spin text-cyan-400" />
-            <span>پایش راداری و بارگذاری سرورهای عملیاتی...</span>
+          <p className="text-[11px] text-emerald-300 font-mono flex items-center justify-center gap-1.5">
+            <Activity size={12} className="animate-spin text-emerald-400" />
+            <span>بارگذاری سیستم‌های عملیاتی...</span>
           </p>
         </div>
 
-        {/* Tactical Progress Bar */}
-        <div className="w-full space-y-2">
-          <div className="w-full h-2 bg-slate-950/80 rounded-full border border-cyan-500/30 overflow-hidden p-[1px] shadow-[inset_0_0_8px_rgba(0,0,0,0.8)]">
+        {/* Tactical Deep Green Progress Bar */}
+        <div className="w-full space-y-1.5">
+          <div className="w-full h-2 bg-slate-950 rounded-full border border-emerald-500/40 overflow-hidden p-[1px] shadow-[inset_0_0_8px_rgba(0,0,0,0.9)]">
             <motion.div 
-              className="h-full bg-gradient-to-r from-cyan-400 via-teal-400 to-blue-500 rounded-full shadow-[0_0_12px_rgba(6,182,212,0.9)]"
+              className="h-full bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-300 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.9)]"
               initial={{ width: '0%' }}
               animate={{ width: `${progress}%` }}
               transition={{ ease: 'easeOut', duration: 0.1 }}
             />
           </div>
           
-          <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
-            <span className="text-slate-400">سیستم دفاعی آنلاین</span>
-            <span className="text-cyan-300 font-bold tracking-wider">{progress}٪</span>
+          <div className="flex justify-between items-center text-[10px] font-mono text-emerald-200/80 px-1">
+            <span>سیستم آنلاین</span>
+            <span className="text-emerald-300 font-black tracking-wider">{progress}٪</span>
           </div>
         </div>
 

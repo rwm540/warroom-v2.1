@@ -94,40 +94,42 @@ export default function Navbar({
     }
   };
 
-  const handleSelectTab = (tab: string, isAdmin = false) => {
+  const handleSelectTab = (tab: string, isAdmin = false, isNotif = false) => {
+    if (isNotif && onOpenNotifications) {
+      setIsMobileMoreOpen(false);
+      onOpenNotifications();
+      return;
+    }
     setIsAdminView(isAdmin);
     setCurrentTab(tab);
     setIsMobileMoreOpen(false);
   };
 
-  // Full Desktop Navigation items (all visible on desktop/laptop)
-  const desktopNavItems = [
-    { id: 'Journey', label: 'نقشه مراحل بازی (Game Map)', icon: Gamepad2 },
-    { id: 'Rewards', label: 'جوایز و امتیازات (Prizes)', icon: Gift },
-    { id: 'Vitrin', label: 'ویترین و اکسپلور (Vitrin)', icon: Grid },
-    { id: 'Leaderboard', label: 'جدول رده‌بندی (Leaderboard)', icon: Trophy },
+  // Full Desktop Navigation items (Web desktop/laptop)
+  const desktopNavItems: { id: string; label: string; icon: any; badge?: string }[] = [
+    { id: 'Journey', label: 'نقشه مراحل بازی', icon: Gamepad2 },
+    { id: 'Rewards', label: 'جوایز و امتیازات', icon: Gift },
     { id: 'Dashboard', label: 'داشبورد عملیات', icon: LayoutDashboard },
-    { id: 'Trainings', label: 'آموزش‌ها', icon: BookOpen },
-    { id: 'Profile', label: 'پروفایل و نشان‌ها', icon: Award },
-    { id: 'Support', label: 'پشتیبانی و تیکت‌ها', icon: Headphones, badge: unreadTicketsCount > 0 ? formatToPersianDigits(unreadTicketsCount) : undefined },
+    { id: 'Vitrin', label: 'ویترین و آثار', icon: Grid },
   ];
 
   // Android Mobile Bottom Navigation (Core 4 tabs)
   const mobileBottomItems = [
     { id: 'Journey', label: 'نقشه بازی', icon: Gamepad2 },
-    { id: 'Rewards', label: 'جوایز ۹‌گانه', icon: Gift },
-    { id: 'Vitrin', label: 'ویترین آثار', icon: Grid },
-    { id: 'Leaderboard', label: 'رده‌بندی', icon: Trophy },
+    { id: 'Rewards', label: 'جوایز و امتیازات', icon: Gift },
+    { id: 'Dashboard', label: 'داشبورد عملیات', icon: LayoutDashboard },
+    { id: 'Vitrin', label: 'ویترین و آثار', icon: Grid },
   ];
 
   // Items shown inside the Mobile Android Bottom Sheet (More ...)
   const mobileSheetItems = [
     { 
-      id: 'Profile', 
-      label: 'پروفایل و مدال‌های فردی', 
-      desc: 'مشاهده نشان‌ها، آمار عملیاتی و دستاوردهای شخصی',
-      icon: Award, 
-      badge: 'شخصی' 
+      id: 'Notifications', 
+      label: 'مرکز پیام‌ها و اعلانات ستاد', 
+      desc: 'مشاهده دستورالعمل‌های عملیاتی، اخطارهای فوری و نشان‌ها',
+      icon: Bell,
+      badge: unreadNotificationsCount > 0 ? `${formatToPersianDigits(unreadNotificationsCount)} جدید` : undefined,
+      isNotification: true
     },
     ...(currentUser?.role === 'admin' ? [
       { 
@@ -221,7 +223,7 @@ export default function Navbar({
                 </button>
               )}
 
-              {/* Admin Panel Switcher (Desktop trigger) */}
+              {/* Admin Panel Switcher (Visible on both mobile & desktop) */}
               {currentUser.role === 'admin' && (
                 <button
                   onClick={() => {
@@ -229,14 +231,14 @@ export default function Navbar({
                     setIsAdminView(target);
                     setCurrentTab(target ? 'Admin' : 'Dashboard');
                   }}
-                  className={`hidden md:flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition border ${
+                  className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition border ${
                     isAdminView 
                       ? 'bg-amber-500 text-black border-amber-400 font-black shadow-[0_0_12px_rgba(245,158,11,0.5)]' 
                       : 'bg-amber-950/40 text-amber-300 border-amber-800/60 hover:bg-amber-900/50'
                   }`}
                 >
-                  <SlidersHorizontal size={14} />
-                  <span>{isAdminView ? 'خروج از پنل ادمین' : 'پنل مدیریت ستاد'}</span>
+                  <SlidersHorizontal size={13} />
+                  <span>{isAdminView ? 'خروج از ادمین' : 'پنل ادمین'}</span>
                 </button>
               )}
 
@@ -322,62 +324,6 @@ export default function Navbar({
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. ANDROID MOBILE BOTTOM NAVIGATION (VISIBLE ONLY ON MOBILE < MD)         */}
-      {/* ========================================================================= */}
-      {currentUser && (
-        <nav 
-          aria-label="منوی موبایل اندروید"
-          className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#050816]/95 backdrop-blur-xl border-t border-cyan-500/30 shadow-[0_-8px_30px_rgba(0,0,0,0.85)] dir-rtl"
-        >
-          <div className="grid grid-cols-4 items-center justify-items-center px-4 py-2">
-            
-            {/* 4 Primary Android Tabs */}
-            {mobileBottomItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentTab === item.id && !isAdminView;
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleSelectTab(item.id, false)}
-                  title={item.label}
-                  className={`flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all ${
-                    isActive
-                      ? 'text-cyan-300 font-black scale-105'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <div className={`p-2 rounded-xl transition ${
-                    isActive ? 'bg-cyan-500/25 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-cyan-500/40' : 'hover:bg-slate-900/80'
-                  }`}>
-                    <Icon size={22} strokeWidth={isActive ? 2.4 : 1.7} />
-                  </div>
-                </button>
-              );
-            })}
-
-            {/* 5th Tab: Android Three-Dots ("سایر") -> Opens Slide-up Sheet */}
-            <button
-              onClick={() => setIsMobileMoreOpen(true)}
-              title="سایر امکانات و منو"
-              className={`flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all ${
-                isMobileMoreOpen
-                  ? 'text-amber-400 font-black scale-105'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <div className={`p-2 rounded-xl transition ${
-                isMobileMoreOpen ? 'bg-amber-500/25 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.5)] border border-amber-500/40' : 'hover:bg-slate-900/80'
-              }`}>
-                <MoreHorizontal size={22} strokeWidth={2.2} />
-              </div>
-            </button>
-
-          </div>
-        </nav>
-      )}
-
-      {/* ========================================================================= */}
       {/* 3. ANDROID SLIDE-UP BOTTOM SHEET (OPENS ON MOBILE WHEN "سایر" IS CLICKED) */}
       {/* ========================================================================= */}
       <AnimatePresence>
@@ -436,7 +382,7 @@ export default function Navbar({
                   return (
                     <button
                       key={item.id}
-                      onClick={() => handleSelectTab(item.id, !!item.isAdmin)}
+                      onClick={() => handleSelectTab(item.id, !!item.isAdmin, !!item.isNotification)}
                       className={`w-full p-3 rounded-2xl border transition-all flex items-center justify-between text-right ${
                         isActive
                           ? 'bg-gradient-to-r from-cyan-950/90 to-slate-900 border-cyan-500/60 shadow-[0_0_15px_rgba(6,182,212,0.2)] text-white'

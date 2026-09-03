@@ -200,17 +200,6 @@ export default function MissionsView({
             پاسخ‌های مأموریت را بارگذاری نمایید. ارسال فایل جدید جایگزین پاسخ‌های قبلی شما خواهد شد.
           </p>
         </div>
-
-        {onNavigate && (
-          <button
-            onClick={() => onNavigate('Home')}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-white hover:border-red-500/50 text-xs font-bold transition shadow-md group shrink-0"
-          >
-            <Home size={14} className="text-red-400 group-hover:scale-110 transition" />
-            <span>بازگشت به صفحه اصلی</span>
-            <ArrowLeft size={14} className="text-slate-400" />
-          </button>
-        )}
       </div>
 
       {/* Main Grid: Mission Selector List (Right) + Mission Details & File Upload (Left) */}

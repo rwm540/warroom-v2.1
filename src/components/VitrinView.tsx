@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Heart, 
@@ -8,43 +8,34 @@ import {
   Share2, 
   Sparkles, 
   X, 
-  User as UserIcon, 
-  Flame, 
-  Award, 
-  Eye, 
+  Bookmark, 
   Send, 
-  ShieldCheck,
-  Film,
-  Camera,
-  Layers,
-  Home
+  Check, 
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  User as UserIcon,
+  MessageSquarePlus,
+  ThumbsUp,
+  Loader2,
+  ArrowDown
 } from 'lucide-react';
 import { User } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
+import { 
+  VitrinPost, 
+  VitrinComment, 
+  initialVitrinPosts, 
+  getSavedPostIds, 
+  savePostId, 
+  getAllComments, 
+  saveComment 
+} from '../data/vitrinData';
 
 interface VitrinViewProps {
   currentUser: User | null;
   triggerAlert: (msg: string) => void;
   onNavigate?: (tab: string) => void;
-}
-
-export interface VitrinPost {
-  id: string;
-  authorName: string;
-  authorAvatar: string;
-  squadName: string;
-  title: string;
-  description: string;
-  mediaUrl: string;
-  mediaType: 'image' | 'video';
-  likesCount: number;
-  isLikedByUser: boolean;
-  ratingAverage: number; // 1 to 5
-  userRating?: number;
-  commentsCount: number;
-  stageTag: string;
-  badge?: string;
-  aspectRatio?: 'square' | 'portrait';
 }
 
 export default function VitrinView({
@@ -54,106 +45,94 @@ export default function VitrinView({
 }: VitrinViewProps) {
   const isGirls = currentUser?.gender === 'دختر' || localStorage.getItem('hisstory_theme_mode') === 'girls';
 
-  // Sample explore items from users nationwide
-  const [posts, setPosts] = useState<VitrinPost[]>([
-    {
-      id: 'v1',
-      authorName: 'سید علی حسینی',
-      authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-      squadName: 'جوخه صاعقه ۱۲',
-      title: 'ماکت عملیاتی قرارگاه تاکتیکی مرحله ۳',
-      description: 'طراحی ماکت بازسازی شده از عملیات فتح با مقوا، چراغ‌های ال‌ای‌دی و چوب کبریت.',
-      mediaUrl: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=800&q=80',
-      mediaType: 'image',
-      likesCount: 142,
-      isLikedByUser: false,
-      ratingAverage: 4.8,
-      commentsCount: 28,
-      stageTag: 'مرحله ۳ - فتح‌المبین',
-      badge: 'برگزیده داوران'
-    },
-    {
-      id: 'v2',
-      authorName: 'زهرا کاظمی',
-      authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      squadName: 'جوخه نسترن‌های نور',
-      title: 'مستند ویدیویی مصاحبه با جانباز محله',
-      description: 'روایت شفاهی ناگفته‌های شب عملیات از زبان رزمنده پیشکسوت دفاع مقدس.',
-      mediaUrl: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=800&q=80',
-      mediaType: 'video',
-      likesCount: 289,
-      isLikedByUser: true,
-      ratingAverage: 5.0,
-      commentsCount: 45,
-      stageTag: 'مرحله ۵ - روایت فتح',
-      badge: '۵ ستاره طلایی'
-    },
-    {
-      id: 'v3',
-      authorName: 'محمدرضا پورمند',
-      authorAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&q=80',
-      squadName: 'جوخه طوفان سرخ',
-      title: 'کتابچه دیجیتال و تحلیل رمزشکنی',
-      description: 'کتابچه مصور ۴۰ صفحه‌ای از تحلیل پیام‌های رمز و سرنخ‌های مرحله اول.',
-      mediaUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
-      mediaType: 'image',
-      likesCount: 95,
-      isLikedByUser: false,
-      ratingAverage: 4.5,
-      commentsCount: 14,
-      stageTag: 'مرحله ۱ - سرنخ آغاز'
-    },
-    {
-      id: 'v4',
-      authorName: 'فاطمه احمدی',
-      authorAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
-      squadName: 'جوخه پرواز',
-      title: 'نقاشی دیجیتال کارآگاه تاریخ',
-      description: 'طراحی چهره قهرمان داستان در سبک کمیک و دیجیتال آرت.',
-      mediaUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
-      mediaType: 'image',
-      likesCount: 310,
-      isLikedByUser: false,
-      ratingAverage: 4.9,
-      commentsCount: 52,
-      stageTag: 'مرحله ۲ - چهره‌های ماندگار'
-    },
-    {
-      id: 'v5',
-      authorName: 'امیرعلی رضایی',
-      authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-      squadName: 'جوخه الفجر',
-      title: 'پادکست صوتی رازهای خط مقدم',
-      description: 'ضبط ۳ دقیقه‌ای با افکت‌های صدای بیسیم و باران در سنگر.',
-      mediaUrl: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=800&q=80',
-      mediaType: 'video',
-      likesCount: 180,
-      isLikedByUser: false,
-      ratingAverage: 4.7,
-      commentsCount: 33,
-      stageTag: 'مرحله ۴ - بیسیم‌چی'
-    },
-    {
-      id: 'v6',
-      authorName: 'مریم سلیمانی',
-      authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
-      squadName: 'جوخه یاس',
-      title: 'گزارش روزنامه‌دیواری محله ما',
-      description: 'روزنامه دیواری ویژه دهه فجر و بازخوانی اسناد اتاق جنگ.',
-      mediaUrl: 'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?auto=format&fit=crop&w=800&q=80',
-      mediaType: 'image',
-      likesCount: 125,
-      isLikedByUser: true,
-      ratingAverage: 4.6,
-      commentsCount: 19,
-      stageTag: 'مرحله ۶ - رسانه سنگر'
-    }
-  ]);
+  // Initialize posts with saved bookmark status from localStorage
+  const [posts, setPosts] = useState<VitrinPost[]>(() => {
+    const savedIds = getSavedPostIds(currentUser?.id);
+    return initialVitrinPosts.map(p => ({
+      ...p,
+      isBookmarked: savedIds.includes(p.id)
+    }));
+  });
 
-  const [activeCategory, setActiveCategory] = useState<'all' | 'video' | 'image' | 'top'>('all');
+  // Lazy Loading for Vitrin Feed: Display 1 post initially, load 1 next post per scroll/trigger
+  const [visiblePostsCount, setVisiblePostsCount] = useState<number>(1);
+  const [isLoadingNextPost, setIsLoadingNextPost] = useState<boolean>(false);
+  const bottomSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Lazy Loading for Comments: Display 5 comments at a time per post
+  const [visibleCommentsCountMap, setVisibleCommentsCountMap] = useState<Record<string, number>>({});
+  const [loadingCommentsPostId, setLoadingCommentsPostId] = useState<string | null>(null);
+
+  const getVisibleCommentsCount = (postId: string) => visibleCommentsCountMap[postId] || 5;
+
+  const loadMoreComments = (postId: string) => {
+    setLoadingCommentsPostId(postId);
+    setTimeout(() => {
+      setVisibleCommentsCountMap(prev => ({
+        ...prev,
+        [postId]: (prev[postId] || 5) + 5
+      }));
+      setLoadingCommentsPostId(null);
+    }, 280);
+  };
+
+  const loadNextPost = () => {
+    if (visiblePostsCount >= posts.length || isLoadingNextPost) return;
+    setIsLoadingNextPost(true);
+    setTimeout(() => {
+      setVisiblePostsCount(prev => Math.min(posts.length, prev + 1));
+      setIsLoadingNextPost(false);
+    }, 450);
+  };
+
+  // IntersectionObserver to auto-load next post when scrolling to the bottom sentinel
+  useEffect(() => {
+    const sentinel = bottomSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (entry && entry.isIntersecting && visiblePostsCount < posts.length && !isLoadingNextPost) {
+        loadNextPost();
+      }
+    }, {
+      rootMargin: '160px',
+      threshold: 0.1
+    });
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [visiblePostsCount, posts.length, isLoadingNextPost]);
+
+  // Window scroll event listener to guarantee smooth auto-loading on all devices
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isLoadingNextPost || visiblePostsCount >= posts.length) return;
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
+      if (scrollY + windowHeight >= docHeight - 250) {
+        loadNextPost();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [visiblePostsCount, posts.length, isLoadingNextPost]);
+
+  // Comments map state
+  const [commentsMap, setCommentsMap] = useState<Record<string, VitrinComment[]>>(() => getAllComments());
+  
+  // Active expandable comments section on feed cards
+  const [expandedCommentsPostId, setExpandedCommentsPostId] = useState<string | null>(null);
+  
+  // Comment draft inputs per post
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+
   const [selectedPost, setSelectedPost] = useState<VitrinPost | null>(null);
   const [heartAnimId, setHeartAnimId] = useState<string | null>(null);
-  const [newCommentText, setNewCommentText] = useState('');
+  const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   // Double Click / Double Tap to Like implementation
   const [lastTap, setLastTap] = useState<{ [key: string]: number }>({});
@@ -163,7 +142,6 @@ export default function VitrinView({
     const prevTap = lastTap[post.id] || 0;
 
     if (now - prevTap < 300) {
-      // It's a double tap!
       toggleLike(post.id, true);
       setHeartAnimId(post.id);
       setTimeout(() => setHeartAnimId(null), 800);
@@ -188,8 +166,65 @@ export default function VitrinView({
       setSelectedPost(prev => prev ? {
         ...prev,
         isLikedByUser: forceLike ? true : !prev.isLikedByUser,
-        likesCount: (forceLike || !prev.isLikedByUser) ? prev.likesCount + 1 : prev.likesCount - 1
+        likesCount: (forceLike || !prev.isLikedByUser) ? prev.likesCount + 1 : Math.max(0, prev.likesCount - 1)
       } : null);
+    }
+  };
+
+  // Toggle Bookmark & Persist into Saved Vitrin Posts
+  const toggleBookmark = (postId: string) => {
+    const isAdded = savePostId(postId, currentUser?.id);
+    
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        return { ...p, isBookmarked: isAdded };
+      }
+      return p;
+    }));
+
+    if (selectedPost && selectedPost.id === postId) {
+      setSelectedPost(prev => prev ? { ...prev, isBookmarked: isAdded } : null);
+    }
+
+    if (isAdded) {
+      triggerAlert('اثر در بخش «ذخیره‌های ویترین» پروفایل شما ذخیره شد.');
+    } else {
+      triggerAlert('اثر از ذخیره‌های ویترین حذف شد.');
+    }
+  };
+
+  // Real Share Link Copy to Clipboard
+  const handleSharePost = (post: VitrinPost) => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}#vitrin-post-${post.id}`;
+    
+    const fallbackCopy = (text: string) => {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopiedPostId(post.id);
+        setTimeout(() => setCopiedPostId(null), 2500);
+        triggerAlert(`لینک اثر «${post.title}» کپی شد!`);
+      } catch (err) {
+        triggerAlert(`لینک اشتراک: ${text}`);
+      }
+    };
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(shareUrl)
+        .then(() => {
+          setCopiedPostId(post.id);
+          setTimeout(() => setCopiedPostId(null), 2500);
+          triggerAlert(`لینک اثر «${post.title}» کپی شد!`);
+        })
+        .catch(() => {
+          fallbackCopy(shareUrl);
+        });
+    } else {
+      fallbackCopy(shareUrl);
     }
   };
 
@@ -214,180 +249,511 @@ export default function VitrinView({
       } : null);
     }
 
-    triggerAlert(`امتیاز ${stars} ستاره برای اثر ثبت شد.`);
+    triggerAlert(`امتیاز ${stars} ستاره برای این اثر ثبت شد.`);
   };
 
-  const filteredPosts = posts.filter(p => {
-    if (activeCategory === 'video') return p.mediaType === 'video';
-    if (activeCategory === 'image') return p.mediaType === 'image';
-    if (activeCategory === 'top') return (p.ratingAverage >= 4.8);
-    return true;
-  });
+  // Add a new comment
+  const handleAddComment = (postId: string) => {
+    const content = (commentInputs[postId] || '').trim();
+    if (!content) {
+      triggerAlert('لطفاً متن نظر خود را بنویسید.');
+      return;
+    }
+
+    const authorName = currentUser 
+      ? `${currentUser.first_name} ${currentUser.last_name}` 
+      : 'رزمنده مهمان';
+
+    const authorSquad = currentUser?.role === 'admin' 
+      ? 'ستاد فرماندهی' 
+      : (currentUser?.gender === 'دختر' ? 'جوخه نسترن' : 'جوخه صاعقه');
+
+    const defaultAvatar = currentUser?.gender === 'دختر'
+      ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80';
+
+    const newComment: VitrinComment = {
+      id: `c_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      postId,
+      authorName,
+      authorAvatar: currentUser?.avatar_url || defaultAvatar,
+      authorSquad,
+      content,
+      createdAt: 'هم‌اکنون',
+      likesCount: 0,
+      isLiked: false
+    };
+
+    const updatedComments = saveComment(newComment);
+    setCommentsMap(updatedComments);
+    setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+
+    // Ensure newly added comment is visible
+    setVisibleCommentsCountMap(prev => ({
+      ...prev,
+      [postId]: Math.max(prev[postId] || 5, 5)
+    }));
+
+    // Update comments count on post
+    const currentCount = updatedComments[postId]?.length || 1;
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, commentsCount: currentCount } : p));
+    if (selectedPost && selectedPost.id === postId) {
+      setSelectedPost(prev => prev ? { ...prev, commentsCount: currentCount } : null);
+    }
+
+    triggerAlert('دیدگاه شما با موفقیت ثبت و منتشر شد.');
+  };
+
+  // Like a comment
+  const handleToggleCommentLike = (postId: string, commentId: string) => {
+    setCommentsMap(prev => {
+      const list = prev[postId] || [];
+      const updatedList = list.map(c => {
+        if (c.id === commentId) {
+          const nextLiked = !c.isLiked;
+          return {
+            ...c,
+            isLiked: nextLiked,
+            likesCount: nextLiked ? (c.likesCount || 0) + 1 : Math.max(0, (c.likesCount || 0) - 1)
+          };
+        }
+        return c;
+      });
+      const nextMap = { ...prev, [postId]: updatedList };
+      try {
+        localStorage.setItem('warroom_vitrin_comments', JSON.stringify(nextMap));
+      } catch (e) {}
+      return nextMap;
+    });
+  };
+
+  // Total saved count for user
+  const savedCount = posts.filter(p => p.isBookmarked).length;
 
   return (
-    <div className="space-y-6 dir-rtl pb-28 max-w-5xl mx-auto px-3 sm:px-6 pt-4 font-sans select-none">
-      
-      {/* 1. Explore Header */}
-      <div className={`p-5 sm:p-7 rounded-3xl relative overflow-hidden shadow-2xl border transition-all duration-500 ${
-        isGirls
-          ? 'bg-gradient-to-r from-[#1d091e] via-[#120513] to-[#080208] border-pink-500/40'
-          : 'bg-gradient-to-r from-[#07132b] via-[#050c1c] to-[#02060e] border-cyan-400/40'
-      }`}>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="space-y-1 text-center sm:text-right">
-            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono border ${
-              isGirls 
-                ? 'bg-pink-950/80 text-pink-300 border-pink-500/50' 
-                : 'bg-cyan-950/80 text-cyan-300 border-cyan-500/50'
-            }`}>
-              WAR ROOM EXPLORE & VITRIN
-            </span>
-            <h1 className="text-xl sm:text-2xl font-black text-white">
-              ویترین افتخارات و اکسپلور رزمندگان
-            </h1>
-            <p className="text-xs text-slate-300">
-              مشاهده آثار ویدیویی، دست‌سازه‌ها و گزارش‌های بچه‌های سراسر کشور (دوبار کلیک برای لایک ❤️)
-            </p>
-          </div>
+    <div className="space-y-5 dir-rtl pb-28 max-w-4xl mx-auto px-2.5 sm:px-4 pt-1 font-sans select-none">
+      {/* 2. Instagram Feed / Timeline Stream with 1-by-1 Post Lazy Loading */}
+      <div className="max-w-xl mx-auto space-y-6">
+        {posts.slice(0, visiblePostsCount).map((post, postIndex) => {
+          const isPlaying = playingVideoId === post.id;
+          const postComments = commentsMap[post.id] || [];
+          const isCommentsExpanded = expandedCommentsPostId === post.id;
+          const currentVisibleLimit = getVisibleCommentsCount(post.id);
+          const visibleComments = postComments.slice(0, currentVisibleLimit);
+          const hasMoreComments = postComments.length > currentVisibleLimit;
 
-          <div className="flex items-center gap-3">
-            {onNavigate && (
-              <button
-                onClick={() => onNavigate('Home')}
-                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-slate-200 hover:text-white hover:border-cyan-500/50 text-xs font-bold transition shadow-md group shrink-0"
-              >
-                <Home size={15} className="text-cyan-400 group-hover:scale-110 transition" />
-                <span>صفحه اصلی</span>
-              </button>
-            )}
-
-            <span className="text-xs text-slate-400 font-mono">
-              {formatToPersianDigits(posts.length)} اثر ثبت‌شده
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Categories Filter */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        {[
-          { id: 'all', label: 'همه آثار (Explore)' },
-          { id: 'video', label: 'ویدیوها و مستندها' },
-          { id: 'image', label: 'تصاویر و دست‌سازه‌ها' },
-          { id: 'top', label: 'برگزیدگان داوری (۵ ستاره)' }
-        ].map(cat => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveCategory(cat.id as any)}
-            className={`px-3.5 py-2 rounded-xl font-bold whitespace-nowrap transition border ${
-              activeCategory === cat.id
-                ? isGirls 
-                  ? 'bg-pink-950 border-pink-500 text-pink-200 shadow-md shadow-pink-900/30' 
-                  : 'bg-cyan-950 border-cyan-400 text-cyan-200 shadow-md shadow-cyan-900/30'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 3. Instagram-Style Explore Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
-        {filteredPosts.map((post) => (
-          <div
-            key={post.id}
-            onClick={() => handleDoubleTap(post)}
-            className="group relative aspect-square sm:aspect-[4/5] rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 hover:border-slate-600 transition cursor-pointer"
-          >
-            {/* Background Media */}
-            <img 
-              src={post.mediaUrl} 
-              alt={post.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-
-            {/* Video Badge if Video */}
-            {post.mediaType === 'video' && (
-              <div className="absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/60 backdrop-blur-md text-white">
-                <Play size={13} className="fill-white" />
-              </div>
-            )}
-
-            {/* Top Stage Tag */}
-            <div className="absolute top-2.5 left-2.5">
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-slate-950/80 text-amber-300 border border-amber-500/30 backdrop-blur-md">
-                {post.stageTag}
-              </span>
-            </div>
-
-            {/* Double Tap Big Floating Animated Heart */}
-            <AnimatePresence>
-              {heartAnimId === post.id && (
-                <motion.div 
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1.3, opacity: 1 }}
-                  exit={{ scale: 1.8, opacity: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
-                >
-                  <Heart size={70} className="fill-rose-500 text-rose-500 drop-shadow-[0_0_25px_rgba(244,63,94,0.9)]" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Instagram Hover / Tap Overlay Info */}
-            <div 
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedPost(post);
-              }}
-              className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end text-white"
+          return (
+            <motion.div 
+              key={post.id}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
+              className="bg-[#080d1a] border border-slate-800 rounded-3xl overflow-hidden shadow-xl"
             >
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <img 
-                  src={post.authorAvatar} 
-                  alt={post.authorName} 
-                  className="w-5 h-5 rounded-full object-cover border border-white/40"
-                />
-                <span className="text-[11px] font-black line-clamp-1">{post.authorName}</span>
+              {/* Feed Header (Author Info & Badge) */}
+              <div className="p-3.5 flex items-center justify-between border-b border-slate-800/80">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-0.5 rounded-full bg-gradient-to-tr from-rose-500 to-amber-400">
+                    <img 
+                      src={post.authorAvatar} 
+                      alt={post.authorName} 
+                      loading="lazy"
+                      className="w-9 h-9 rounded-full object-cover border border-[#080d1a]"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-black text-white">{post.authorName}</span>
+                      {post.badge && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-500/40">
+                          {post.badge}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">{post.squadName}</span>
+                  </div>
+                </div>
+
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {post.timeAgo || 'امروز'}
+                </span>
               </div>
 
-              <h4 className="text-xs font-bold line-clamp-1 mb-2 text-slate-100">
-                {post.title}
-              </h4>
+              {/* Feed Media with Lazy Loading & Double Tap */}
+              <div 
+                onClick={() => handleDoubleTap(post)}
+                className="relative aspect-square sm:aspect-[4/3] bg-black flex items-center justify-center overflow-hidden cursor-pointer group select-none"
+              >
+                {post.mediaType === 'video' && isPlaying ? (
+                  <video 
+                    src={post.videoSourceUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'} 
+                    controls 
+                    autoPlay 
+                    playsInline
+                    preload="none"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <>
+                    <img 
+                      src={post.mediaUrl} 
+                      alt={post.title} 
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover group-hover:scale-102 transition duration-500"
+                    />
+                    {post.mediaType === 'video' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPlayingVideoId(post.id);
+                        }}
+                        className="absolute p-3.5 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white backdrop-blur-md shadow-2xl transition transform hover:scale-110"
+                        title="پخش ویدیو"
+                      >
+                        <Play size={24} className="fill-white mr-0.5" />
+                      </button>
+                    )}
+                  </>
+                )}
 
-              {/* Interactions Bar */}
-              <div className="flex items-center justify-between text-[11px] font-mono text-slate-300">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex items-center gap-1">
-                    <Heart size={13} className={post.isLikedByUser ? 'fill-rose-500 text-rose-500' : ''} />
-                    {formatToPersianDigits(post.likesCount)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Star size={13} className="fill-amber-400 text-amber-400" />
-                    {formatToPersianDigits(post.ratingAverage)}
+                {/* Stage Tag */}
+                <div className="absolute top-3 left-3 pointer-events-none">
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-black/70 text-amber-300 border border-amber-500/30 backdrop-blur-md">
+                    {post.stageTag}
                   </span>
                 </div>
 
-                <span className="text-[10px] text-cyan-300 font-sans font-bold">مشاهده کامل</span>
+                {/* Double Tap Floating Animated Heart */}
+                <AnimatePresence>
+                  {heartAnimId === post.id && (
+                    <motion.div 
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1.4, opacity: 1 }}
+                      exit={{ scale: 2, opacity: 0 }}
+                      transition={{ duration: 0.5 }}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
+                    >
+                      <Heart size={80} className="fill-rose-500 text-rose-500 drop-shadow-[0_0_30px_rgba(244,63,94,0.9)]" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
+
+              {/* Feed Actions (Like, Comment, Share Link, Bookmark) */}
+              <div className="p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {/* Heart Like */}
+                    <button
+                      onClick={() => toggleLike(post.id)}
+                      className="p-1 text-slate-300 hover:text-rose-500 transition transform active:scale-125"
+                      title={post.isLikedByUser ? 'حذف لایک' : 'پسندیدن اثر'}
+                    >
+                      <Heart 
+                        size={22} 
+                        className={post.isLikedByUser ? 'fill-rose-500 text-rose-500' : ''} 
+                      />
+                    </button>
+
+                    {/* Comment Toggle */}
+                    <button
+                      onClick={() => setExpandedCommentsPostId(isCommentsExpanded ? null : post.id)}
+                      className={`p-1 transition flex items-center gap-1 ${
+                        isCommentsExpanded 
+                          ? isGirls ? 'text-pink-400' : 'text-cyan-400'
+                          : 'text-slate-300 hover:text-cyan-400'
+                      }`}
+                      title="نمایش یا ارسال دیدگاه"
+                    >
+                      <MessageCircle size={21} />
+                      <span className="text-xs font-bold font-mono">
+                        {formatToPersianDigits(postComments.length)}
+                      </span>
+                    </button>
+
+                    {/* Share Link */}
+                    <button
+                      onClick={() => handleSharePost(post)}
+                      className="p-1 text-slate-300 hover:text-cyan-400 transition"
+                      title="کپی لینک اختصاصی این اثر"
+                    >
+                      {copiedPostId === post.id ? (
+                        <Check size={21} className="text-emerald-400" />
+                      ) : (
+                        <Share2 size={20} />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Bookmark Button */}
+                  <button
+                    onClick={() => toggleBookmark(post.id)}
+                    className="p-1 text-slate-300 hover:text-amber-400 transition transform active:scale-125"
+                    title={post.isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره در ذخیره‌های ویترین'}
+                  >
+                    <Bookmark 
+                      size={21} 
+                      className={post.isBookmarked ? 'fill-amber-400 text-amber-400' : ''} 
+                    />
+                  </button>
+                </div>
+
+                {/* Likes Count */}
+                <div className="text-xs font-black text-white">
+                  {formatToPersianDigits(post.likesCount)} پسند (لایک)
+                </div>
+
+                {/* Caption & Title */}
+                <div className="text-xs text-slate-200 leading-relaxed space-y-0.5">
+                  <span className="font-black text-white ml-1.5">{post.authorName}:</span>
+                  <strong className="text-white block sm:inline font-bold">{post.title} - </strong>
+                  <span className="text-slate-300">{post.description}</span>
+                </div>
+
+                {/* 1-5 Star Interactive Rating */}
+                <div className="pt-2 flex items-center justify-between border-t border-slate-800/80 text-xs">
+                  <span className="text-slate-400 text-[11px]">
+                    میانگین امتیاز: <strong className="text-amber-300 font-mono">{formatToPersianDigits(post.ratingAverage)}</strong> از ۵
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => handleRatePost(post.id, star)}
+                        className="text-slate-600 hover:text-amber-400 transition transform hover:scale-125 p-0.5"
+                        title={`ثبت امتیاز ${star} ستاره`}
+                      >
+                        <Star 
+                          size={16} 
+                          className={(post.userRating || 0) >= star ? 'fill-amber-400 text-amber-400' : ''} 
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Toggle Comments Button */}
+                <button
+                  onClick={() => setExpandedCommentsPostId(isCommentsExpanded ? null : post.id)}
+                  className="text-[11px] text-slate-400 hover:text-slate-200 pt-0.5 flex items-center gap-1.5 transition"
+                >
+                  <MessageSquarePlus size={13} className={isGirls ? 'text-pink-400' : 'text-cyan-400'} />
+                  <span>
+                    {isCommentsExpanded 
+                      ? 'بستن بخش دیدگاه‌ها' 
+                      : `مشاهده هر ${formatToPersianDigits(postComments.length)} دیدگاه و ارسال نظر...`}
+                  </span>
+                  {isCommentsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
+
+                {/* ========================================================================= */}
+                {/* EXPANDABLE COMMENTS STREAM & INPUT FORM                                    */}
+                {/* ========================================================================= */}
+                <AnimatePresence>
+                  {isCommentsExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-3 pt-3 border-t border-slate-800 space-y-3 overflow-hidden"
+                    >
+                      {/* Comments List Header */}
+                      <div className="flex items-center justify-between text-[11px] text-slate-400">
+                        <span className="font-bold text-slate-300">
+                          نظرات و دیدگاه‌های همرزمان ({formatToPersianDigits(Math.min(currentVisibleLimit, postComments.length))} از {formatToPersianDigits(postComments.length)})
+                        </span>
+                        <span className="text-[10px] text-slate-500">لیزی لود ۵ تایی</span>
+                      </div>
+
+                      {/* Comments Scrollable Area */}
+                      <div className="max-h-60 overflow-y-auto space-y-2.5 pr-1 text-xs">
+                        {postComments.length === 0 ? (
+                          <div className="py-4 text-center text-slate-500 text-[11px]">
+                            هنوز دیدگاهی برای این اثر ثبت نشده است. اولین نظر را شما بنویسید!
+                          </div>
+                        ) : (
+                          <>
+                            {visibleComments.map((comment) => (
+                              <div 
+                                key={comment.id}
+                                className="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex items-start justify-between gap-2.5"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[11px] font-bold text-slate-200 overflow-hidden flex-shrink-0">
+                                    {comment.authorAvatar ? (
+                                      <img src={comment.authorAvatar} alt={comment.authorName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      comment.authorName[0] || 'ر'
+                                    )}
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="font-black text-white text-[11px]">{comment.authorName}</span>
+                                      {comment.authorSquad && (
+                                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 text-slate-400 font-mono">
+                                          {comment.authorSquad}
+                                        </span>
+                                      )}
+                                      <span className="text-[9px] text-slate-500 font-mono">{comment.createdAt}</span>
+                                    </div>
+                                    <p className="text-slate-300 text-[11px] leading-relaxed">
+                                      {comment.content}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Comment Like Button */}
+                                <button
+                                  onClick={() => handleToggleCommentLike(post.id, comment.id)}
+                                  className="flex flex-col items-center justify-center p-1 text-slate-500 hover:text-rose-400 transition"
+                                  title="پسندیدن این دیدگاه"
+                                >
+                                  <Heart 
+                                    size={13} 
+                                    className={comment.isLiked ? 'fill-rose-500 text-rose-500' : ''} 
+                                  />
+                                  {(comment.likesCount || 0) > 0 && (
+                                    <span className="text-[9px] font-mono mt-0.5">
+                                      {formatToPersianDigits(comment.likesCount)}
+                                    </span>
+                                  )}
+                                </button>
+                              </div>
+                            ))}
+
+                            {/* Lazy load 5 more comments button */}
+                            {hasMoreComments && (
+                              <div className="pt-1.5 pb-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => loadMoreComments(post.id)}
+                                  disabled={loadingCommentsPostId === post.id}
+                                  className={`w-full py-2 px-3 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-2 ${
+                                    isGirls
+                                      ? 'bg-pink-950/40 hover:bg-pink-900/60 border-pink-500/40 text-pink-200'
+                                      : 'bg-cyan-950/40 hover:bg-cyan-900/60 border-cyan-500/40 text-cyan-200'
+                                  }`}
+                                >
+                                  {loadingCommentsPostId === post.id ? (
+                                    <>
+                                      <Loader2 size={13} className="animate-spin text-cyan-400" />
+                                      <span>در حال بارگذاری ۵ دیدگاه بعدی...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ChevronDown size={14} />
+                                      <span>
+                                        بارگذاری ۵ دیدگاه بیشتر (نمایش {formatToPersianDigits(Math.min(currentVisibleLimit, postComments.length))} از {formatToPersianDigits(postComments.length)})
+                                      </span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Comment Input Box */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-black text-white flex-shrink-0">
+                          {currentUser ? currentUser.first_name[0] : <UserIcon size={14} />}
+                        </div>
+                        <div className="flex-1 relative">
+                          <input 
+                            type="text"
+                            value={commentInputs[post.id] || ''}
+                            onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleAddComment(post.id);
+                              }
+                            }}
+                            placeholder="دیدگاه خود را درباره این اثر بنویسید..."
+                            className="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none transition"
+                          />
+                        </div>
+                        <button
+                          onClick={() => handleAddComment(post.id)}
+                          className={`p-2 rounded-xl text-black font-bold transition flex items-center justify-center ${
+                            isGirls 
+                              ? 'bg-gradient-to-r from-pink-400 to-rose-500 hover:brightness-110' 
+                              : 'bg-gradient-to-r from-cyan-400 to-blue-500 hover:brightness-110'
+                          }`}
+                          title="ارسال دیدگاه"
+                        >
+                          <Send size={15} className="mr-0.5" />
+                        </button>
+                      </div>
+
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+              </div>
+
+            </motion.div>
+          );
+        })}
+
+        {/* Lazy Loading Sentinel and Next Video Controller */}
+        {visiblePostsCount < posts.length ? (
+          <div 
+            ref={bottomSentinelRef} 
+            className="py-6 flex flex-col items-center justify-center gap-3 transition-all"
+          >
+            {/* Status counter pill */}
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs text-slate-300 font-mono shadow-sm">
+              <span>در حال نمایش اثر {formatToPersianDigits(visiblePostsCount)} از {formatToPersianDigits(posts.length)}</span>
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
             </div>
+
+            {/* Loading Indicator or Action Button */}
+            {isLoadingNextPost ? (
+              <div className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-cyan-950/50 border border-cyan-500/40 text-cyan-300 text-xs font-bold shadow-lg animate-pulse">
+                <Loader2 size={18} className="animate-spin text-cyan-400" />
+                <span>در حال بارگذاری ویدیوی بعدی...</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={loadNextPost}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition shadow-lg border group ${
+                  isGirls 
+                    ? 'bg-gradient-to-r from-pink-950/70 to-purple-950/70 border-pink-500/40 text-pink-200 hover:border-pink-400' 
+                    : 'bg-gradient-to-r from-cyan-950/70 to-blue-950/70 border-cyan-500/40 text-cyan-200 hover:border-cyan-400'
+                }`}
+              >
+                <ArrowDown size={15} className="group-hover:translate-y-1 transition duration-200" />
+                <span>برای نمایش اثر بعدی به پایین اسکرول کنید یا کلیک نمایید</span>
+              </button>
+            )}
           </div>
-        ))}
+        ) : (
+          <div className="py-8 flex flex-col items-center justify-center gap-2 text-center text-slate-500 text-xs">
+            <div className="flex items-center gap-2 text-emerald-400 bg-emerald-950/30 border border-emerald-500/30 px-4 py-1.5 rounded-full font-bold">
+              <CheckCircle2 size={14} />
+              <span>تمام {formatToPersianDigits(posts.length)} اثر ویترین بارگذاری شدند</span>
+            </div>
+            <span className="text-[10px] text-slate-500">برای مشاهده مجدد به بالای صفحه اسکرول کنید.</span>
+          </div>
+        )}
       </div>
 
-      {/* 4. Full-Screen Interactive Media Modal with 1-5 Star Rating */}
+      {/* 3. Full-Screen Interactive Media Modal with 1-5 Star Rating & Comments */}
       {selectedPost && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
-          <div className="bg-[#090e21] border border-cyan-500/40 rounded-3xl max-w-2xl w-full overflow-hidden text-white shadow-2xl relative flex flex-col max-h-[90vh]">
+          <div className="bg-[#090e21] border border-cyan-500/40 rounded-3xl max-w-2xl w-full overflow-hidden text-white shadow-2xl relative flex flex-col max-h-[92vh]">
             
             {/* Modal Header */}
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <img 
                   src={selectedPost.authorAvatar} 
-                  alt={selectedPost.authorName}
+                  alt={selectedPost.authorName} 
+                  loading="lazy"
                   className="w-9 h-9 rounded-full object-cover border-2 border-cyan-400" 
                 />
                 <div>
@@ -396,30 +762,53 @@ export default function VitrinView({
                 </div>
               </div>
 
-              <button
-                onClick={() => setSelectedPost(null)}
-                className="p-1.5 rounded-full bg-slate-900 text-slate-400 hover:text-white"
-              >
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleBookmark(selectedPost.id)}
+                  className={`p-1.5 rounded-full border transition ${
+                    selectedPost.isBookmarked 
+                      ? 'bg-amber-400 text-black border-amber-300' 
+                      : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white'
+                  }`}
+                  title={selectedPost.isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره در پروفایل'}
+                >
+                  <Bookmark size={16} className={selectedPost.isBookmarked ? 'fill-black' : ''} />
+                </button>
+
+                <button
+                  onClick={() => setSelectedPost(null)}
+                  className="p-1.5 rounded-full bg-slate-900 text-slate-400 hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             {/* Media Box */}
-            <div className="relative aspect-video sm:aspect-[16/10] bg-black flex items-center justify-center overflow-hidden">
+            <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden flex-shrink-0">
               <img 
                 src={selectedPost.mediaUrl} 
                 alt={selectedPost.title}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-contain"
               />
               {selectedPost.mediaType === 'video' && (
-                <div className="absolute p-4 rounded-full bg-cyan-500/80 text-slate-950 shadow-xl cursor-pointer hover:scale-110 transition">
+                <div 
+                  onClick={() => {
+                    const post = selectedPost;
+                    setSelectedPost(null);
+                    setPlayingVideoId(post.id);
+                  }}
+                  className="absolute p-4 rounded-full bg-cyan-500/80 text-slate-950 shadow-xl cursor-pointer hover:scale-110 transition"
+                >
                   <Play size={24} className="fill-slate-950" />
                 </div>
               )}
             </div>
 
-            {/* Details & Interactive Rating Bar */}
-            <div className="p-4 sm:p-5 space-y-3.5 overflow-y-auto">
+            {/* Details, Rating & Full Comment Stream */}
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-1">
                 <h2 className="text-base font-black text-white">{selectedPost.title}</h2>
                 <p className="text-xs text-slate-300 leading-relaxed">{selectedPost.description}</p>
@@ -449,7 +838,7 @@ export default function VitrinView({
                 </div>
               </div>
 
-              {/* Action Buttons (Like, Share) */}
+              {/* Actions (Like & Share) */}
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-2">
                   <button
@@ -465,18 +854,144 @@ export default function VitrinView({
                   </button>
 
                   <button
-                    onClick={() => triggerAlert('لینک اثر با موفقیت کپی شد.')}
+                    onClick={() => handleSharePost(selectedPost)}
                     className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 border border-slate-700 text-slate-300 hover:text-white flex items-center gap-1.5 transition"
                   >
-                    <Share2 size={14} />
-                    <span>اشتراک‌گذاری</span>
+                    {copiedPostId === selectedPost.id ? (
+                      <Check size={14} className="text-emerald-400" />
+                    ) : (
+                      <Share2 size={14} />
+                    )}
+                    <span>{copiedPostId === selectedPost.id ? 'کپی شد!' : 'کپی لینک اشتراک'}</span>
                   </button>
                 </div>
 
                 <span className="text-[10px] text-slate-400 font-mono">
-                  شناسه اثر: #{selectedPost.id}
+                  شناسه: #{selectedPost.id}
                 </span>
               </div>
+
+              {/* Comments Section in Modal (5-at-a-time Lazy Loading) */}
+              {(() => {
+                const modalComments = commentsMap[selectedPost.id] || [];
+                const modalLimit = getVisibleCommentsCount(selectedPost.id);
+                const modalVisible = modalComments.slice(0, modalLimit);
+                const modalHasMore = modalComments.length > modalLimit;
+
+                return (
+                  <div className="pt-3 border-t border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-slate-300 font-bold">
+                      <span>
+                        دیدگاه‌های ثبت‌شده ({formatToPersianDigits(Math.min(modalLimit, modalComments.length))} از {formatToPersianDigits(modalComments.length)})
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-normal">نمایش ۵ دیدگاه در هر نوبت</span>
+                    </div>
+
+                    <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                      {modalVisible.length === 0 ? (
+                        <div className="py-4 text-center text-slate-500 text-xs">
+                          هنوز دیدگاهی ثبت نشده است. اولین نظر را شما بنویسید!
+                        </div>
+                      ) : (
+                        modalVisible.map((comment) => (
+                          <div 
+                            key={comment.id}
+                            className="p-2.5 rounded-2xl bg-slate-950 border border-slate-800/80 flex items-start justify-between gap-2.5 text-xs transition hover:border-slate-750"
+                          >
+                            <div className="flex items-start gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-slate-800 border border-cyan-500/40 ring-1 ring-cyan-500/20 overflow-hidden shrink-0 shadow-sm">
+                                <img 
+                                  src={comment.authorAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'} 
+                                  alt={comment.authorName} 
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80';
+                                  }}
+                                />
+                              </div>
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-black text-white text-[11px]">{comment.authorName}</span>
+                                  {comment.authorSquad && (
+                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 font-mono">
+                                      {comment.authorSquad}
+                                    </span>
+                                  )}
+                                  <span className="text-[9px] text-slate-500 font-mono">{comment.createdAt}</span>
+                                </div>
+                                <p className="text-slate-300 text-[11px] leading-relaxed pr-0.5">{comment.content}</p>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => handleToggleCommentLike(selectedPost.id, comment.id)}
+                              className="flex flex-col items-center p-1 text-slate-500 hover:text-rose-400 transition shrink-0"
+                            >
+                              <Heart size={13} className={comment.isLiked ? 'fill-rose-500 text-rose-500' : ''} />
+                              {(comment.likesCount || 0) > 0 && (
+                                <span className="text-[9px] font-mono mt-0.5">{formatToPersianDigits(comment.likesCount)}</span>
+                              )}
+                            </button>
+                          </div>
+                        ))
+                      )}
+
+                      {/* Modal Load 5 More Comments Button */}
+                      {modalHasMore && (
+                        <div className="pt-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => loadMoreComments(selectedPost.id)}
+                            disabled={loadingCommentsPostId === selectedPost.id}
+                            className={`w-full py-2 px-3 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-2 ${
+                              isGirls
+                                ? 'bg-pink-950/40 hover:bg-pink-900/60 border-pink-500/40 text-pink-200'
+                                : 'bg-cyan-950/40 hover:bg-cyan-900/60 border-cyan-500/40 text-cyan-200'
+                            }`}
+                          >
+                            {loadingCommentsPostId === selectedPost.id ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin text-cyan-400" />
+                                <span>در حال بارگذاری ۵ دیدگاه بعدی...</span>
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown size={14} />
+                                <span>
+                                  بارگذاری ۵ دیدگاه بیشتر (نمایش {formatToPersianDigits(Math.min(modalLimit, modalComments.length))} از {formatToPersianDigits(modalComments.length)})
+                                </span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Input in modal */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <input 
+                        type="text"
+                        value={commentInputs[selectedPost.id] || ''}
+                        onChange={(e) => setCommentInputs({ ...commentInputs, [selectedPost.id]: e.target.value })}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleAddComment(selectedPost.id);
+                          }
+                        }}
+                        placeholder="دیدگاه خود را درباره این اثر بنویسید..."
+                        className="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none transition"
+                      />
+                      <button
+                        onClick={() => handleAddComment(selectedPost.id)}
+                        className="p-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-bold transition flex items-center justify-center"
+                      >
+                        <Send size={15} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
             </div>
 
           </div>

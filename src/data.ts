@@ -1,4 +1,4 @@
-import { User, Group, Mission, MissionSubmission, Training, Medal, UserMedal, SupportTicket, SupportReply, Announcement, News } from './types';
+import { User, Group, Mission, MissionSubmission, Training, Medal, UserMedal, SupportTicket, SupportReply, Announcement, News, AppNotification } from './types';
 
 export const initialUsers: User[] = [
   {
@@ -244,3 +244,59 @@ export const initialNews: News[] = [
     category: 'رویدادها'
   }
 ];
+
+export const initialNotifications: AppNotification[] = [
+  {
+    id: 'notif-1',
+    title: 'دستور آماده‌باش عملیاتی: آغاز مأموریت ۳ پدافند هوایی',
+    message: 'رزمندگان محترم، مأموریت شبیه‌سازی دفاع هوایی و جنگ الکترونیک فعال گردید. سناریوی مقابله را از بخش مأموریت‌ها دریافت کنید.',
+    type: 'urgent',
+    target: 'all',
+    action_tab: 'Missions',
+    action_label: 'مشاهده مأموریت',
+    sender_name: 'ستاد کل فرماندهی اتاق جنگ',
+    is_read_by: [],
+    created_at: 'هم‌اکنون',
+    timestamp: Date.now() - 1000 * 60 * 12
+  },
+  {
+    id: 'notif-2',
+    title: 'امتیازدهی و نتایج مرحله رمزگشایی کوانتومی',
+    message: 'پاسخ‌های ارسال‌شده برای عملیات ۲ توسط هیئت داوران ارزیابی شد. جهت مشاهده امتیازات و مدال‌های کسب‌شده به داشبورد مراجعه کنید.',
+    type: 'score',
+    target: 'all',
+    action_tab: 'Rewards',
+    action_label: 'جدول امتیازات و جوایز',
+    sender_name: 'واحد داوری و ارزیابی ستاد',
+    is_read_by: ['u-admin'],
+    created_at: '۱ ساعت پیش',
+    timestamp: Date.now() - 1000 * 60 * 60
+  },
+  {
+    id: 'notif-3',
+    title: 'اهدای نشان افتخار به فرماندهان برتر',
+    message: 'مدال فرمانده ارشد برتر به پاس عملکرد درخشان در هماهنگی تاکتیکی اعضای جوخه اهدا گردید.',
+    type: 'medal',
+    target: 'leaders',
+    action_tab: 'Dashboard',
+    action_label: 'مشاهده نشان‌ها در داشبورد',
+    sender_name: 'مرکز فرماندهی کل',
+    is_read_by: [],
+    created_at: 'دیروز',
+    timestamp: Date.now() - 1000 * 60 * 60 * 24
+  },
+  {
+    id: 'notif-4',
+    title: 'آثار جدید در ویترین استعدادهای دانش‌آموزی',
+    message: 'آثار برگزیده سناریونویسی و کلیپ‌های تولیدی رزمندگان در ویترین عمومی منتشر شد. می‌توانید نظرات و لایک‌های خود را ثبت کنید.',
+    type: 'announcement',
+    target: 'all',
+    action_tab: 'Vitrin',
+    action_label: 'ورود به ویترین آثار',
+    sender_name: 'روابط عمومی و رسانه',
+    is_read_by: ['u-admin'],
+    created_at: '۲ روز پیش',
+    timestamp: Date.now() - 1000 * 60 * 60 * 48
+  }
+];
+

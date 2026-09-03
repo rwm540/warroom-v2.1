@@ -1,90 +1,130 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { 
   Gamepad2, 
-  Headphones, 
-  Info,
-  Home as HomeIcon
+  Gift, 
+  LayoutDashboard, 
+  Grid 
 } from 'lucide-react';
 import { User } from '../../types';
 
-interface BottomNavigationProps {
+export interface BottomNavigationProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   currentUser?: User | null;
-  onOpenCentralModal?: () => void;
-  onOpenSquadModal?: () => void;
-  onOpenAboutModal?: () => void;
-  onLogout?: () => void;
   isAdminMode?: boolean;
   setIsAdminMode?: (val: boolean) => void;
-  unreadTicketsCount?: number;
+  campaignTheme?: 'girls' | 'boys';
 }
 
 export default function BottomNavigation({
   activeTab,
   setActiveTab,
   currentUser,
+  isAdminMode,
+  setIsAdminMode,
+  campaignTheme
 }: BottomNavigationProps) {
-  const mainItems = [
-    { id: 'Home', label: 'صفحه اصلی', icon: HomeIcon },
-    { id: 'Support', label: 'ارتباط با ما', icon: Headphones },
-    { id: currentUser ? 'Journey' : 'GameSelection', label: currentUser ? 'پنل کاربری' : 'انتخاب بازی', icon: Gamepad2, isCentral: true },
-    { id: 'About', label: 'درباره ما', icon: Info }
+  const isGirls = campaignTheme === 'girls' || currentUser?.gender === 'دختر';
+
+  // The 4 Core Android Navigation Tabs
+  const items = [
+    { id: 'Journey', label: 'نقشه بازی', icon: Gamepad2 },
+    { id: 'Rewards', label: 'جوایز و امتیازات', icon: Gift },
+    { id: 'Dashboard', label: 'داشبورد عملیات', icon: LayoutDashboard },
+    { id: 'Vitrin', label: 'ویترین و آثار', icon: Grid },
   ];
 
+  const handleSelectTab = (tabId: string) => {
+    if (setIsAdminMode) {
+      setIsAdminMode(false);
+    }
+    setActiveTab(tabId);
+  };
+
   return (
-    <>
-      {/* Slim & Elegant Android Bottom Navigation Bar */}
-      <nav 
-        aria-label="ناوبری پنل اندروید" 
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden w-full max-w-xl mx-auto bg-[#040814]/95 backdrop-blur-xl border-t border-slate-800/80 px-4 py-1.5 flex items-center justify-around dir-rtl shadow-[0_-4px_24px_rgba(0,0,0,0.8)] h-[56px] rounded-t-xl"
-        id="bottom-navigation-mobile"
-      >
-        {mainItems.map((item) => {
+    <nav 
+      aria-label="منوی اندروید"
+      className={`fixed bottom-3.5 inset-x-3.5 sm:bottom-5 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[430px] z-50 rounded-[28px] backdrop-blur-2xl border shadow-[0_12px_45px_rgba(0,0,0,0.85)] dir-rtl px-2 py-1.5 transition-all duration-300 select-none md:hidden ${
+        isGirls 
+          ? 'bg-[#160619]/95 border-pink-500/40 shadow-[0_12px_45px_rgba(0,0,0,0.85),0_0_25px_rgba(244,63,94,0.22)]'
+          : 'bg-[#050b1d]/95 border-cyan-500/35 shadow-[0_12px_45px_rgba(0,0,0,0.85),0_0_25px_rgba(6,182,212,0.22)]'
+      }`}
+      id="android-bottom-navigation"
+    >
+      <div className="grid grid-cols-4 items-center justify-items-center relative">
+        {items.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.id;
+          const isActive = (activeTab === item.id && !isAdminMode) || (item.id === 'Dashboard' && isAdminMode);
 
           return (
-            <button
+            <motion.button
               key={item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-              }}
+              whileTap={{ scale: 0.88 }}
+              onClick={() => handleSelectTab(item.id)}
               aria-label={item.label}
               title={item.label}
-              className="relative flex flex-col items-center justify-center h-full w-20 focus:outline-none transition-all duration-200"
+              className={`relative flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition-all w-full select-none cursor-pointer focus:outline-none ${
+                isActive
+                  ? isGirls ? 'text-pink-300 font-black' : 'text-cyan-300 font-black'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
             >
-              {/* Sleek, Line-style Container with Clean Border */}
-              <div className={`flex flex-col items-center justify-center w-full py-1 px-2.5 rounded-xl transition-all duration-200 ${
-                isActive 
-                  ? 'bg-cyan-950/30 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.15)] text-cyan-400' 
-                  : 'border border-transparent text-slate-400 hover:text-slate-200'
-              }`}>
-                <Icon 
-                  size={18} 
-                  strokeWidth={1.5} /* Thin, line-style vector lines */
-                  className={`transition-all duration-200 ${
-                    isActive ? 'scale-105' : ''
+              {/* Animated Sliding Highlight Pill */}
+              {isActive && (
+                <motion.div
+                  layoutId="android-active-pill"
+                  transition={{ type: "spring", stiffness: 460, damping: 33 }}
+                  className={`absolute inset-0 rounded-2xl border shadow-md ${
+                    isGirls
+                      ? 'bg-gradient-to-b from-pink-500/25 to-rose-600/15 border-pink-400/40 shadow-[0_0_15px_rgba(244,63,94,0.35)]'
+                      : 'bg-gradient-to-b from-cyan-500/25 to-blue-600/15 border-cyan-400/40 shadow-[0_0_15px_rgba(6,182,212,0.35)]'
                   }`}
                 />
+              )}
+
+              <div className="relative z-10 flex flex-col items-center justify-center">
+                <motion.div
+                  animate={{ scale: isActive ? 1.12 : 1 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 26 }}
+                >
+                  <Icon 
+                    size={21} 
+                    strokeWidth={isActive ? 2.3 : 1.7} 
+                    className={
+                      isActive 
+                        ? isGirls
+                          ? 'text-pink-300 drop-shadow-[0_0_8px_rgba(244,63,94,0.85)]'
+                          : 'text-cyan-300 drop-shadow-[0_0_8px_rgba(6,182,212,0.85)]'
+                        : 'text-slate-400'
+                    }
+                  />
+                </motion.div>
                 
-                {/* Micro Label */}
-                <span className={`text-[9px] mt-0.5 tracking-tight transition-all duration-200 font-bold ${
-                  isActive ? 'text-cyan-400' : 'text-slate-500'
+                <span className={`text-[10px] font-bold mt-1 tracking-tight truncate max-w-full text-center transition-colors ${
+                  isActive 
+                    ? isGirls ? 'text-pink-300 font-black' : 'text-cyan-300 font-black'
+                    : 'text-slate-400'
                 }`}>
                   {item.label}
                 </span>
-              </div>
 
-              {/* Tiny indicator bar at the bottom */}
-              {isActive && (
-                <div className="absolute bottom-0.5 w-4 h-0.5 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-              )}
-            </button>
+                {/* Active Tiny Glowing Indicator Dot */}
+                {isActive && (
+                  <motion.span 
+                    layoutId="android-active-dot"
+                    className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
+                      isGirls 
+                        ? 'bg-pink-400 shadow-[0_0_6px_#f43f5e]'
+                        : 'bg-cyan-400 shadow-[0_0_6px_#22d3ee]'
+                    }`}
+                  />
+                )}
+              </div>
+            </motion.button>
           );
         })}
-      </nav>
-    </>
+      </div>
+    </nav>
   );
 }
-

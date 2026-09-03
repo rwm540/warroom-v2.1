@@ -291,18 +291,8 @@ export default function AuthView({
         }`} />
       </div>
 
-      {/* Top Back Header */}
-      <div className="w-full max-w-md mb-2 flex items-center justify-between z-10">
-        {onBackToHome && (
-          <button
-            onClick={onBackToHome}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-600 text-xs font-bold transition shadow-sm"
-          >
-            <ArrowRight size={14} />
-            <span>صفحه اصلی</span>
-          </button>
-        )}
-
+      {/* Top Header */}
+      <div className="w-full max-w-md mb-2 flex items-center justify-end z-10">
         <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
           <Shield size={14} className={isGirls ? 'text-pink-400' : 'text-cyan-400'} />
           <span>{isGirls ? 'بخش دختران' : 'بخش پسران'}</span>
