@@ -1,5 +1,5 @@
 import React from 'react';
-import { Send, MessageSquare, ExternalLink, HelpCircle, Map, BookOpen, Sparkles, CheckCircle } from 'lucide-react';
+import { Send, MessageSquare, ExternalLink, HelpCircle, Map as MapIcon, BookOpen, Sparkles, CheckCircle } from 'lucide-react';
 
 interface SocialMessengersWidgetsProps {
   themeMode: 'girls' | 'boys';
@@ -110,7 +110,7 @@ export default function SocialMessengersWidgets({
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition group-hover:scale-105 ${
               isGirls ? 'bg-pink-950/80 text-pink-400 border border-pink-800' : 'bg-cyan-950/80 text-cyan-400 border border-cyan-800'
             }`}>
-              <Map size={20} />
+              <MapIcon size={20} />
             </div>
             <div className="text-right">
               <h5 className="text-xs sm:text-sm font-black text-white group-hover:text-amber-300 transition">

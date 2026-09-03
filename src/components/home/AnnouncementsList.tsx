@@ -1,6 +1,6 @@
 import React from 'react';
 import { HomeAnnouncement } from '../../data/home';
-import { Calendar, ChevronLeft, Sparkles } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, Sparkles } from 'lucide-react';
 
 interface AnnouncementsListProps {
   announcements: HomeAnnouncement[];
@@ -68,7 +68,7 @@ export default function AnnouncementsList({
                   {item.message}
                 </p>
                 <div className="flex items-center gap-1 text-[9px] text-cyan-400/80 font-mono">
-                  <Calendar size={10} className="text-cyan-400" />
+                  <CalendarIcon size={10} className="text-cyan-400" />
                   <span>{item.createdAt}</span>
                 </div>
               </div>

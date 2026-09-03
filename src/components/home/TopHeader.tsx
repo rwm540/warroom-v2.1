@@ -1,6 +1,7 @@
 import React from 'react';
 import { User } from '../../types';
-import { Bell, Shield, LogIn, UserPlus, LogOut, Home, Headphones, Info, Gamepad2, User as UserIcon } from 'lucide-react';
+import { Shield, LogIn, UserPlus, LogOut, Home, Headphones, Info, Gamepad2, User as UserIcon, Heart, Zap, Sparkles } from 'lucide-react';
+import warroomLogoJpg from '../../assets/images/warroom_logo_1787906676836.jpg';
 
 interface TopHeaderProps {
   currentUser: User | null;
@@ -12,6 +13,9 @@ interface TopHeaderProps {
   onOpenRegister: () => void;
   onLogout: () => void;
   onOpenProfile: () => void;
+  campaignTheme?: 'girls' | 'boys';
+  onChangeCampaign?: () => void;
+  onToggleTheme?: (mode: 'girls' | 'boys') => void;
 }
 
 export default function TopHeader({
@@ -23,59 +27,43 @@ export default function TopHeader({
   onOpenLogin,
   onOpenRegister,
   onLogout,
-  onOpenProfile
+  onOpenProfile,
+  campaignTheme = 'boys'
 }: TopHeaderProps) {
+  const isGirls = campaignTheme === 'girls';
   const navItems = [
     { id: 'Home', label: 'صفحه اصلی', icon: Home },
-    { id: 'GameSelection', label: 'انتخاب بازی', icon: Gamepad2 },
     { id: 'Support', label: 'ارتباط با ما', icon: Headphones },
     { id: 'About', label: 'درباره ما', icon: Info },
   ];
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-[#060b1e]/95 backdrop-blur-md border-b border-cyan-500/20 px-2 sm:px-4 py-2 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.6)] dir-rtl">
+    <header className={`sticky top-0 z-30 w-full backdrop-blur-md border-b px-2 sm:px-4 py-2 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.6)] dir-rtl ${
+      isGirls 
+        ? 'bg-[#15051c]/95 border-pink-500/30' 
+        : 'bg-[#060b1e]/95 border-cyan-500/20'
+    }`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-4">
         
         {/* Right Section: Brand Logo */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-cyan-950/70 border border-cyan-500/35 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
-            <Shield size={16} className="text-cyan-400 shrink-0" />
-            <span className="text-xs sm:text-sm font-black text-white font-sans whitespace-nowrap">
-              اتاق جنگ
-            </span>
-            <span className="hidden md:inline-block text-[9px] text-cyan-300 font-mono font-bold bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-500/25">
-              نسخه ۲.۵
-            </span>
+          <div className={`flex items-center gap-1.5 p-1 rounded-2xl border shadow-md ${
+            isGirls
+              ? 'bg-pink-950/80 border-pink-500/40 shadow-[0_0_15px_rgba(244,63,94,0.4)]'
+              : 'bg-cyan-950/70 border-cyan-500/35 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+          }`}>
+            <img 
+              src={warroomLogoJpg} 
+              alt="اتاق جنگ" 
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border border-white/40 shrink-0 shadow-lg" 
+              referrerPolicy="no-referrer" 
+            />
           </div>
         </div>
 
-        {/* Center Section: User Info Pill (Mobile + Desktop) OR Desktop Navigation */}
+        {/* Center Section: User Info Pill */}
         <div className="flex items-center justify-center min-w-0 flex-1 px-1">
-          {/* Desktop Nav Items (Hidden on Mobile) */}
-          {setActiveTab && (
-            <nav className="hidden lg:flex items-center gap-1 bg-[#05091a]/80 p-1 rounded-xl border border-cyan-500/20">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                      isActive 
-                        ? 'bg-cyan-400 text-slate-950 font-black shadow-[0_0_12px_rgba(34,211,238,0.4)]' 
-                        : 'text-slate-300 hover:text-white hover:bg-cyan-950/40'
-                    }`}
-                  >
-                    <Icon size={14} />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          )}
-
-          {/* User Badge / Profile (Compact on Mobile) */}
+          {/* User Badge / Profile */}
           {currentUser && (
             <button 
               onClick={onOpenProfile}
@@ -98,23 +86,8 @@ export default function TopHeader({
           )}
         </div>
 
-        {/* Left Section: Notifications & Actions */}
+        {/* Left Section: Auth Actions */}
         <div className="flex items-center gap-1.5 shrink-0">
-          
-          {/* Notifications Button */}
-          <button
-            onClick={onToggleNotifications}
-            aria-label="اطلاعیه‌ها"
-            title="اطلاعیه‌های قرارگاه"
-            className="relative p-1.5 sm:p-2 rounded-xl bg-[#0c132a] hover:bg-cyan-950/80 text-slate-300 hover:text-cyan-300 border border-cyan-500/30 transition focus:outline-none shrink-0"
-          >
-            <Bell size={16} />
-            {activeAnnouncementsCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-rose-600 text-white text-[9px] font-black flex items-center justify-center border border-[#060b1e] animate-pulse">
-                {activeAnnouncementsCount}
-              </span>
-            )}
-          </button>
 
           {/* Auth State */}
           {!currentUser ? (

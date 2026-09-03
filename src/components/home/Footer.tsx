@@ -5,18 +5,13 @@ import {
   Mail, 
   MapPin, 
   Clock, 
-  ExternalLink, 
   CheckCircle2, 
   Info, 
-  FileText, 
-  Lock,
-  Copy,
-  Check,
   CreditCard,
   Building2,
   X,
-  Send,
-  MessageCircle
+  MessageCircle,
+  Lock
 } from 'lucide-react';
 
 interface FooterProps {
@@ -25,17 +20,10 @@ interface FooterProps {
 }
 
 export default function Footer({ onNavigate, onOpenAbout }: FooterProps) {
-  const [copiedChannel, setCopiedChannel] = useState<string | null>(null);
   const [activeTrustModal, setActiveTrustModal] = useState<'enamad' | 'zarinpal' | 'contact' | null>(null);
 
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedChannel(id);
-    setTimeout(() => setCopiedChannel(null), 2000);
-  };
-
   return (
-    <footer className="mt-12 mb-20 md:mb-6 px-4 py-8 border-t border-cyan-500/30 bg-[#05091a]/95 text-slate-200 dir-rtl rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.8)] relative overflow-hidden">
+    <footer className="mt-12 mb-2 md:mb-6 px-4 py-8 border-t border-cyan-500/30 bg-[#05091a]/95 text-slate-200 dir-rtl rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.8)] relative overflow-hidden">
       
       {/* Background Accent Gradients */}
       <div className="absolute top-0 right-1/4 w-72 h-72 bg-cyan-600/10 blur-[100px] pointer-events-none rounded-full" />
@@ -43,8 +31,8 @@ export default function Footer({ onNavigate, onOpenAbout }: FooterProps) {
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         
-        {/* Top Grid: Brand Info + Communication Channels + Contact Info */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-right pb-8 border-b border-cyan-500/15">
+        {/* Top Grid: Brand Info + Contact Info */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-right pb-8 border-b border-cyan-500/15">
           
           {/* Col 1: About Platform & Brand */}
           <div className="space-y-3">
@@ -84,91 +72,7 @@ export default function Footer({ onNavigate, onOpenAbout }: FooterProps) {
             </div>
           </div>
 
-          {/* Col 2: Official Communication Channels (Rubika & Eitaa ONLY) */}
-          <div className="space-y-3 bg-[#080e26]/80 p-4 rounded-2xl border border-cyan-500/20 shadow-inner">
-            <div className="flex items-center gap-2 text-cyan-300 font-black text-xs border-b border-cyan-500/20 pb-2">
-              <Send size={16} className="text-cyan-400" />
-              <span>کانال‌های ارتباطی رسمی (روبیکا و ایتا)</span>
-            </div>
-
-            <p className="text-[11px] text-slate-400 leading-snug">
-              اطلاعیه‌ها، اخبار مسابقات و نتایج داوری صرفاً از طریق دو کانال زیر منتشر می‌شود:
-            </p>
-
-            <div className="space-y-2.5 pt-1">
-              
-              {/* Eitaa Messenger Channel Badge */}
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#141d38] border border-amber-500/30 hover:border-amber-400/60 transition group">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center text-slate-950 font-black text-xs shadow-md">
-                    ایتا
-                  </div>
-                  <div>
-                    <span className="text-xs font-black text-white block">کانال رسمی در ایتا</span>
-                    <span className="text-[10px] text-amber-300/90 font-mono dir-ltr block">@WarRoom_ir</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => copyToClipboard('@WarRoom_ir', 'eitaa')}
-                    className="p-1.5 rounded-lg bg-slate-900/90 text-amber-300 hover:text-white border border-slate-700/80 text-[10px] font-bold flex items-center gap-1 transition"
-                    title="کپی شناسه ایتا"
-                  >
-                    {copiedChannel === 'eitaa' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                    <span>{copiedChannel === 'eitaa' ? 'کپی شد' : 'کپی'}</span>
-                  </button>
-
-                  <a
-                    href="https://eitaa.com/WarRoom_ir"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[10px] flex items-center gap-1 transition shadow-[0_0_10px_rgba(245,158,11,0.3)]"
-                  >
-                    <span>عضویت</span>
-                    <ExternalLink size={12} />
-                  </a>
-                </div>
-              </div>
-
-              {/* Rubika Messenger Channel Badge */}
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#141d38] border border-rose-500/30 hover:border-rose-400/60 transition group">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-rose-600 via-pink-600 to-amber-500 flex items-center justify-center text-white font-black text-xs shadow-md">
-                    روبیکا
-                  </div>
-                  <div>
-                    <span className="text-xs font-black text-white block">کانال رسمی در روبیکا</span>
-                    <span className="text-[10px] text-rose-300/90 font-mono dir-ltr block">@WarRoom_ir</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => copyToClipboard('@WarRoom_ir', 'rubika')}
-                    className="p-1.5 rounded-lg bg-slate-900/90 text-rose-300 hover:text-white border border-slate-700/80 text-[10px] font-bold flex items-center gap-1 transition"
-                    title="کپی شناسه روبیکا"
-                  >
-                    {copiedChannel === 'rubika' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                    <span>{copiedChannel === 'rubika' ? 'کپی شد' : 'کپی'}</span>
-                  </button>
-
-                  <a
-                    href="https://rubika.ir/WarRoom_ir"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-black text-[10px] flex items-center gap-1 transition shadow-[0_0_10px_rgba(225,29,72,0.3)]"
-                  >
-                    <span>عضویت</span>
-                    <ExternalLink size={12} />
-                  </a>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Col 3: Contact & Support Info */}
+          {/* Col 2: Contact & Support Info */}
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-cyan-300 font-black text-xs border-b border-cyan-500/20 pb-2">
               <Phone size={16} className="text-cyan-400" />

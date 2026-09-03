@@ -9,12 +9,10 @@ import {
   FaqItem
 } from '../data/home';
 
-import TopHeader from './home/TopHeader';
 import NotificationPanel from './home/NotificationPanel';
 import AdventureHeroSection from './home/AdventureHeroSection';
 import PrizesAwardsBanner from './home/PrizesAwardsBanner';
 import SocialMessengersWidgets from './home/SocialMessengersWidgets';
-import AnnouncementsList from './home/AnnouncementsList';
 import AboutSection from './home/AboutSection';
 import StatsStrip from './home/StatsStrip';
 import FaqAccordion from './home/FaqAccordion';
@@ -116,7 +114,7 @@ export default function HomeView({
       </div>
 
       {/* Responsive Container: Mobile-Optimized + Full Desktop Experience */}
-      <div className={`w-full max-w-[500px] md:max-w-6xl min-h-screen md:min-h-0 relative shadow-[0_0_60px_rgba(0,0,0,0.95)] border-x md:border md:rounded-3xl flex flex-col pb-16 md:pb-6 overflow-hidden z-10 transition-colors duration-500 ${
+      <div className={`w-full max-w-[500px] md:max-w-6xl min-h-screen md:min-h-0 relative shadow-[0_0_60px_rgba(0,0,0,0.95)] border-x md:border md:rounded-3xl flex flex-col pb-3 md:pb-6 overflow-hidden z-10 transition-colors duration-500 ${
         isGirls 
           ? 'bg-[#120516]/95 border-pink-500/30' 
           : 'bg-[#050b18]/95 border-cyan-500/25'
@@ -124,28 +122,17 @@ export default function HomeView({
         
         <div className="relative z-10 flex-1 flex flex-col">
 
-          {/* 1. Top Global Navigation Header */}
-          <TopHeader 
-            currentUser={currentUser}
-            activeAnnouncementsCount={unreadNotificationsCount || announcements.filter(a => a.isActive).length}
-            activeTab={activeTab}
-            setActiveTab={(tab) => setActiveTab(tab)}
-            onToggleNotifications={onOpenNotifications || (() => setIsNotificationsOpen(prev => !prev))}
-            onOpenLogin={() => onOpenAuth('login')}
-            onOpenRegister={() => onOpenAuth('register_individual')}
-            onLogout={onLogout}
-            onOpenProfile={() => setActiveTab('Profile')}
-          />
+
 
           {/* Main Landing Content */}
           <div className="p-3 sm:p-5 md:p-6 space-y-6 sm:space-y-8">
             
-            {/* Adventure Hero Section (هیس‌طوری! این پرونده هنوز بازه! + شروع ماموریت) */}
-            <section aria-label="بخش معرفی مسابقه هیس‌طوری">
+            {/* Adventure Hero Section (بنر اختصاصی ثبت‌نام با تفکیک دختر و پسر) */}
+            <section aria-label="بخش معرفی مسابقه و بنر ثبت‌نام">
               <AdventureHeroSection 
                 themeMode={themeMode}
                 currentUser={currentUser}
-                onStartMission={handleStartMission}
+                onOpenRegister={() => onOpenAuth('register_individual')}
               />
             </section>
 
@@ -167,17 +154,9 @@ export default function HomeView({
               />
             </section>
 
-            {/* Desktop 2-Column Auxiliary Widgets (Announcements + Fast Stats) */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-2">
-              <div className="md:col-span-7">
-                <AnnouncementsList 
-                  announcements={announcements}
-                  onOpenAll={() => setIsNotificationsOpen(true)}
-                />
-              </div>
-              <div className="md:col-span-5">
-                <StatsStrip stats={homeStats || homeStatsData} />
-              </div>
+            {/* Quick Stats Strip */}
+            <div className="pt-2">
+              <StatsStrip stats={homeStats || homeStatsData} />
             </div>
 
             {/* FAQ Accordion */}

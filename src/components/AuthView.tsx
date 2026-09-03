@@ -99,7 +99,32 @@ export default function AuthView({
   });
 
   const [registerError, setRegisterError] = useState<string | null>(null);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Generate secure password containing uppercase, lowercase, and numbers
+  const handleGenerateRandomPassword = () => {
+    const uppers = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lowers = 'abcdefghjkmnpqrstuvwxyz';
+    const digits = '23456789';
+    const all = uppers + lowers + digits;
+
+    // Guarantee characters from each group (avoid ambiguous chars like 0, O, 1, l)
+    let generated = [
+      uppers[Math.floor(Math.random() * uppers.length)],
+      uppers[Math.floor(Math.random() * uppers.length)],
+      lowers[Math.floor(Math.random() * lowers.length)],
+      lowers[Math.floor(Math.random() * lowers.length)],
+      digits[Math.floor(Math.random() * digits.length)],
+      digits[Math.floor(Math.random() * digits.length)],
+      all[Math.floor(Math.random() * all.length)],
+      all[Math.floor(Math.random() * all.length)]
+    ].sort(() => 0.5 - Math.random()).join('');
+
+    setRegisterForm(prev => ({ ...prev, password: generated }));
+    setShowRegisterPassword(true);
+    triggerAlert(`رمز عبور قوی ایجاد شد: ${generated}`);
+  };
 
   // 2. Login Form (National ID as username + Password)
   const [loginNationalId, setLoginNationalId] = useState('');
@@ -361,6 +386,47 @@ export default function AuthView({
               </div>
             )}
 
+            {/* Gender Selection */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 block">انتخاب جنسیت</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGender('پسر');
+                    setRegisterForm({ ...registerForm, gender: 'پسر' });
+                    localStorage.setItem('hisstory_theme_mode', 'boys');
+                    window.dispatchEvent(new Event('storage'));
+                  }}
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition ${
+                    selectedGender === 'پسر'
+                      ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                      : 'bg-slate-950/70 text-slate-300 border-slate-700/80 hover:bg-slate-900'
+                  }`}
+                >
+                  <Zap size={14} />
+                  <span>پسران (ویژه رزمندگان)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGender('دختر');
+                    setRegisterForm({ ...registerForm, gender: 'دختر' });
+                    localStorage.setItem('hisstory_theme_mode', 'girls');
+                    window.dispatchEvent(new Event('storage'));
+                  }}
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition ${
+                    selectedGender === 'دختر'
+                      ? 'bg-pink-500 text-white border-pink-400 shadow-[0_0_12px_rgba(244,63,94,0.4)]'
+                      : 'bg-slate-950/70 text-slate-300 border-slate-700/80 hover:bg-slate-900'
+                  }`}
+                >
+                  <Heart size={14} />
+                  <span>دختران (ویژه رزمندگان)</span>
+                </button>
+              </div>
+            </div>
+
             {/* Name & Surname */}
             <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-1">
@@ -414,22 +480,45 @@ export default function AuthView({
               </div>
             </div>
 
-            {/* Password (Required) */}
-            <div className="space-y-1">
+            {/* Password (Required with Auto Generator & Eye Toggle) */}
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-bold text-slate-300 block">
                   رمز عبور <span className="text-rose-400">*</span>
                 </label>
-                <span className="text-[10px] text-slate-500 font-sans">حداقل ۴ کاراکتر</span>
+                <button
+                  type="button"
+                  onClick={handleGenerateRandomPassword}
+                  className={`text-[11px] font-bold flex items-center gap-1 transition px-2 py-0.5 rounded-lg border ${
+                    isGirls
+                      ? 'text-pink-400 hover:text-pink-300 bg-pink-950/40 border-pink-500/30 hover:border-pink-500/60'
+                      : 'text-cyan-400 hover:text-cyan-300 bg-cyan-950/40 border-cyan-500/30 hover:border-cyan-500/60'
+                  }`}
+                  title="تولید رمز عبور قوی ترکیبی (حروف بزرگ، کوچک و عدد)"
+                >
+                  <KeyRound size={12} />
+                  <span>تولید خودکار رمز</span>
+                </button>
               </div>
-              <input
-                type="password"
-                required
-                placeholder="رمز عبور خود را وارد کنید"
-                value={registerForm.password}
-                onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                className="w-full py-2 px-3 rounded-xl bg-slate-950/70 border border-slate-700/80 focus:border-cyan-400 text-xs text-white font-mono placeholder:text-slate-500 focus:outline-none transition text-left"
-              />
+              <div className="relative">
+                <input
+                  type={showRegisterPassword ? 'text' : 'password'}
+                  required
+                  placeholder="رمز عبور دلخواه یا تولید خودکار"
+                  value={registerForm.password}
+                  onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                  className="w-full py-2 px-3 pr-9 pl-9 rounded-xl bg-slate-950/70 border border-slate-700/80 focus:border-cyan-400 text-xs text-white font-mono placeholder:text-slate-500 focus:outline-none transition text-left"
+                />
+                <Lock size={15} className="absolute right-3 top-2.5 text-slate-400" />
+                <button
+                  type="button"
+                  onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                  className="absolute left-3 top-2.5 text-slate-400 hover:text-slate-200 transition"
+                  title={showRegisterPassword ? "مخفی‌سازی رمز" : "نمایش رمز"}
+                >
+                  {showRegisterPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
             </div>
 
             <button

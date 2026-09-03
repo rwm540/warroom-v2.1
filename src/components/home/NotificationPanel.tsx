@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { HomeAnnouncement } from '../../data/home';
-import { Bell, X, Calendar, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Bell, X, Calendar as CalendarIcon, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface NotificationPanelProps {
@@ -136,7 +136,7 @@ export default function NotificationPanel({
                         {item.message}
                       </p>
                       <div className="flex items-center gap-1 text-[9px] text-cyan-400/80 pt-1 font-mono">
-                        <Calendar size={10} className="text-cyan-400" />
+                        <CalendarIcon size={10} className="text-cyan-400" />
                         <span>{item.createdAt}</span>
                       </div>
                     </div>

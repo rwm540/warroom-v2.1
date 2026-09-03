@@ -1,5 +1,6 @@
 import React from 'react';
 import { HomeStats } from '../../data/home';
+import { formatToPersianDigits } from '../../utils/jalali';
 
 interface StatsStripProps {
   stats: HomeStats;
@@ -13,7 +14,7 @@ export default function StatsStrip({ stats }: StatsStripProps) {
         {/* Stat 1 */}
         <div className="space-y-1 py-1">
           <span className="block text-sm md:text-base font-black text-cyan-300 font-mono">
-            {stats.activeMissions}
+            {formatToPersianDigits(stats.activeMissions)}
           </span>
           <span className="text-[10px] text-slate-300 font-bold block">
             ماموریت‌های فعال
@@ -23,7 +24,7 @@ export default function StatsStrip({ stats }: StatsStripProps) {
         {/* Divider & Stat 2 */}
         <div className="space-y-1 py-1 border-x border-cyan-500/20">
           <span className="block text-sm md:text-base font-black text-rose-400 font-mono">
-            {stats.activeParticipants.toLocaleString('fa-IR')}
+            {formatToPersianDigits(stats.activeParticipants)}
           </span>
           <span className="text-[10px] text-slate-300 font-bold block">
             رزمندگان حاضر
@@ -33,7 +34,7 @@ export default function StatsStrip({ stats }: StatsStripProps) {
         {/* Stat 3 */}
         <div className="space-y-1 py-1">
           <span className="block text-sm md:text-base font-black text-amber-400 font-mono">
-            {stats.activeGroups}
+            {formatToPersianDigits(stats.activeGroups)}
           </span>
           <span className="text-[10px] text-slate-300 font-bold block">
             جوخه‌های فعال

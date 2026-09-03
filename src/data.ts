@@ -18,94 +18,10 @@ export const initialUsers: User[] = [
     school_name: 'دبیرستان ماندگار البرز',
     personal_code: '900000001',
     address: 'ستاد مرکزی اتاق جنگ'
-  },
-  {
-    id: 'u-leader',
-    first_name: 'محمدجواد',
-    last_name: 'حسینی',
-    national_code: '0087654321',
-    phone: '09121111111',
-    password: 'leader',
-    role: 'leader',
-    education_level: 'متوسطه دوم',
-    grade: 'یازدهم',
-    gender: 'پسر',
-    province: 'اصفهان',
-    city: 'اصفهان',
-    birth_date: '1386/03/22',
-    school_name: 'دبیرستان تیزهوشان شهید اژه‌ای',
-    personal_code: '839201745',
-    group_id: 'g-saegheh'
-  },
-  {
-    id: 'u-member1',
-    first_name: 'علی',
-    last_name: 'رضایی',
-    national_code: '0076543210',
-    phone: '09122222222',
-    password: '123',
-    role: 'member',
-    education_level: 'متوسطه دوم',
-    grade: 'یازدهم',
-    gender: 'پسر',
-    province: 'اصفهان',
-    city: 'اصفهان',
-    birth_date: '1386/08/10',
-    school_name: 'دبیرستان تیزهوشان شهید اژه‌ای',
-    personal_code: '839201746',
-    group_id: 'g-saegheh'
-  },
-  {
-    id: 'u-member2',
-    first_name: 'سینا',
-    last_name: 'کریمی',
-    national_code: '0065432109',
-    phone: '09123333333',
-    password: '123',
-    role: 'member',
-    education_level: 'متوسطه دوم',
-    grade: 'یازدهم',
-    gender: 'پسر',
-    province: 'اصفهان',
-    city: 'اصفهان',
-    birth_date: '1386/05/04',
-    school_name: 'دبیرستان تیزهوشان شهید اژه‌ای',
-    personal_code: '839201747',
-    group_id: 'g-saegheh'
-  },
-  {
-    id: 'u-user1',
-    first_name: 'زهرا',
-    last_name: 'موسوی',
-    national_code: '0054321098',
-    phone: '09124444444',
-    password: 'user',
-    role: 'user',
-    education_level: 'متوسطه اول',
-    grade: 'نهم',
-    gender: 'دختر',
-    province: 'خراسان رضوی',
-    city: 'مشهد',
-    birth_date: '1388/11/20',
-    school_name: 'دبیرستان فرزانگان مشهد',
-    personal_code: '748192034'
   }
 ];
 
-export const initialGroups: Group[] = [
-  {
-    id: 'g-saegheh',
-    leader_id: 'u-leader',
-    name: 'جوخه صاعقه مداری',
-    members_count: 3,
-    education_level: 'متوسطه دوم',
-    gender: 'پسر',
-    province: 'اصفهان',
-    city: 'اصفهان',
-    registration_code: 'WRS-7740',
-    created_at: '1403/02/10'
-  }
-];
+export const initialGroups: Group[] = [];
 
 export const initialMissions: Mission[] = [
   {
@@ -148,60 +64,7 @@ export const initialMissions: Mission[] = [
   }
 ];
 
-export const initialSubmissions: MissionSubmission[] = [
-  {
-    id: 'sub-1',
-    user_id: 'u-leader',
-    user_name: 'محمدجواد حسینی',
-    personal_code: '839201745',
-    group_id: 'g-saegheh',
-    mission_id: 'm-1',
-    mission_title: 'عملیات ۱: رصد و تحلیل نفوذ سایبری زیرساخت',
-    file_path: '/uploads/report_cyber_leader.pdf',
-    file_name: 'گزارش_تحلیل_نفوذ_جوخه_صاعقه.pdf',
-    file_size: '4.2 MB',
-    file_type: 'pdf',
-    user_note: 'تحلیل کامل فایل لاگ با استخراج ۵ آی‌پی مشکوک و نمودار زمان‌بندی حمله انجام گردید.',
-    status: 'approved',
-    awarded_score: 95,
-    admin_note: 'تحلیل بسیار عالی و دقیق. پاسخ کاملاً جامع بود.',
-    submitted_at: '۱۴۰۳/۰۲/۱۲'
-  },
-  {
-    id: 'sub-2',
-    user_id: 'u-member1',
-    user_name: 'علی رضایی',
-    personal_code: '839201746',
-    group_id: 'g-saegheh',
-    mission_id: 'm-1',
-    mission_title: 'عملیات ۱: رصد و تحلیل نفوذ سایبری زیرساخت',
-    file_path: '/uploads/ali_logs.zip',
-    file_name: 'تحلیل_شبکه_علی_رضایی.zip',
-    file_size: '18.5 MB',
-    file_type: 'zip',
-    user_note: 'کدهای پایتون استخراج لاگ ضمیمه شد.',
-    status: 'pending',
-    awarded_score: 0,
-    submitted_at: '۱۴۰۳/۰۲/۱۴'
-  },
-  {
-    id: 'sub-3',
-    user_id: 'u-user1',
-    user_name: 'زهرا موسوی',
-    personal_code: '748192034',
-    mission_id: 'm-2',
-    mission_title: 'عملیات ۲: رمزگشایی کدهای کوانتومی و الگوریتم AES-256',
-    file_path: '/uploads/cipher_result.docx',
-    file_name: 'رمزگشایی_نهایی_موسوی.docx',
-    file_size: '1.8 MB',
-    file_type: 'docx',
-    user_note: 'کلید رمزگشایی با فرمول هش MD5 و کلید AES به‌دست آمد.',
-    status: 'approved',
-    awarded_score: 140,
-    admin_note: 'رمزگشایی با موفقیت کامل انجام گردید.',
-    submitted_at: '۱۴۰۳/۰۲/۱۵'
-  }
-];
+export const initialSubmissions: MissionSubmission[] = [];
 
 export const initialTrainings: Training[] = [
   {

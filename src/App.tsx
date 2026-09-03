@@ -45,8 +45,6 @@ import {
 import HomeView from './components/HomeView';
 import Navbar from './components/Navbar';
 import BottomNavigation from './components/home/BottomNavigation';
-import CampaignSelectScreen from './components/CampaignSelectScreen';
-import PortalSelectorView from './components/PortalSelectorView';
 import AuthView from './components/AuthView';
 import DashboardView from './components/DashboardView';
 import JourneyView from './components/JourneyView';
@@ -172,37 +170,36 @@ export default function App() {
     return (saved === 'girls' || saved === 'boys') ? saved : 'boys';
   });
 
+  // Sync campaignTheme with localStorage
+  useEffect(() => {
+    const handleStorage = () => {
+      const saved = localStorage.getItem('hisstory_theme_mode');
+      if (saved === 'girls' || saved === 'boys') {
+        setCampaignTheme(saved);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    const interval = setInterval(handleStorage, 400);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
+
   // UI Navigation State
   const [activeTab, setActiveTab] = useState<string>('Home');
-  const [showCampaignSelector, setShowCampaignSelector] = useState<boolean>(true);
   const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('register_individual');
 
-  const handleSelectCampaign = (campaign: 'girls' | 'boys') => {
-    setCampaignTheme(campaign);
-    localStorage.setItem('hisstory_theme_mode', campaign);
-    setShowCampaignSelector(false);
-    setShowAuthScreen(false);
-    setActiveTab('Home');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    triggerAlert(campaign === 'girls' ? 'تم دختران فعال شد و وارد صفحه اصلی شدید.' : 'تم پسران فعال شد و وارد صفحه اصلی شدید.');
-  };
-
   const handleDirectLogin = () => {
-    setShowCampaignSelector(false);
     setAuthMode('login');
     setShowAuthScreen(true);
   };
 
   const handleTabChange = (tab: string) => {
-    setShowCampaignSelector(false);
     setShowAuthScreen(false);
-    if (tab === 'CampaignSelect') {
-      setShowCampaignSelector(true);
-    } else {
-      setIsAdminMode(tab === 'Admin');
-      setActiveTab(tab);
-    }
+    setIsAdminMode(tab === 'Admin');
+    setActiveTab(tab);
   };
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [showSquadModal, setShowSquadModal] = useState<boolean>(false);
@@ -292,14 +289,12 @@ export default function App() {
     setCurrentUser(null);
     setIsAdminMode(false);
     setActiveTab('Home');
-    setShowCampaignSelector(false);
     setShowAuthScreen(false);
     triggerAlert('خروج از سامانه اتاق جنگ با موفقیت انجام شد.');
   };
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
-    setShowCampaignSelector(false);
     setShowAuthScreen(false);
     if (user.gender === 'دختر') {
       setCampaignTheme('girls');
@@ -313,7 +308,7 @@ export default function App() {
       setActiveTab('Dashboard');
     } else {
       setIsAdminMode(false);
-      setActiveTab('Journey'); // Immediately show the Stage Selection / Journey Map screen after registration/login
+      setActiveTab('Journey');
       setShowOnboardingTutorial(true); // Launch Commander Guided Tutorial
     }
     triggerAlert(`خوش آمدید رزمنده ${user.first_name} ${user.last_name}`);
@@ -321,7 +316,6 @@ export default function App() {
 
   const handleOpenAuth = (mode: 'login' | 'register_individual' | 'register_group') => {
     setAuthMode(mode);
-    setShowCampaignSelector(false);
     setShowAuthScreen(true);
   };
 
@@ -395,20 +389,7 @@ export default function App() {
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {showCampaignSelector ? (
-          /* Preliminary Campaign Selection Screen (Girls vs Boys) */
-          <motion.div
-            key="campaign-selector"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CampaignSelectScreen 
-              onSelectCampaign={handleSelectCampaign}
-            />
-          </motion.div>
-        ) : showAuthScreen ? (
+        {showAuthScreen ? (
           /* Authentication / Registration Page for War Room */
           <motion.div
             key="auth"
@@ -430,30 +411,6 @@ export default function App() {
               }}
               initialAuthMode={authMode}
               campaignTheme={campaignTheme}
-            />
-          </motion.div>
-        ) : (activeTab === 'GameSelection' || activeTab === 'PortalSelector') ? (
-          /* Standalone Dedicated Game Selection / Portal Selector Page */
-          <motion.div
-            key="gameSelectionPage"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.3 }}
-          >
-            <PortalSelectorView 
-              onSelectWarRoom={(mode) => {
-                if (currentUser) {
-                  setActiveTab('Journey');
-                } else {
-                  setAuthMode(mode === 'login' ? 'login' : 'register_individual');
-                  setShowAuthScreen(true);
-                }
-              }}
-              onBackToHome={() => {
-                handleTabChange('Home');
-              }}
-              isGirls={campaignTheme === 'girls'}
             />
           </motion.div>
         ) : activeTab === 'Home' ? (
@@ -479,7 +436,12 @@ export default function App() {
               homeStats={homeStats}
               faqs={faqs}
               campaignTheme={campaignTheme}
-              onChangeCampaign={() => setShowCampaignSelector(true)}
+              onChangeCampaign={() => {
+                const newTheme = campaignTheme === 'boys' ? 'girls' : 'boys';
+                setCampaignTheme(newTheme);
+                localStorage.setItem('hisstory_theme_mode', newTheme);
+                triggerAlert(newTheme === 'girls' ? 'پویش دختران فعال شد.' : 'پویش پسران فعال شد.');
+              }}
             />
           </motion.div>
         ) : (activeTab === 'Support' || activeTab === 'Contact') ? (
@@ -707,13 +669,13 @@ export default function App() {
       </AnimatePresence>
 
       {/* Global Android Mobile Bottom Navigation for Home/Public Views */}
-      {!showAuthScreen && !showCampaignSelector && !isPanelTab && (
+      {!showAuthScreen && !isPanelTab && activeTab !== 'Home' && (
         <BottomNavigation 
           activeTab={isAdminMode ? 'Admin' : activeTab}
           setActiveTab={(tab) => {
             if (tab === 'WarRoom') {
               setIsAdminMode(false);
-              handleTabChange('CampaignSelect');
+              handleTabChange('Home');
             } else if (tab === 'Admin') {
               setIsAdminMode(true);
             } else {

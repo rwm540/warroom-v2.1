@@ -41,7 +41,7 @@ export default function ThemeSwitcherHeader({
                 : 'bg-pink-950/60 text-pink-300 border border-pink-800/40'
             }`}>
               <Heart size={12} className="fill-current" />
-              <span>پویش دختران</span>
+              <span>بخش دختران</span>
             </span>
 
             {isGirls && (
@@ -93,7 +93,7 @@ export default function ThemeSwitcherHeader({
                 : 'bg-cyan-950/60 text-cyan-300 border border-cyan-800/40'
             }`}>
               <Zap size={12} className="fill-current" />
-              <span>پویش پسران</span>
+              <span>بخش پسران</span>
             </span>
 
             {!isGirls && (

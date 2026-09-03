@@ -10,7 +10,6 @@ import {
   IdCard, 
   MapPin, 
   School, 
-  Calendar,
   Lock,
   Home,
   ArrowLeft
@@ -59,7 +58,20 @@ export default function ProfileView({
   const userGroup = groups.find(g => g.id === currentUser.group_id);
 
   const copyCode = () => {
-    navigator.clipboard.writeText(currentUser.personal_code);
+    try {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(currentUser.personal_code);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = currentUser.personal_code;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+    } catch (err) {
+      console.warn('Clipboard copy error:', err);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

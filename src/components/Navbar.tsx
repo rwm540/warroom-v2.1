@@ -61,7 +61,20 @@ export default function Navbar({
 
   const copyPersonalCode = () => {
     if (currentUser?.personal_code) {
-      navigator.clipboard.writeText(currentUser.personal_code);
+      try {
+        if (navigator?.clipboard?.writeText) {
+          navigator.clipboard.writeText(currentUser.personal_code);
+        } else {
+          const textArea = document.createElement('textarea');
+          textArea.value = currentUser.personal_code;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+        }
+      } catch (err) {
+        console.warn('Clipboard copy fallback:', err);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -97,7 +110,6 @@ export default function Navbar({
     { id: 'Trainings', label: 'آموزش‌ها', icon: BookOpen },
     { id: 'Profile', label: 'پروفایل و نشان‌ها', icon: Award },
     { id: 'Support', label: 'پشتیبانی و تیکت‌ها', icon: Headphones, badge: unreadTicketsCount > 0 ? formatToPersianDigits(unreadTicketsCount) : undefined },
-    { id: 'About', label: 'درباره ما', icon: Info },
   ];
 
   // Android Mobile Bottom Navigation (Core 4 tabs)
@@ -139,12 +151,6 @@ export default function Navbar({
       desc: 'ارتباط مستقیم با مرکز پشتیبانی فنی و داوری',
       icon: Headphones,
       badge: unreadTicketsCount > 0 ? `${formatToPersianDigits(unreadTicketsCount)} تیکت` : undefined
-    },
-    { 
-      id: 'About', 
-      label: 'درباره پلتفرم اتاق جنگ', 
-      desc: 'اهداف طرح، ساختار مسابقات و اطلاعات قرارگاه',
-      icon: Info 
     },
   ];
 

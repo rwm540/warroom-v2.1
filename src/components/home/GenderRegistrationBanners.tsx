@@ -42,7 +42,7 @@ export default function GenderRegistrationBanners({
           <div className="space-y-2 mb-4">
             <h4 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
               <span>ثبت‌نام دختران</span>
-              <span className="text-xs text-pink-400 font-normal">(پویش نور)</span>
+              <span className="text-xs text-pink-400 font-normal">(رده نور)</span>
             </h4>
             <p className="text-[11px] text-slate-300 leading-relaxed">
               رقابت در مأموریت‌های استراتژیک، کشف راز پرونده‌های تاریخی و دریافت جوایز نفیس دخترانه به همراه کریستال‌های امتیاز.
@@ -86,7 +86,7 @@ export default function GenderRegistrationBanners({
           <div className="space-y-2 mb-4">
             <h4 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
               <span>ثبت‌نام پسران</span>
-              <span className="text-xs text-cyan-400 font-normal">(پویش فاتحان)</span>
+              <span className="text-xs text-cyan-400 font-normal">(رده فاتحان)</span>
             </h4>
             <p className="text-[11px] text-slate-300 leading-relaxed">
               تشکیل جوخه‌های عملیاتی، حل معماهای رمزآلود، فتح مراحل هفت‌خوان و رقابت بر سر جوایز میلیاردی مسابقات.
