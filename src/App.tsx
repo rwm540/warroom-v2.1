@@ -185,23 +185,49 @@ export default function App() {
     return null;
   });
 
-  // Keep localStorage in sync when currentUser data updates
+  // Keep localStorage in sync when currentUser data updates & enforce theme locking by user gender
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('warroom_current_user_id', currentUser.id);
       localStorage.setItem('warroom_current_user_data', JSON.stringify(currentUser));
+      if (currentUser.gender === 'دختر') {
+        setCampaignTheme('girls');
+        localStorage.setItem('hisstory_theme_mode', 'girls');
+      } else if (currentUser.gender === 'پسر') {
+        setCampaignTheme('boys');
+        localStorage.setItem('hisstory_theme_mode', 'boys');
+      }
     }
   }, [currentUser]);
 
-  // Active Campaign Theme: 'girls' vs 'boys' (stored in localStorage)
+  // Active Campaign Theme: 'girls' vs 'boys' (prioritizes logged-in user profile gender)
   const [campaignTheme, setCampaignTheme] = useState<'girls' | 'boys'>(() => {
-    const saved = localStorage.getItem('hisstory_theme_mode');
-    return (saved === 'girls' || saved === 'boys') ? saved : 'boys';
+    try {
+      const savedUserData = localStorage.getItem('warroom_current_user_data');
+      if (savedUserData) {
+        const parsed = JSON.parse(savedUserData);
+        if (parsed?.gender === 'دختر') return 'girls';
+        if (parsed?.gender === 'پسر') return 'boys';
+      }
+      const saved = localStorage.getItem('hisstory_theme_mode');
+      if (saved === 'girls' || saved === 'boys') return saved;
+    } catch (e) {}
+    return 'boys';
   });
 
-  // Sync campaignTheme with localStorage
+  // Sync campaignTheme with localStorage (guaranteeing logged-in user gender cannot be overridden)
   useEffect(() => {
     const handleStorage = () => {
+      if (currentUser?.gender === 'دختر') {
+        setCampaignTheme('girls');
+        localStorage.setItem('hisstory_theme_mode', 'girls');
+        return;
+      }
+      if (currentUser?.gender === 'پسر') {
+        setCampaignTheme('boys');
+        localStorage.setItem('hisstory_theme_mode', 'boys');
+        return;
+      }
       const saved = localStorage.getItem('hisstory_theme_mode');
       if (saved === 'girls' || saved === 'boys') {
         setCampaignTheme(saved);
@@ -213,7 +239,7 @@ export default function App() {
       window.removeEventListener('storage', handleStorage);
       clearInterval(interval);
     };
-  }, []);
+  }, [currentUser]);
 
   // UI Navigation State - restore activeTab or default to Journey if logged in!
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -242,6 +268,28 @@ export default function App() {
   const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('register_individual');
 
   const handleDirectLogin = () => {
+    let activeUser = currentUser;
+    if (!activeUser) {
+      try {
+        const savedUserData = localStorage.getItem('warroom_current_user_data');
+        if (savedUserData) activeUser = JSON.parse(savedUserData);
+      } catch (e) {}
+    }
+
+    if (activeUser) {
+      if (activeUser.role === 'admin') {
+        setIsAdminMode(true);
+        setActiveTab('Dashboard');
+        localStorage.setItem('warroom_active_tab', 'Dashboard');
+      } else {
+        setIsAdminMode(false);
+        setActiveTab('Dashboard');
+        localStorage.setItem('warroom_active_tab', 'Dashboard');
+      }
+      setShowAuthScreen(false);
+      triggerAlert(`ورود مستقیم با نشست فعال: ${activeUser.first_name} ${activeUser.last_name}`);
+      return;
+    }
     setAuthMode('login');
     setShowAuthScreen(true);
   };
@@ -413,7 +461,7 @@ export default function App() {
     if (user.gender === 'دختر') {
       setCampaignTheme('girls');
       localStorage.setItem('hisstory_theme_mode', 'girls');
-    } else if (user.gender === 'پسر') {
+    } else {
       setCampaignTheme('boys');
       localStorage.setItem('hisstory_theme_mode', 'boys');
     }
@@ -423,17 +471,55 @@ export default function App() {
       localStorage.setItem('warroom_active_tab', 'Dashboard');
     } else {
       setIsAdminMode(false);
-      setActiveTab('Journey');
-      localStorage.setItem('warroom_active_tab', 'Journey');
+      setActiveTab('Dashboard');
+      localStorage.setItem('warroom_active_tab', 'Dashboard');
       setShowOnboardingTutorial(true); // Launch Commander Guided Tutorial
     }
     triggerAlert(`خوش آمدید رزمنده ${user.first_name} ${user.last_name}`);
   };
 
   const handleOpenAuth = (mode: 'login' | 'register_individual' | 'register_group') => {
+    let activeUser = currentUser;
+    if (!activeUser) {
+      try {
+        const savedUserData = localStorage.getItem('warroom_current_user_data');
+        if (savedUserData) activeUser = JSON.parse(savedUserData);
+      } catch (e) {}
+    }
+
+    if (activeUser) {
+      // User is already logged in! Never show auth or registration screen. Directly go to panel.
+      if (activeUser.role === 'admin') {
+        setIsAdminMode(true);
+        setActiveTab('Dashboard');
+        localStorage.setItem('warroom_active_tab', 'Dashboard');
+      } else {
+        setIsAdminMode(false);
+        setActiveTab('Dashboard');
+        localStorage.setItem('warroom_active_tab', 'Dashboard');
+      }
+      setShowAuthScreen(false);
+      triggerAlert(`نشست فعال شناسایی شد: ورود مستقیم به پنل ${activeUser.first_name} ${activeUser.last_name}`);
+      return;
+    }
+
     setAuthMode(mode);
     setShowAuthScreen(true);
   };
+
+  // Guard: If currentUser is logged in, immediately dismiss any auth screen
+  useEffect(() => {
+    if (currentUser && showAuthScreen) {
+      setShowAuthScreen(false);
+      if (currentUser.role === 'admin') {
+        setIsAdminMode(true);
+      } else {
+        setIsAdminMode(false);
+      }
+      setActiveTab('Dashboard');
+      localStorage.setItem('warroom_active_tab', 'Dashboard');
+    }
+  }, [currentUser, showAuthScreen]);
 
   return (
     <div className="bg-[#030611] text-slate-100 min-h-screen w-full overflow-x-hidden flex flex-col relative font-sans dir-rtl">
@@ -850,6 +936,9 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Global Persistent Multi-Track Background Music System */}
+      <BackgroundMusic />
 
     </div>
   );

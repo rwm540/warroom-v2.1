@@ -159,53 +159,6 @@ export default function PrizesPointsView({
   return (
     <div className="space-y-6 dir-rtl pb-28 max-w-5xl mx-auto px-3 sm:px-6 pt-4 font-sans select-none">
       
-      {/* 1. Header Banner & Points Balance */}
-      <div className={`p-5 sm:p-7 rounded-3xl relative overflow-hidden shadow-2xl border transition-all duration-500 ${
-        isGirls
-          ? 'bg-gradient-to-r from-[#1d091e] via-[#120513] to-[#080208] border-pink-500/40 shadow-[0_0_30px_rgba(244,63,94,0.2)]'
-          : 'bg-gradient-to-r from-[#07132b] via-[#050c1c] to-[#02060e] border-cyan-400/40 shadow-[0_0_30px_rgba(6,182,212,0.2)]'
-      }`}>
-        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="space-y-1 text-center sm:text-right">
-            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono border ${
-              isGirls 
-                ? 'bg-pink-950/80 text-pink-300 border-pink-500/50' 
-                : 'bg-cyan-950/80 text-cyan-300 border-cyan-500/50'
-            }`}>
-              WAR ROOM REWARDS & CRYSTALS
-            </span>
-            <h1 className="text-xl sm:text-2xl font-black text-white">
-              ویترین جوایز و امتیازات اتاق جنگ
-            </h1>
-            <p className="text-xs text-slate-300 max-w-md">
-              با تکمیل مراحل هفت‌خوان و کسب کریستال‌های امتیاز، قفل جوایز دلخواه خود را باز کنید.
-            </p>
-          </div>
-
-          {/* User Current Crystals / Points Card */}
-          <div className="flex items-center gap-3">
-            <div className={`p-4 rounded-2xl border flex items-center gap-3 backdrop-blur-md shadow-xl ${
-              isGirls
-                ? 'bg-pink-950/60 border-pink-500/50 text-pink-200'
-                : 'bg-cyan-950/60 border-cyan-400/50 text-cyan-200'
-            }`}>
-              <div className={`p-2.5 rounded-xl ${isGirls ? 'bg-pink-500/20 text-pink-400' : 'bg-cyan-500/20 text-cyan-400'}`}>
-                <Gem size={26} className="animate-pulse" />
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 block font-bold">موجودی کریستال شما</span>
-                <div className="flex items-center gap-1">
-                  <span className="text-xl sm:text-2xl font-black text-white font-mono">
-                    {formatToPersianDigits(userPoints)}
-                  </span>
-                  <span className="text-[11px] font-bold text-amber-400">کریستال</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* 2. Main Tab Switcher: "ویترین ۹ جایزه رویایی" vs "جدول رده‌بندی" */}
       <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
         <button
@@ -378,8 +331,8 @@ export default function PrizesPointsView({
 
       {/* Modal for Claiming Prize */}
       {selectedPrize && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#0b1226] border border-amber-500/40 rounded-3xl p-6 max-w-md w-full space-y-4 text-white shadow-2xl relative">
+        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+          <div className="bg-[#0b1226] border border-amber-500/40 rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 text-white shadow-2xl relative my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto">
             <h3 className="text-base font-black text-amber-300">
               تایید درخواست جایزه {selectedPrize.title}
             </h3>

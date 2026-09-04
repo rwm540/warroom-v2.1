@@ -32,7 +32,8 @@ import {
   Home,
   CheckCircle,
   Headphones,
-  MessageSquare
+  MessageSquare,
+  ArrowRight
 } from 'lucide-react';
 import { User, Group, Mission, MissionSubmission, Announcement, News, Medal, UserMedal, SupportTicket, SupportReply } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
@@ -200,132 +201,6 @@ export default function DashboardView({
   return (
     <div className={`space-y-4 md:space-y-5 dir-rtl pb-16 font-sans max-w-7xl mx-auto w-full px-2 sm:px-4 overflow-y-auto scroll-smooth ${isGirl ? 'girl-theme' : 'boy-theme'}`}>
       
-      {/* 1. Tactical Profile Hero Banner with Gender Customization */}
-      <div className={`rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 relative overflow-hidden border shadow-xl ${
-        isGirl 
-          ? 'bg-gradient-to-r from-[#170919] via-[#210c22] to-[#0d0414] border-rose-500/40 shadow-[0_0_30px_rgba(244,63,94,0.25)]' 
-          : 'bg-gradient-to-r from-[#070e24] via-[#091538] to-[#040916] border-cyan-500/40 shadow-[0_0_30px_rgba(6,182,212,0.25)]'
-      }`}>
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-          
-          {/* User Profile Details */}
-          <div className="flex items-center gap-3.5 sm:gap-4">
-            <div className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl p-[2px] shadow-lg flex-shrink-0 ${
-              isGirl 
-                ? 'bg-gradient-to-tr from-rose-500 via-pink-400 to-amber-300' 
-                : 'bg-gradient-to-tr from-cyan-400 via-blue-500 to-amber-400'
-            }`}>
-              <div className="w-full h-full bg-[#050816] rounded-[14px] flex items-center justify-center overflow-hidden">
-                {currentUser.avatar_url ? (
-                  <img src={currentUser.avatar_url} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  <span className={`font-black text-xl ${isGirl ? 'text-rose-300' : 'text-cyan-300'}`}>
-                    {currentUser.first_name[0]}
-                  </span>
-                )}
-              </div>
-              <span className={`absolute -bottom-1 -left-1 text-[9px] font-black font-mono px-1.5 py-0.2 rounded-full border border-black ${
-                isGirl ? 'bg-rose-500 text-white' : 'bg-amber-400 text-black'
-              }`}>
-                L3
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg md:text-xl font-black text-white">
-                  {currentUser.first_name} {currentUser.last_name}
-                </h2>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                  isGirl 
-                    ? 'bg-rose-950/80 text-rose-300 border-rose-500/50' 
-                    : 'bg-cyan-950/80 text-cyan-300 border-cyan-500/50'
-                }`}>
-                  {rankTitle}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-2 text-xs text-slate-300 font-medium flex-wrap">
-                <span>استان {currentUser.province} - {currentUser.school_name}</span>
-                <span>•</span>
-                <span>پایه {currentUser.grade} ({currentUser.education_level})</span>
-                {userGroup && (
-                  <span className={isGirl ? 'text-pink-300 font-bold' : 'text-amber-300 font-bold'}>
-                    • جوخه {userGroup.name}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Copy 9-Digit Personal Code Card & Quick Ticket Action */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="bg-[#050816]/90 border border-slate-700/80 rounded-2xl p-2.5 sm:p-3 flex items-center justify-between gap-3 shadow-inner w-full sm:w-auto">
-              <div>
-                <span className="text-[10px] text-slate-400 block font-bold">کد اختصاصی ۹ رقمی رزمنده:</span>
-                <span className={`text-sm sm:text-base font-black font-mono tracking-widest ${
-                  isGirl ? 'text-rose-300' : 'text-cyan-300'
-                }`}>
-                  {formatToPersianDigits(currentUser.personal_code)}
-                </span>
-              </div>
-              <button
-                onClick={copyCode}
-                className={`p-2 rounded-xl border transition cursor-pointer ${
-                  isGirl 
-                    ? 'bg-rose-950 text-rose-300 border-rose-600/50 hover:bg-rose-900' 
-                    : 'bg-cyan-950 text-cyan-300 border-cyan-600/50 hover:bg-cyan-900'
-                }`}
-                title="کپی کد اختصاصی"
-              >
-                {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
-              </button>
-            </div>
-
-            <button
-              onClick={() => setDashboardCategory('tickets')}
-              className={`p-2.5 sm:p-3 rounded-2xl border flex items-center gap-2 text-xs font-black transition cursor-pointer w-full sm:w-auto justify-center ${
-                dashboardCategory === 'tickets'
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                  : 'bg-[#050816]/90 text-slate-300 hover:text-white border-slate-700/80 hover:border-cyan-500/50'
-              }`}
-            >
-              <Headphones size={16} className={dashboardCategory === 'tickets' ? 'text-slate-950' : 'text-cyan-400'} />
-              <span>ارسال پیام و تیکت به مدیر</span>
-              {answeredTicketsCount > 0 && (
-                <span className="bg-emerald-400 text-slate-950 text-[9px] px-1.5 py-0.5 rounded-full animate-bounce font-mono">
-                  {formatToPersianDigits(answeredTicketsCount)} پاسخ جدید
-                </span>
-              )}
-            </button>
-          </div>
-
-        </div>
-
-        {/* Commander Squad Management Trigger */}
-        {currentUser.role === 'leader' && (
-          <div className="mt-4 pt-3.5 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className={`flex items-center gap-2 text-xs font-bold ${isGirl ? 'text-pink-300' : 'text-amber-300'}`}>
-              <Users size={16} className={isGirl ? 'text-pink-400' : 'text-amber-400'} />
-              <span>فرمانده گرامی، کد دعوت اختصاصی جوخه شما: <strong className="font-mono text-white text-sm bg-slate-900 px-2 py-0.5 rounded border border-amber-500/40">{userGroup?.registration_code || 'WRS-4820'}</strong></span>
-            </div>
-            <button
-              onClick={onOpenSquadModal}
-              className={`w-full sm:w-auto font-black text-xs px-4 py-2 rounded-xl transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer hover:opacity-95 ${
-                isGirl 
-                  ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white' 
-                  : 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950'
-              }`}
-            >
-              <Users size={15} />
-              <span>مدیریت و اصلاح اعضای جوخه</span>
-            </button>
-          </div>
-        )}
-
-      </div>
-
       {/* 2. STANDARDIZED SQUARE METRIC CARDS (مربع‌های آماری استاندارد ۴ گانه در وب و اندروید) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         
@@ -351,15 +226,25 @@ export default function DashboardView({
         {/* Metric 2: Missions Completed */}
         <div className="cyber-card-3d rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between aspect-square sm:aspect-auto sm:min-h-[135px] transition hover:scale-[1.02] relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center justify-center shrink-0 shadow-inner">
-              <Target size={20} />
+            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${
+              isGirl
+                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+            }`}>
+              <Target size={20} className={isGirl ? 'text-rose-400' : 'text-cyan-400'} />
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-300 border border-cyan-400/30 font-mono">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono ${
+              isGirl
+                ? 'bg-rose-400/10 text-rose-300 border border-rose-400/30'
+                : 'bg-cyan-400/10 text-cyan-300 border border-cyan-400/30'
+            }`}>
               {formatToPersianDigits(activeMissions.length)} فعال
             </span>
           </div>
           <div className="mt-2 space-y-0.5">
-            <div className="text-base sm:text-xl font-black text-cyan-300 font-mono tracking-tight flex items-baseline gap-1">
+            <div className={`text-base sm:text-xl font-black font-mono tracking-tight flex items-baseline gap-1 ${
+              isGirl ? 'text-rose-300' : 'text-cyan-300'
+            }`}>
               <span>{formatToPersianDigits(approvedCount)}</span>
               <span className="text-xs text-slate-400 font-normal">از {formatToPersianDigits(missions.length)}</span>
             </div>
@@ -557,12 +442,14 @@ export default function DashboardView({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Target size={18} className="text-cyan-400" />
+                <Target size={18} className={isGirl ? 'text-rose-400' : 'text-cyan-400'} />
                 <h3 className="text-xs sm:text-sm font-black text-white">مأموریت‌های فعال و آماده ارسال</h3>
               </div>
               <button
                 onClick={() => onNavigate('Missions')}
-                className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                className={`text-xs font-bold flex items-center gap-1 ${
+                  isGirl ? 'text-rose-400 hover:text-rose-300' : 'text-cyan-400 hover:text-cyan-300'
+                }`}
               >
                 <span>مشاهده تمام مأموریت‌ها</span>
                 <ChevronLeft size={14} />
@@ -579,7 +466,11 @@ export default function DashboardView({
                   >
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-black bg-cyan-950 text-cyan-300 px-2.5 py-0.5 rounded-full border border-cyan-500/40 font-mono">
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full font-mono border ${
+                          isGirl
+                            ? 'bg-rose-950 text-rose-300 border-rose-500/40'
+                            : 'bg-cyan-950 text-cyan-300 border-cyan-500/40'
+                        }`}>
                           حداکثر امتیاز: {formatToPersianDigits(m.max_score)}
                         </span>
                         {userSub ? (
@@ -608,7 +499,9 @@ export default function DashboardView({
                       className={`w-full mt-3 py-2.5 rounded-xl font-black text-xs transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer ${
                         userSub?.status === 'approved'
                           ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-                          : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-95 text-slate-950'
+                          : isGirl
+                          ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-fuchsia-600 hover:opacity-95 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]'
+                          : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-95 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
                       }`}
                     >
                       <span>{userSub ? 'مشاهده پاسخ مأموریت' : 'بارگذاری پاسخ مأموریت'}</span>

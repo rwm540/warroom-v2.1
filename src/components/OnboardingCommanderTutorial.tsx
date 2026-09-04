@@ -113,16 +113,16 @@ export default function OnboardingCommanderTutorial({
   };
 
   return (
-    <div className="fixed inset-0 z-50 pointer-events-auto bg-black/75 backdrop-blur-sm flex flex-col justify-end sm:justify-center items-center p-3 sm:p-6 dir-rtl font-sans select-none animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[100] pointer-events-auto bg-black/85 backdrop-blur-sm flex flex-col justify-center items-center p-3 sm:p-6 dir-rtl font-sans select-none animate-in fade-in duration-300 overflow-y-auto">
       
       {/* Clash of Clans Style Commander Dialog Box */}
       <motion.div 
         key={currentStep}
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        initial={{ opacity: 0, y: 15, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20 }}
         transition={{ duration: 0.25 }}
-        className={`w-full max-w-xl bg-[#090e21] border-2 ${commander.borderColor} rounded-3xl p-4 sm:p-6 shadow-2xl relative ${commander.glowColor} overflow-hidden`}
+        className={`w-full max-w-xl bg-[#090e21] border-2 ${commander.borderColor} rounded-3xl p-4 sm:p-6 shadow-2xl relative ${commander.glowColor} overflow-hidden max-h-[85vh] sm:max-h-[88vh] overflow-y-auto my-auto`}
       >
         {/* Background Subtle Tech Grid */}
         <div className="absolute inset-0 radar-grid opacity-30 pointer-events-none" />

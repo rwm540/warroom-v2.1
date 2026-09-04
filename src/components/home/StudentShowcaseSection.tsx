@@ -215,8 +215,8 @@ export default function StudentShowcaseSection({ onOpenAuth }: StudentShowcaseSe
 
       {/* Detail Modal */}
       {activeItem && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 dir-rtl">
-          <div className="bg-[#070b1e] border border-cyan-500/40 rounded-3xl p-5 max-w-lg w-full space-y-4 text-right shadow-[0_0_50px_rgba(6,182,212,0.3)] relative overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+          <div className="bg-[#070b1e] border border-cyan-500/40 rounded-3xl p-4 sm:p-6 max-w-lg w-full space-y-4 text-right shadow-[0_0_50px_rgba(6,182,212,0.3)] relative overflow-hidden max-h-[85vh] sm:max-h-[88vh] overflow-y-auto my-auto">
             
             <button
               onClick={() => setActiveItem(null)}

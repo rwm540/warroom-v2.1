@@ -178,8 +178,8 @@ export default function Footer({ onNavigate, onOpenAbout }: FooterProps) {
 
       {/* TRUST & VERIFICATION MODALS */}
       {activeTrustModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 dir-rtl">
-          <div className="bg-[#080d24] border border-cyan-500/50 rounded-3xl p-6 max-w-sm w-full text-right shadow-[0_0_50px_rgba(6,182,212,0.4)] relative space-y-4">
+        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+          <div className="bg-[#080d24] border border-cyan-500/50 rounded-3xl p-4 sm:p-6 max-w-sm w-full text-right shadow-[0_0_50px_rgba(6,182,212,0.4)] relative space-y-4 my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto">
             
             <button
               onClick={() => setActiveTrustModal(null)}

@@ -131,6 +131,44 @@ export default function AuthView({
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [detectedUser, setDetectedUser] = useState<User | null>(null);
+
+  // Detect if there is already a saved active user session
+  const [activeSessionUser, setActiveSessionUser] = useState<User | null>(() => {
+    try {
+      const savedUserData = localStorage.getItem('warroom_current_user_data');
+      if (savedUserData) return JSON.parse(savedUserData);
+      const savedId = localStorage.getItem('warroom_current_user_id');
+      if (savedId) {
+        const found = users.find(u => u.id === savedId);
+        if (found) return found;
+      }
+    } catch (e) {}
+    return null;
+  });
+
+  // Auto-detect registered user profile gender upon entering National ID or Personal Code
+  useEffect(() => {
+    const natId = normalizeToEnglishDigits(loginNationalId.trim());
+    if (natId.length >= 8) {
+      const found = users.find(u => 
+        normalizeToEnglishDigits(u.national_code) === natId || 
+        normalizeToEnglishDigits(u.personal_code) === natId
+      );
+      if (found) {
+        setDetectedUser(found);
+        // Force the theme to the registered user's gender!
+        setSelectedGender(found.gender);
+        const targetTheme = found.gender === 'دختر' ? 'girls' : 'boys';
+        localStorage.setItem('hisstory_theme_mode', targetTheme);
+        window.dispatchEvent(new Event('storage'));
+      } else {
+        setDetectedUser(null);
+      }
+    } else {
+      setDetectedUser(null);
+    }
+  }, [loginNationalId, users]);
 
   // 3. Forgot Password Modal State
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -204,6 +242,10 @@ export default function AuthView({
     setTimeout(() => {
       setUsers(prev => [...prev, newUser]);
       setIsSubmitting(false);
+      // Explicitly lock theme to newly registered user gender
+      const targetTheme = selectedGender === 'دختر' ? 'girls' : 'boys';
+      localStorage.setItem('hisstory_theme_mode', targetTheme);
+      window.dispatchEvent(new Event('storage'));
       triggerAlert(`ثبت‌نام شما با موفقیت انجام شد! به اتاق جنگ خوش آمدید ${firstName} عزیز.`);
       onLoginSuccess(newUser);
     }, 400);
@@ -231,6 +273,13 @@ export default function AuthView({
         setLoginError('رمز عبور وارد شده صحیح نیست. از گزینه فراموشی رمز عبور استفاده کنید.');
         return;
       }
+      
+      // CRITICAL: Strictly enforce the registered user's profile gender theme
+      const targetTheme = user.gender === 'دختر' ? 'girls' : 'boys';
+      setSelectedGender(user.gender);
+      localStorage.setItem('hisstory_theme_mode', targetTheme);
+      window.dispatchEvent(new Event('storage'));
+
       triggerAlert(`خوش آمدید ${user.first_name} ${user.last_name}`);
       onLoginSuccess(user);
     } else {
@@ -292,8 +341,24 @@ export default function AuthView({
       </div>
 
       {/* Top Header */}
-      <div className="w-full max-w-md mb-2 flex items-center justify-end z-10">
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
+      <div className="w-full max-w-md mb-2 flex items-center justify-between z-10 px-1">
+        {onBackToHome && (
+          <button
+            type="button"
+            onClick={onBackToHome}
+            className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-md cursor-pointer ${
+              isGirls
+                ? 'bg-rose-950/70 hover:bg-rose-900/90 text-pink-200 border-pink-500/50 hover:border-pink-400 shadow-[0_0_15px_rgba(244,63,94,0.2)]'
+                : 'bg-slate-900/80 hover:bg-cyan-950/90 text-cyan-200 border-cyan-500/50 hover:border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+            }`}
+            title="بازگشت به صفحه اصلی سایت"
+          >
+            <ArrowRight size={16} className="text-amber-400 group-hover:-translate-x-1 transition-transform" />
+            <span>صفحه اصلی سایت</span>
+          </button>
+        )}
+
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mr-auto">
           <Shield size={14} className={isGirls ? 'text-pink-400' : 'text-cyan-400'} />
           <span>{isGirls ? 'بخش دختران' : 'بخش پسران'}</span>
         </div>
@@ -364,6 +429,57 @@ export default function AuthView({
             </button>
           </div>
         </div>
+
+        {/* Active Session Fast Direct Entry Banner */}
+        {activeSessionUser && (
+          <div className={`mb-4 p-3.5 rounded-2xl border flex flex-col gap-2.5 shadow-xl animate-fade-in ${
+            activeSessionUser.gender === 'دختر'
+              ? 'bg-pink-950/70 border-pink-500/50 shadow-pink-950/40'
+              : 'bg-cyan-950/70 border-cyan-500/50 shadow-cyan-950/40'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={16} className={activeSessionUser.gender === 'دختر' ? 'text-pink-400' : 'text-cyan-400'} />
+                <span className="text-xs font-black text-white">نشست فعال شما ذخیره است</span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-300">
+                {activeSessionUser.personal_code}
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-300 leading-relaxed text-right">
+              رزمنده گرامی <strong className="text-white">{activeSessionUser.first_name} {activeSessionUser.last_name}</strong>، شما قبلاً وارد سامانه شده‌اید. نیازی به ورود یا ثبت‌نام مجدد نیست.
+            </p>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => onLoginSuccess(activeSessionUser)}
+                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-2 shadow-lg cursor-pointer ${
+                  activeSessionUser.gender === 'دختر'
+                    ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-pink-900/50 hover:brightness-110'
+                    : 'bg-gradient-to-r from-cyan-400 to-blue-600 text-slate-950 shadow-cyan-900/50 hover:brightness-110'
+                }`}
+              >
+                <ArrowLeft size={16} />
+                <span>ورود مستقیم به پنل کاربری ({activeSessionUser.first_name})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem('warroom_current_user_id');
+                  localStorage.removeItem('warroom_current_user_data');
+                  setActiveSessionUser(null);
+                  triggerAlert('نشست قبلی پاک شد. اکنون می‌توانید ثبت‌نام یا ورود جدید انجام دهید.');
+                }}
+                className="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-rose-400 border border-slate-800 text-[11px] font-bold transition whitespace-nowrap"
+              >
+                خروج و تعویض
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 2. Unified Registration Form */}
         {activeTab === 'register' ? (
@@ -548,10 +664,25 @@ export default function AuthView({
                   placeholder="کد ملی ۱۰ رقمی"
                   value={loginNationalId}
                   onChange={(e) => setLoginNationalId(e.target.value)}
-                  className="w-full py-2.5 px-3 pr-9 rounded-xl bg-slate-950/70 border border-slate-700/80 focus:border-cyan-400 text-xs text-white font-mono placeholder:text-slate-500 focus:outline-none transition text-left"
+                  className={`w-full py-2.5 px-3 pr-9 rounded-xl bg-slate-950/70 border text-xs text-white font-mono placeholder:text-slate-500 focus:outline-none transition text-left ${
+                    isGirls ? 'border-pink-500/40 focus:border-pink-400' : 'border-slate-700/80 focus:border-cyan-400'
+                  }`}
                 />
-                <IdCard size={15} className="absolute right-3 top-3 text-slate-400" />
+                <IdCard size={15} className={`absolute right-3 top-3 ${isGirls ? 'text-pink-400' : 'text-slate-400'}`} />
               </div>
+
+              {detectedUser && (
+                <div className={`mt-1.5 p-2 rounded-xl text-[11px] font-bold flex items-center gap-1.5 border transition-all ${
+                  detectedUser.gender === 'دختر'
+                    ? 'bg-rose-950/80 border-rose-500/50 text-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.25)]'
+                    : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                }`}>
+                  <UserCheck size={14} className={detectedUser.gender === 'دختر' ? 'text-rose-400' : 'text-cyan-400'} />
+                  <span>
+                    کاربر گرامی {detectedUser.first_name} {detectedUser.last_name} ({detectedUser.gender === 'دختر' ? 'بخش ویژه دختران' : 'بخش ویژه پسران'} — پوسته {detectedUser.gender === 'دختر' ? 'دخترانه' : 'پسرانه'} تثبیت شد)
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -565,7 +696,9 @@ export default function AuthView({
                     setShowForgotPassword(true);
                     setForgotNationalId(loginNationalId);
                   }}
-                  className="text-[10px] text-cyan-400 hover:text-cyan-300 hover:underline transition"
+                  className={`text-[10px] hover:underline transition ${
+                    isGirls ? 'text-pink-400 hover:text-pink-300' : 'text-cyan-400 hover:text-cyan-300'
+                  }`}
                 >
                   فراموشی رمز عبور؟
                 </button>
@@ -576,9 +709,11 @@ export default function AuthView({
                   placeholder="رمز عبور خود را وارد کنید"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full py-2.5 px-3 pr-9 pl-9 rounded-xl bg-slate-950/70 border border-slate-700/80 focus:border-cyan-400 text-xs text-white font-mono placeholder:text-slate-500 focus:outline-none transition text-left"
+                  className={`w-full py-2.5 px-3 pr-9 pl-9 rounded-xl bg-slate-950/70 border text-xs text-white font-mono placeholder:text-slate-500 focus:outline-none transition text-left ${
+                    isGirls ? 'border-pink-500/40 focus:border-pink-400' : 'border-slate-700/80 focus:border-cyan-400'
+                  }`}
                 />
-                <Lock size={15} className="absolute right-3 top-3 text-slate-400" />
+                <Lock size={15} className={`absolute right-3 top-3 ${isGirls ? 'text-pink-400' : 'text-slate-400'}`} />
                 <button
                   type="button"
                   onClick={() => setShowLoginPassword(!showLoginPassword)}
@@ -609,8 +744,8 @@ export default function AuthView({
 
       {/* Forgot Password Modal */}
       {showForgotPassword && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#0b1226] border border-cyan-500/40 rounded-3xl p-5 sm:p-6 max-w-sm w-full space-y-4 text-white shadow-2xl relative">
+        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+          <div className="bg-[#0b1226] border border-cyan-500/40 rounded-3xl p-5 sm:p-6 max-w-sm w-full space-y-4 text-white shadow-2xl relative my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto">
             
             <button
               onClick={() => setShowForgotPassword(false)}

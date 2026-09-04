@@ -50,6 +50,7 @@ import { User, Mission, MissionSubmission, Group, Medal, UserMedal } from '../ty
 import { formatToPersianDigits } from '../utils/jalali';
 import { getSavedPostIds } from '../data/vitrinData';
 import SavedVitrinReelsModal from './SavedVitrinReelsModal';
+import StageQuizModal from './StageQuizModal';
 
 interface JourneyViewProps {
   currentUser: User | null;
@@ -314,8 +315,18 @@ export default function JourneyView({
         {/* 1. TOP HEADER                                                             */}
         {/* ========================================================================= */}
         <header className="flex items-center justify-between px-2 pt-0.5 pb-0.5 shrink-0">
-          {/* Left Actions: Notification Bell + Saved Vitrin Videos button */}
+          {/* Left Actions: Guide button + Notification Bell + Saved Vitrin Videos button */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowGuideModal(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/40 text-cyan-300 hover:text-white hover:border-cyan-400 text-xs font-bold transition shadow-sm group cursor-pointer"
+              title="مشاهده راهنمای نقشه و دستورات تاکتیکی فرمانده"
+            >
+              <Compass size={14} className="text-cyan-400 group-hover:rotate-45 transition shrink-0" />
+              <span className="hidden sm:inline">راهنمای مسیر و فرمانده</span>
+              <span className="sm:hidden">راهنما</span>
+            </button>
+
             <button
               onClick={() => setShowSavedReelsModal(true)}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-rose-500/20 border border-amber-500/40 text-amber-300 hover:text-white hover:border-amber-400 text-xs font-bold transition shadow-sm group"
@@ -667,187 +678,30 @@ export default function JourneyView({
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. INTERACTIVE STAGE DETAILS MODAL (Opens on click of any Stage Icon)     */}
+      {/* 4. INTERACTIVE STAGE DETAILS & 4-OPTION QUIZ MODAL WITH TIMER & MEDIA     */}
       {/* ========================================================================= */}
-      <AnimatePresence>
-        {selectedStage && (
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 dir-rtl overflow-y-auto">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-[#0a1122] border border-cyan-500/40 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative my-auto max-h-[90vh] flex flex-col"
-            >
-              
-              {/* Stage Header Banner */}
-              <div className="relative h-44 w-full overflow-hidden bg-slate-950">
-                <img 
-                  src={selectedStage.bgThemeUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80'} 
-                  alt="تصویر مرحله" 
-                  className="w-full h-full object-cover opacity-60"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a1122] via-[#0a1122]/40 to-transparent" />
-                
-                {/* Close Button */}
-                <button
-                  onClick={() => setSelectedStage(null)}
-                  className="absolute top-4 left-4 p-2 rounded-xl bg-slate-950/80 border border-slate-700 text-slate-300 hover:text-white transition z-10"
-                >
-                  <X size={18} />
-                </button>
-
-                <div className="absolute bottom-4 right-4 left-4 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md">
-                      مرحله {formatToPersianDigits(selectedStage.number)} از ۷
-                    </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                      selectedStage.status === 'completed' 
-                        ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' 
-                        : selectedStage.status === 'in_progress'
-                        ? 'bg-amber-950 text-amber-300 border border-amber-800 animate-pulse'
-                        : 'bg-slate-900 text-slate-400 border border-slate-800'
-                    }`}>
-                      {selectedStage.status === 'completed' ? 'تکمیل شده' : selectedStage.status === 'in_progress' ? 'در حال انجام (جاری)' : 'قفل مرحله'}
-                    </span>
-                  </div>
-                  <h2 className="text-xl font-black text-white">{selectedStage.title}</h2>
-                  <p className="text-xs text-slate-300 font-medium">{selectedStage.subtitle}</p>
-                </div>
-              </div>
-
-              {/* Stage Widgets & Deliverable Form */}
-              <div className="p-5 overflow-y-auto space-y-4 text-xs">
-                
-                {/* Countdown Timer Widget */}
-                <div className="bg-amber-950/30 border border-amber-500/40 p-3 rounded-2xl flex items-center justify-between text-amber-300">
-                  <div className="flex items-center gap-2">
-                    <Clock size={17} className="animate-pulse text-amber-400" />
-                    <span className="font-bold">زمان باقی‌مانده تا پایان مأموریت:</span>
-                  </div>
-                  <span className="font-mono font-black text-xs tracking-wider">۰۲ : ۱۴ : ۳۵ : ۱۲</span>
-                </div>
-
-                {/* Description Text */}
-                <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80 space-y-2">
-                  <h4 className="font-black text-slate-200 flex items-center gap-2 text-xs">
-                    <FileText size={15} className="text-cyan-400" />
-                    <span>شرح سناریو و اهداف مأموریت:</span>
-                  </h4>
-                  <p className="text-slate-300 leading-relaxed text-xs">
-                    {selectedStage.description} رزمندگان عزیز می‌توانند پس از انجام اقدامات خواسته شده، گزارش کار، صوت، عکس یا مستندات مربوطه را از بخش بارگذاری ارسال نمایند.
-                  </p>
-                </div>
-
-                {/* Audio Briefing Player Widget */}
-                <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-cyan-950/80 text-cyan-400 border border-cyan-800">
-                      <Volume2 size={18} />
-                    </div>
-                    <div>
-                      <h5 className="font-bold text-slate-200">فایل صوتی توجیهی مرحله</h5>
-                      <span className="text-[10px] text-slate-400">مدت زمان: ۰۲:۴۵ دقیقه</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      setIsPlayingAudio(!isPlayingAudio);
-                      triggerAlert(isPlayingAudio ? 'پخش صوت متوقف شد.' : 'پخش صوت توجیهی مرحله آغاز شد.');
-                    }}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs transition"
-                  >
-                    {isPlayingAudio ? 'توقف' : 'پخش صوت'}
-                  </button>
-                </div>
-
-                {/* Video Widget Preview */}
-                <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h5 className="font-bold text-slate-200 flex items-center gap-1.5">
-                      <Video size={15} className="text-rose-400" />
-                      <span>ویدئوی آموزشی و راهنمای مرحله</span>
-                    </h5>
-                    <span className="text-[10px] text-slate-400 font-mono">HD 1080p</span>
-                  </div>
-                  <div className="relative h-36 rounded-xl bg-slate-900 overflow-hidden flex items-center justify-center border border-slate-800">
-                    <img src={selectedStage.bgThemeUrl} alt="ویدئو" className="w-full h-full object-cover opacity-40" />
-                    <button 
-                      onClick={() => triggerAlert('پخش ویدئوی آموزشی مرحله آغاز شد.')}
-                      className="absolute w-12 h-12 rounded-full bg-cyan-500 text-slate-950 flex items-center justify-center shadow-lg hover:scale-110 transition"
-                    >
-                      <Play size={20} className="fill-slate-950 mr-0.5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Deliverable File Upload Widget */}
-                <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80 space-y-3">
-                  <h5 className="font-bold text-slate-200 flex items-center gap-1.5">
-                    <Upload size={15} className="text-emerald-400" />
-                    <span>بارگذاری مستندات و پاسخ مرحله:</span>
-                  </h5>
-                  
-                  <div className="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 p-4 rounded-xl text-center space-y-2 transition bg-slate-900/50">
-                    <input 
-                      type="file" 
-                      id="stage-file-upload" 
-                      onChange={handleFileUploadSim}
-                      className="hidden" 
-                    />
-                    <label htmlFor="stage-file-upload" className="cursor-pointer block space-y-1">
-                      <Upload size={24} className="mx-auto text-cyan-400" />
-                      <span className="text-slate-300 font-bold block">برای انتخاب فایل کلیک کنید یا فایل را اینجا رها کنید</span>
-                      <span className="text-[10px] text-slate-500 block">پشتیبانی از فرمت‌های ZIP, DOCX, MP4, PDF (حداکثر ۵۰ مگابایت)</span>
-                    </label>
-                    {uploadedFile && (
-                      <div className="mt-2 bg-emerald-950/60 border border-emerald-800 text-emerald-300 p-2 rounded-lg text-xs font-mono font-bold">
-                        فایل انتخاب شده: {uploadedFile}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block text-[11px] font-bold text-slate-300">یادداشت برای هیئت داوران ستاد:</label>
-                    <textarea 
-                      rows={2}
-                      value={widgetNote}
-                      onChange={(e) => setWidgetNote(e.target.value)}
-                      placeholder="توضیحات تکمیلی پیرامون اقدام انجام شده..."
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-cyan-500"
-                    />
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      triggerAlert(`پاسخ مرحله «${selectedStage.title}» با موفقیت برای ستاد ارسال گردید.`);
-                      setSelectedStage(null);
-                    }}
-                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs py-2.5 rounded-xl transition shadow-lg flex items-center justify-center gap-2"
-                  >
-                    <Send size={15} />
-                    <span>ارسال نهایی مستندات مرحله</span>
-                  </button>
-                </div>
-
-              </div>
-
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <StageQuizModal
+        isOpen={Boolean(selectedStage)}
+        onClose={() => setSelectedStage(null)}
+        stage={selectedStage}
+        currentUser={currentUser}
+        triggerAlert={triggerAlert}
+        onStageCompleted={(stageId, earnedPoints) => {
+          triggerAlert(`مرحله با موفقیت فتح شد و ${formatToPersianDigits(earnedPoints)} کریستال پاداش به رزمنده تعلق گرفت.`);
+        }}
+      />
 
       {/* ========================================================================= */}
       {/* 5. JOURNAL MODAL (دفترچه سفر)                                            */}
       {/* ========================================================================= */}
       <AnimatePresence>
         {showJournalModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl">
+          <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#0b1222] border border-amber-500/40 rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl"
+              className="bg-[#0b1222] border border-amber-500/40 rounded-3xl max-w-md w-full p-4 sm:p-5 space-y-4 shadow-2xl my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2 text-amber-400 font-black text-base">
@@ -893,57 +747,114 @@ export default function JourneyView({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showGuideModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl">
+          <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#0b1222] border border-cyan-500/40 rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl"
+              className="bg-[#0b1222] border border-cyan-500/40 rounded-3xl max-w-md w-full p-4 sm:p-5 space-y-4 shadow-2xl my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2 text-cyan-400 font-black text-base">
-                  <Compass size={20} />
-                  <span>راهنمای پیمایش مسیر سفر</span>
+                <div className="flex items-center gap-2.5 text-cyan-400 font-black text-base">
+                  <Compass size={22} className="animate-spin-slow" />
+                  <span>راهنمای نقشه و دستورات فرمانده قرارگاه</span>
                 </div>
                 <button 
                   onClick={() => setShowGuideModal(false)}
-                  className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+                  className="p-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
+                  title="بستن پنجره"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
-                <div className="flex items-start gap-2.5 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                  <span className="text-emerald-400 text-sm">🟢</span>
-                  <div>
-                    <strong className="text-white block">مراحل سبز:</strong>
-                    <span>مراحلی که شما با موفقیت آن‌ها را پشت سر گذاشته‌اید.</span>
+              {/* COMMANDER AVATAR & TAC DEBRIEFING CARD */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-[#071329] via-[#0d1f3d] to-[#08152c] border border-cyan-500/50 relative overflow-hidden shadow-lg space-y-3">
+                
+                <div className="flex items-center gap-3.5">
+                  {/* Commander Avatar Frame */}
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl p-[2px] bg-gradient-to-tr from-amber-400 via-cyan-400 to-emerald-400 shadow-[0_0_20px_rgba(6,182,212,0.4)] shrink-0">
+                    <div className="w-full h-full bg-[#050b18] rounded-[14px] overflow-hidden relative">
+                      <img 
+                        src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80" 
+                        alt="فرمانده قرارگاه تاکتیکی" 
+                        className="w-full h-full object-cover object-top"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#050b18]/70 via-transparent to-transparent" />
+                    </div>
+                    {/* Live Online Indicator */}
+                    <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#071329] animate-pulse" />
+                  </div>
+
+                  {/* Commander Identity & Titles */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        فرماندهی ارشد عملیات
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
+                        اتاق فرماندهی آنلاین
+                      </span>
+                    </div>
+
+                    <h3 className="text-base sm:text-lg font-black text-white">
+                      سردار ستاد قرارگاه تاکتیکی اتاق جنگ
+                    </h3>
+                    <p className="text-[11px] text-cyan-300 font-bold">
+                      راهبر عالی عملیات‌های هفت‌خوان دانش‌آموزی مقاومت
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                  <span className="text-amber-400 text-sm">🟡</span>
+                {/* Commander's Strategic Briefing Speech Bubble */}
+                <div className="bg-[#050b18]/85 p-3 rounded-xl border border-cyan-800/40 text-xs text-slate-200 leading-relaxed relative space-y-1.5">
+                  <div className="text-amber-400 font-black flex items-center gap-1.5 text-[11px]">
+                    <Sparkles size={13} />
+                    <span>دستورالعمل تاکتیکی فرمانده برای رزمندگان:</span>
+                  </div>
+                  <p className="text-slate-300 text-xs leading-relaxed">
+                    «رزمندگان غیور! نقشه هفت‌خوان پیش روی شما، میدان فتح و محک آمادگی علمی، بصیرتی و عملیاتی است. با کلیک بر روی هر یک از آیکون‌های مسیر، وارد آزمون‌های زمان‌دار چهارگزینه‌ای به همراه عکس‌ها و فیلم‌های توجیهی مرحله می‌شوید. زمان تایمر محدود است؛ با تمرکز و مشورت با جوخه، گزینه‌های صحیح را انتخاب کنید تا بالاترین کریستال‌های امتیاز به حسابتان افزوده شود.»
+                  </p>
+                </div>
+
+              </div>
+
+              {/* Status Legend */}
+              <div className="space-y-2.5 text-xs text-slate-300">
+                <span className="font-bold text-slate-400 block text-[11px]">راهنمای وضعیت آیکون‌های مراحل روی نقشه:</span>
+                
+                <div className="flex items-start gap-2.5 bg-slate-900/70 p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-emerald-400 text-sm shrink-0">🟢</span>
                   <div>
-                    <strong className="text-white block">مراحل طلایی:</strong>
-                    <span>مرحله جاری و در دست اقدام شما؛ با کلیک روی آن مأموریت را تکمیل فرمایید.</span>
+                    <strong className="text-white block">مراحل سبز (فتح‌شده):</strong>
+                    <span>مراحلی که آزمون ۴ گزینه‌ای و مأموریت آن تکمیل گردیده و مدال‌های آن به شما تعلق گرفته است. (می‌توانید جهت مرور دوباره روی آن کلیک کنید).</span>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 text-sm">🔒</span>
+                <div className="flex items-start gap-2.5 bg-amber-950/20 p-2.5 rounded-xl border border-amber-500/40">
+                  <span className="text-amber-400 text-sm shrink-0 animate-pulse">🟡</span>
                   <div>
-                    <strong className="text-white block">مراحل قفل شده:</strong>
-                    <span>پس از کسب امتیاز و گذراندن مراحل قبلی، به صورت خودکار بازگشایی خواهند شد.</span>
+                    <strong className="text-amber-300 block">مراحل طلایی (مرحله جاری):</strong>
+                    <span>مرحله فعال کنونی شما؛ با کلیک روی آن فوراً آزمون زمان‌دار ۴ گزینه‌ای با فیلم و تصویر آغاز می‌شود.</span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 bg-slate-900/70 p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 text-sm shrink-0">🔒</span>
+                  <div>
+                    <strong className="text-slate-300 block">مراحل قفل‌شده (آتی):</strong>
+                    <span>پس از پاسخ به سوالات مرحله جاری و افزایش امتیاز کریستال‌ها، به صورت خودکار بازگشایی می‌شوند.</span>
                   </div>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowGuideModal(false)}
-                className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs py-2.5 rounded-xl transition"
+                className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs py-3 rounded-xl transition shadow-lg shadow-cyan-950/40 cursor-pointer"
               >
-                متوجه شدم
+                تایید، اجرای دستورات فرمانده و بازگشت به نقشه
               </button>
             </motion.div>
           </div>
@@ -953,12 +864,12 @@ export default function JourneyView({
         {/* INTEGRATED PROFILE & DOSSIER MODAL (پروفایل و نشان‌های رزمنده)             */}
         {/* ========================================================================= */}
         {showProfileDrawer && (
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 dir-rtl overflow-y-auto">
+          <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-[#090e1c] border border-cyan-500/40 rounded-3xl max-w-xl w-full p-4 sm:p-6 space-y-5 shadow-2xl relative my-auto max-h-[90vh] overflow-y-auto"
+              className="bg-[#090e1c] border border-cyan-500/40 rounded-3xl max-w-xl w-full p-4 sm:p-6 space-y-5 shadow-2xl relative my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">

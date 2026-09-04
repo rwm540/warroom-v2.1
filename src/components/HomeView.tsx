@@ -133,6 +133,16 @@ export default function HomeView({
                 themeMode={themeMode}
                 currentUser={currentUser}
                 onOpenRegister={() => onOpenAuth('register_individual')}
+                onGoToDashboard={() => {
+                  if (currentUser?.role === 'admin') {
+                    setActiveTab('Admin');
+                  } else {
+                    setActiveTab('Dashboard');
+                  }
+                  if (currentUser) {
+                    triggerAlert(`ورود مستقیم به پنل: ${currentUser.first_name} ${currentUser.last_name}`);
+                  }
+                }}
               />
             </section>
 
@@ -188,8 +198,8 @@ export default function HomeView({
 
         {/* Competition Guide & Rules Modal */}
         {showGuideModal && (
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 dir-rtl">
-            <div className={`border rounded-3xl p-5 sm:p-6 max-w-md w-full text-right relative space-y-4 shadow-2xl ${
+          <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+            <div className={`border rounded-3xl p-4 sm:p-6 max-w-md w-full text-right relative space-y-4 shadow-2xl my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto ${
               isGirls 
                 ? 'bg-[#150718] border-pink-500/50 shadow-pink-900/40 text-pink-50' 
                 : 'bg-[#081224] border-cyan-500/50 shadow-cyan-900/40 text-slate-100'

@@ -59,12 +59,12 @@ export default function ProfileModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 dir-rtl font-sans">
+      <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl font-sans overflow-y-auto">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-[#080d21] border border-cyan-500/30 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl overflow-hidden relative"
+          className="bg-[#080d21] border border-cyan-500/30 rounded-3xl max-w-lg w-full p-4 sm:p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[85vh] sm:max-h-[88vh] relative my-auto"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-800 pb-4">

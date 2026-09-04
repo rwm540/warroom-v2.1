@@ -279,4 +279,52 @@ body, html {
   scrollbar-color: #06b6d4 #030612;
 }
 
+/* Girl Theme Tactical Cyber Theme */
+.girl-theme .cyber-card {
+  background: linear-gradient(135deg, rgba(32, 10, 36, 0.88) 0%, rgba(18, 5, 22, 0.94) 100%);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+    0 10px 30px -5px rgba(0, 0, 0, 0.85),
+    0 0 18px 0 rgba(244, 63, 94, 0.2);
+}
+
+.girl-theme .cyber-card-3d {
+  background: linear-gradient(145deg, rgba(35, 12, 40, 0.92) 0%, rgba(20, 6, 24, 0.96) 100%);
+  border-top: 1px solid rgba(244, 63, 94, 0.5);
+  border-left: 1px solid rgba(244, 63, 94, 0.3);
+  border-right: 1px solid rgba(217, 70, 239, 0.2);
+  border-bottom: 2px solid rgba(24, 4, 28, 0.9);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.22),
+    0 15px 35px -5px rgba(0, 0, 0, 0.85),
+    0 0 25px 0 rgba(244, 63, 94, 0.22);
+}
+
+.girl-theme .cyber-card-3d:hover {
+  box-shadow: 
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.3),
+    0 22px 45px -10px rgba(0, 0, 0, 0.9),
+    0 0 35px 2px rgba(244, 63, 94, 0.4);
+  border-top-color: rgba(244, 63, 94, 0.8);
+}
+
+.girl-theme .cyber-button-3d {
+  background: linear-gradient(180deg, #f43f5e 0%, #db2777 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 3px solid #9d174d;
+  box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.girl-theme ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f43f5e 0%, #d946ef 100%);
+  border: 1px solid #200824;
+  box-shadow: inset 0 0 6px rgba(244, 63, 94, 0.5);
+}
+
+.girl-theme ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #fb7185 0%, #f43f5e 100%);
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.8);
+}
+
 

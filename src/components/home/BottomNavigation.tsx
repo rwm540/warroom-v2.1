@@ -45,7 +45,7 @@ export default function BottomNavigation({
   return (
     <nav 
       aria-label="منوی اندروید"
-      className={`fixed bottom-3.5 inset-x-3.5 sm:bottom-5 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[430px] z-50 rounded-[28px] backdrop-blur-2xl border shadow-[0_12px_45px_rgba(0,0,0,0.85)] dir-rtl px-2 py-1.5 transition-all duration-300 select-none md:hidden ${
+      className={`fixed bottom-3.5 inset-x-3.5 sm:bottom-5 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[430px] z-40 rounded-[28px] backdrop-blur-2xl border shadow-[0_12px_45px_rgba(0,0,0,0.85)] dir-rtl px-2 py-1.5 transition-all duration-300 select-none md:hidden ${
         isGirls 
           ? 'bg-[#160619]/95 border-pink-500/40 shadow-[0_12px_45px_rgba(0,0,0,0.85),0_0_25px_rgba(244,63,94,0.22)]'
           : 'bg-[#050b1d]/95 border-cyan-500/35 shadow-[0_12px_45px_rgba(0,0,0,0.85),0_0_25px_rgba(6,182,212,0.22)]'

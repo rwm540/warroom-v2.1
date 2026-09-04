@@ -696,14 +696,14 @@ export default function TicketsView({
       {/* 3. Modal: New Ticket Submission Form */}
       <AnimatePresence>
         {showNewModal && (
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 dir-rtl">
+          <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-start justify-center p-3 pt-3 sm:pt-6 pb-28 dir-rtl overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-[#070c22] border border-cyan-500/50 rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-[0_0_40px_rgba(6,182,212,0.3)] max-h-[90vh] overflow-y-auto"
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              className="bg-[#070c22] border border-cyan-500/50 rounded-3xl p-4 sm:p-5 max-w-lg w-full shadow-[0_0_50px_rgba(6,182,212,0.35)] max-h-[82vh] flex flex-col relative"
             >
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-xl bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-cyan-400">
                     <Plus size={18} />
@@ -721,87 +721,90 @@ export default function TicketsView({
                 </button>
               </div>
 
-              <form onSubmit={handleCreateTicket} className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">عنوان / موضوع مشکل *</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={newSubject}
-                    onChange={(e) => setNewSubject(e.target.value)}
-                    placeholder="مثال: عدم تایید ارسال مأموریت شماره ۳ یا مشکل در عضویت جوخه"
-                    className="w-full bg-[#040716] border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <form onSubmit={handleCreateTicket} className="flex flex-col flex-1 overflow-hidden mt-3">
+                <div className="flex-1 overflow-y-auto space-y-3 pr-1 pl-0.5">
                   <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">دسته‌بندی موضوع *</label>
-                    <select
-                      value={newType}
-                      onChange={(e) => setNewType(e.target.value as TicketType)}
-                      className="w-full bg-[#040716] border border-slate-700 focus:border-cyan-400 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition"
-                    >
-                      <option value="technical">پشتیبانی فنی و سامانه</option>
-                      <option value="judge">داوری و اعتراض به امتیاز</option>
-                      <option value="content">محتوا، ویدیوها و آموزه‌ها</option>
-                      <option value="other">تغییر اطلاعات جوخه / عمومی</option>
-                    </select>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">عنوان / موضوع مشکل *</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={newSubject}
+                      onChange={(e) => setNewSubject(e.target.value)}
+                      placeholder="مثال: عدم تایید ارسال مأموریت شماره ۳ یا مشکل در عضویت جوخه"
+                      className="w-full bg-[#040716] border border-slate-700 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white outline-none transition"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">دسته‌بندی موضوع *</label>
+                      <select
+                        value={newType}
+                        onChange={(e) => setNewType(e.target.value as TicketType)}
+                        className="w-full bg-[#040716] border border-slate-700 focus:border-cyan-400 rounded-xl px-2.5 py-2 text-xs text-white outline-none transition"
+                      >
+                        <option value="technical">پشتیبانی فنی و سامانه</option>
+                        <option value="judge">داوری و اعتراض به امتیاز</option>
+                        <option value="content">محتوا، ویدیوها و آموزه‌ها</option>
+                        <option value="other">تغییر اطلاعات جوخه / عمومی</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">اولویت رسیدگی *</label>
+                      <select
+                        value={newPriority}
+                        onChange={(e) => setNewPriority(e.target.value as TicketPriority)}
+                        className="w-full bg-[#040716] border border-slate-700 focus:border-cyan-400 rounded-xl px-2.5 py-2 text-xs text-white outline-none transition"
+                      >
+                        <option value="normal">عادی (پاسخ استاندارد)</option>
+                        <option value="important">مهم (بررسی ویژه)</option>
+                        <option value="urgent">فوری (خطای بحرانی یا داوری نهایی)</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">اولویت رسیدگی *</label>
-                    <select
-                      value={newPriority}
-                      onChange={(e) => setNewPriority(e.target.value as TicketPriority)}
-                      className="w-full bg-[#040716] border border-slate-700 focus:border-cyan-400 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition"
-                    >
-                      <option value="normal">عادی (پاسخ استاندارد)</option>
-                      <option value="important">مهم (بررسی ویژه)</option>
-                      <option value="urgent">فوری (خطای بحرانی یا داوری نهایی)</option>
-                    </select>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">شرح دقیق مشکل یا درخواست *</label>
+                    <textarea 
+                      rows={3}
+                      required
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="لطفاً تمام جزئیات مربوط به مشکل، شماره مأموریت، نام عضو جوخه یا خطای مشاهده‌شده را با دقت بنویسید..."
+                      className="w-full bg-[#040716] border border-slate-700 focus:border-cyan-400 rounded-xl p-2.5 text-xs text-white outline-none transition resize-none placeholder-slate-500 leading-relaxed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">لینک یا تصویر ضمیمه (اختیاری)</label>
+                    <input 
+                      type="text" 
+                      value={newAttachment}
+                      onChange={(e) => setNewAttachment(e.target.value)}
+                      placeholder="https://... یا نشانی تصویر خطا"
+                      className="w-full bg-[#040716] border border-slate-700 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white outline-none transition font-mono dir-ltr text-right"
+                    />
+                  </div>
+
+                  <div className="bg-cyan-950/40 p-2.5 rounded-xl border border-cyan-500/20 text-[11px] text-cyan-300 flex items-start gap-2">
+                    <Info size={16} className="shrink-0 mt-0.5 text-cyan-400" />
+                    <p>تیکت شما بلافاصله در کارتابل داوران و مدیران ارشد قرار می‌گیرد و به محض پاسخ، در داشبورد شما اعلان داده می‌شود.</p>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">شرح دقیق مشکل یا درخواست *</label>
-                  <textarea 
-                    rows={4}
-                    required
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="لطفاً تمام جزئیات مربوط به مشکل، شماره مأموریت، نام عضو جوخه یا خطای مشاهده‌شده را با دقت بنویسید..."
-                    className="w-full bg-[#040716] border border-slate-700 focus:border-cyan-400 rounded-xl p-3 text-xs text-white outline-none transition resize-none placeholder-slate-500 leading-relaxed"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">لینک یا تصویر ضمیمه (اختیاری)</label>
-                  <input 
-                    type="text" 
-                    value={newAttachment}
-                    onChange={(e) => setNewAttachment(e.target.value)}
-                    placeholder="https://... یا نشانی تصویر خطا"
-                    className="w-full bg-[#040716] border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition font-mono dir-ltr text-right"
-                  />
-                </div>
-
-                <div className="bg-cyan-950/40 p-3 rounded-xl border border-cyan-500/20 text-[11px] text-cyan-300 flex items-start gap-2">
-                  <Info size={16} className="shrink-0 mt-0.5 text-cyan-400" />
-                  <p>تیکت شما بلافاصله در کارتابل داوران و مدیران ارشد ستاد اتاق جنگ قرار می‌گیرد و به محض پاسخ، در داشبورد شما اعلان داده می‌شود.</p>
-                </div>
-
-                <div className="flex items-center justify-end gap-2.5 pt-2">
+                {/* Sticky Always-Visible Footer Action Buttons */}
+                <div className="pt-3 border-t border-slate-800/90 flex items-center justify-end gap-2.5 shrink-0 mt-2 bg-[#070c22]">
                   <button
                     type="button"
                     onClick={() => setShowNewModal(false)}
-                    className="px-4 py-2.5 rounded-xl bg-slate-900 text-slate-400 hover:text-white font-bold text-xs transition cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 hover:text-white font-bold text-xs transition cursor-pointer"
                   >
                     انصراف
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(6,182,212,0.4)] transition flex items-center gap-2 cursor-pointer"
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(6,182,212,0.4)] transition flex items-center gap-2 cursor-pointer"
                   >
                     <Send size={15} />
                     <span>ارسال نهایی تیکت به مدیر</span>

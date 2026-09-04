@@ -11,7 +11,6 @@ import {
   Share2,
   Trash2,
   Eye,
-  Star,
   Heart,
   MessageCircle,
   ExternalLink,
@@ -485,11 +484,6 @@ export default function ProfileView({
                               <span className="font-mono font-bold text-slate-200">{formatToPersianDigits(postComments.length || post.commentsCount)}</span>
                             </span>
                           </div>
-
-                          <span className="flex items-center gap-1 text-amber-400 font-bold">
-                            <Star size={13} className="fill-amber-400" />
-                            <span className="font-mono">{formatToPersianDigits(post.ratingAverage)}</span>
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -536,8 +530,8 @@ export default function ProfileView({
 
       {/* Full Preview Modal for Saved Post */}
       {selectedPost && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
-          <div className="bg-[#090e21] border border-amber-500/40 rounded-3xl max-w-2xl w-full overflow-hidden text-white shadow-2xl relative flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+          <div className="bg-[#090e21] border border-amber-500/40 rounded-3xl max-w-2xl w-full overflow-hidden text-white shadow-2xl relative flex flex-col max-h-[85vh] sm:max-h-[88vh] my-auto">
             
             {/* Modal Header */}
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
@@ -606,9 +600,6 @@ export default function ProfileView({
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-amber-950 text-amber-300 border border-amber-500/30">
                     {selectedPost.stageTag}
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    امتیاز: {formatToPersianDigits(selectedPost.ratingAverage)} از ۵
                   </span>
                 </div>
                 <h2 className="text-base font-black text-white">{selectedPost.title}</h2>

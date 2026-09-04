@@ -157,7 +157,7 @@ export default function PersianDatePicker({
       {/* Calendar Picker Modal Overlay */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md overflow-y-auto">
             
             {/* Backdrop click to close */}
             <div 
@@ -170,7 +170,7 @@ export default function PersianDatePicker({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 10 }}
               transition={{ duration: 0.2 }}
-              className={`relative z-10 w-full max-w-[340px] sm:max-w-sm rounded-3xl border p-4 sm:p-5 shadow-2xl font-sans text-right select-none ${
+              className={`relative z-10 w-full max-w-[340px] sm:max-w-sm rounded-3xl border p-4 sm:p-5 shadow-2xl font-sans text-right select-none my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto ${
                 isGirls
                   ? 'bg-[#1a0820] border-pink-500/50 text-pink-100 shadow-[0_0_50px_rgba(244,63,94,0.35)]'
                   : 'bg-[#081226] border-cyan-500/50 text-slate-100 shadow-[0_0_50px_rgba(6,182,212,0.35)]'

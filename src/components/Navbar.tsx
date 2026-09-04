@@ -107,6 +107,7 @@ export default function Navbar({
 
   // Full Desktop Navigation items (Web desktop/laptop)
   const desktopNavItems: { id: string; label: string; icon: any; badge?: string }[] = [
+    { id: 'Home', label: 'صفحه اصلی سایت', icon: Home },
     { id: 'Journey', label: 'نقشه مراحل بازی', icon: Gamepad2 },
     { id: 'Rewards', label: 'جوایز و امتیازات', icon: Gift },
     { id: 'Dashboard', label: 'داشبورد عملیات', icon: LayoutDashboard },
@@ -166,19 +167,20 @@ export default function Navbar({
         {/* Top Utility Bar */}
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between border-b border-slate-800/80 text-xs">
           
-          {/* Brand Logo & Title */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-600 to-rose-600 p-[1.5px] shadow-[0_0_12px_rgba(6,182,212,0.4)]">
-              <div className="w-full h-full bg-[#070b1e] rounded-[11px] flex items-center justify-center text-cyan-400 font-bold">
+          {/* Brand Logo & Title (Clickable to return Home) */}
+          <div 
+            onClick={() => handleSelectTab('Home', false)}
+            className="flex items-center gap-2.5 sm:gap-3 shrink-0 cursor-pointer group select-none transition-transform hover:scale-[1.02]"
+            title="بازگشت به صفحه اصلی سایت"
+          >
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-600 to-rose-600 p-[1.5px] shadow-[0_0_12px_rgba(6,182,212,0.4)] group-hover:shadow-[0_0_18px_rgba(6,182,212,0.7)] transition-shadow">
+              <div className="w-full h-full bg-[#070b1e] rounded-[11px] flex items-center justify-center text-cyan-400 font-bold group-hover:text-cyan-300">
                 <ShieldAlert size={18} className="animate-pulse" />
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h1 className="font-black text-xs sm:text-sm md:text-base text-white tracking-tight">اتاق جنگ</h1>
-                <span className="bg-cyan-950/80 text-cyan-300 text-[9px] font-mono px-1.5 py-0.5 rounded border border-cyan-500/40 font-bold">
-                  OPERATIONAL v2.5
-                </span>
+                <h1 className="font-black text-xs sm:text-sm md:text-base text-white tracking-tight group-hover:text-cyan-300 transition-colors">اتاق جنگ</h1>
               </div>
               <p className="text-[10px] text-slate-400 font-medium hidden md:block">سامانه ارزیابی، مسابقه و آموزش‌های استراتژیک دانش‌آموزی</p>
             </div>
@@ -187,30 +189,6 @@ export default function Navbar({
           {/* User Controls / Status */}
           {currentUser && (
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              
-              {/* 9-Digit Personal Code Badge (Visible on desktop & tablet) */}
-              <div 
-                onClick={copyPersonalCode}
-                title="برای کپی کد اختصاصی ۹ رقمی کلیک کنید"
-                className="hidden sm:flex items-center gap-1.5 bg-slate-900/90 border border-cyan-500/30 hover:border-cyan-400 px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer transition font-mono text-[11px]"
-              >
-                <span className="text-[10px] text-slate-400 font-sans">کد اختصاصی:</span>
-                <span className="font-black text-cyan-300 tracking-wider">
-                  {formatToPersianDigits(currentUser.personal_code)}
-                </span>
-                {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} className="text-slate-400" />}
-              </div>
-
-              {/* Role Badge */}
-              <span className={`hidden md:inline-block text-[10px] font-bold px-2 py-1 rounded-md border ${
-                currentUser.role === 'admin' 
-                  ? 'bg-amber-950/60 text-amber-300 border-amber-800/60' 
-                  : currentUser.role === 'leader' 
-                  ? 'bg-red-950/80 text-red-300 border-red-800/60' 
-                  : 'bg-cyan-950/60 text-cyan-300 border-cyan-800/50'
-              }`}>
-                {getRoleLabel(currentUser.role)}
-              </span>
 
               {/* Leader Squad Management (Desktop trigger) */}
               {currentUser.role === 'leader' && (
@@ -239,22 +217,6 @@ export default function Navbar({
                 >
                   <SlidersHorizontal size={13} />
                   <span>{isAdminView ? 'خروج از ادمین' : 'پنل ادمین'}</span>
-                </button>
-              )}
-
-              {/* Notification Bell */}
-              {onOpenNotifications && (
-                <button
-                  onClick={onOpenNotifications}
-                  className="relative p-1.5 bg-slate-900 hover:bg-cyan-950 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 rounded-lg transition"
-                  title="پیام‌ها و اعلانات ستاد"
-                >
-                  <Bell size={16} />
-                  {unreadNotificationsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-600 text-white text-[9px] font-black flex items-center justify-center border border-black animate-pulse">
-                      {unreadNotificationsCount}
-                    </span>
-                  )}
                 </button>
               )}
 

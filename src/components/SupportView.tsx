@@ -449,8 +449,8 @@ export default function SupportView({
 
       {/* New Ticket Modal */}
       {showNewModal && currentUser && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#080d22] border border-amber-500/40 rounded-3xl p-6 max-w-lg w-full dir-rtl space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+          <div className="bg-[#080d22] border border-amber-500/40 rounded-3xl p-4 sm:p-6 max-w-lg w-full dir-rtl space-y-4 shadow-2xl max-h-[85vh] sm:max-h-[88vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-black text-white">ثبت تیکت جدید در ستاد</h3>
               <button 

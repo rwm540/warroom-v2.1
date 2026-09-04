@@ -23,6 +23,7 @@ import {
   Check,
   Home,
   ArrowLeft,
+  ArrowRight,
   Headphones,
   MessageSquare,
   CheckCircle,
@@ -509,7 +510,18 @@ export default function AdminPanel({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {onNavigate && (
+            <button
+              onClick={() => onNavigate('Home')}
+              className="group flex items-center gap-2 bg-gradient-to-r from-slate-900 to-cyan-950 hover:from-cyan-950 hover:to-blue-950 text-cyan-200 hover:text-white border border-cyan-500/50 hover:border-cyan-400 px-3.5 py-2 rounded-xl text-xs font-black transition-all shadow-[0_0_15px_rgba(6,182,212,0.25)] cursor-pointer"
+              title="بازگشت به صفحه اصلی سایت"
+            >
+              <ArrowRight size={16} className="text-amber-400 group-hover:-translate-x-1 transition-transform" />
+              <span>بازگشت به صفحه اصلی سایت</span>
+            </button>
+          )}
+
           <div className="flex items-center gap-2 font-mono text-xs text-amber-300 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-amber-900/60">
             <span>داور فعال: {currentUser.first_name} {currentUser.last_name}</span>
           </div>

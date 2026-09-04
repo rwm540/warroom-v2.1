@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Heart, 
-  Star, 
   Play, 
   MessageCircle, 
   Share2, 
@@ -15,13 +14,13 @@ import {
   ChevronDown,
   ChevronUp,
   User as UserIcon,
-  MessageSquarePlus,
   ThumbsUp,
   Loader2,
   ArrowDown
 } from 'lucide-react';
 import { User } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
+import { playTacticalSound } from '../utils/epicBgmEngine';
 import { 
   VitrinPost, 
   VitrinComment, 
@@ -150,6 +149,7 @@ export default function VitrinView({
   };
 
   const toggleLike = (postId: string, forceLike = false) => {
+    playTacticalSound('like');
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
         const nextLiked = forceLike ? true : !p.isLikedByUser;
@@ -301,6 +301,7 @@ export default function VitrinView({
       setSelectedPost(prev => prev ? { ...prev, commentsCount: currentCount } : null);
     }
 
+    playTacticalSound('comment');
     triggerAlert('دیدگاه شما با موفقیت ثبت و منتشر شد.');
   };
 
@@ -456,17 +457,20 @@ export default function VitrinView({
                       />
                     </button>
 
-                    {/* Comment Toggle */}
+                    {/* Comment Toggle - Only clicking this icon opens view & add comments */}
                     <button
-                      onClick={() => setExpandedCommentsPostId(isCommentsExpanded ? null : post.id)}
-                      className={`p-1 transition flex items-center gap-1 ${
+                      onClick={() => {
+                        playTacticalSound('click');
+                        setExpandedCommentsPostId(isCommentsExpanded ? null : post.id);
+                      }}
+                      className={`p-1 transition flex items-center gap-1 cursor-pointer ${
                         isCommentsExpanded 
-                          ? isGirls ? 'text-pink-400' : 'text-cyan-400'
+                          ? isGirls ? 'text-pink-400 font-bold' : 'text-cyan-400 font-bold'
                           : 'text-slate-300 hover:text-cyan-400'
                       }`}
-                      title="نمایش یا ارسال دیدگاه"
+                      title={isCommentsExpanded ? 'بستن بخش نظرات' : 'مشاهده و ثبت نظر'}
                     >
-                      <MessageCircle size={21} />
+                      <MessageCircle size={21} className={isCommentsExpanded ? (isGirls ? 'fill-pink-400/30' : 'fill-cyan-400/30') : ''} />
                       <span className="text-xs font-bold font-mono">
                         {formatToPersianDigits(postComments.length)}
                       </span>
@@ -511,44 +515,8 @@ export default function VitrinView({
                   <span className="text-slate-300">{post.description}</span>
                 </div>
 
-                {/* 1-5 Star Interactive Rating */}
-                <div className="pt-2 flex items-center justify-between border-t border-slate-800/80 text-xs">
-                  <span className="text-slate-400 text-[11px]">
-                    میانگین امتیاز: <strong className="text-amber-300 font-mono">{formatToPersianDigits(post.ratingAverage)}</strong> از ۵
-                  </span>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => handleRatePost(post.id, star)}
-                        className="text-slate-600 hover:text-amber-400 transition transform hover:scale-125 p-0.5"
-                        title={`ثبت امتیاز ${star} ستاره`}
-                      >
-                        <Star 
-                          size={16} 
-                          className={(post.userRating || 0) >= star ? 'fill-amber-400 text-amber-400' : ''} 
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Toggle Comments Button */}
-                <button
-                  onClick={() => setExpandedCommentsPostId(isCommentsExpanded ? null : post.id)}
-                  className="text-[11px] text-slate-400 hover:text-slate-200 pt-0.5 flex items-center gap-1.5 transition"
-                >
-                  <MessageSquarePlus size={13} className={isGirls ? 'text-pink-400' : 'text-cyan-400'} />
-                  <span>
-                    {isCommentsExpanded 
-                      ? 'بستن بخش دیدگاه‌ها' 
-                      : `مشاهده هر ${formatToPersianDigits(postComments.length)} دیدگاه و ارسال نظر...`}
-                  </span>
-                  {isCommentsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                </button>
-
                 {/* ========================================================================= */}
-                {/* EXPANDABLE COMMENTS STREAM & INPUT FORM                                    */}
+                {/* EXPANDABLE COMMENTS STREAM & INPUT FORM (Opened only via comment icon)    */}
                 {/* ========================================================================= */}
                 <AnimatePresence>
                   {isCommentsExpanded && (
@@ -744,8 +712,8 @@ export default function VitrinView({
 
       {/* 3. Full-Screen Interactive Media Modal with 1-5 Star Rating & Comments */}
       {selectedPost && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
-          <div className="bg-[#090e21] border border-cyan-500/40 rounded-3xl max-w-2xl w-full overflow-hidden text-white shadow-2xl relative flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+          <div className="bg-[#090e21] border border-cyan-500/40 rounded-3xl max-w-2xl w-full overflow-hidden text-white shadow-2xl relative flex flex-col max-h-[85vh] sm:max-h-[88vh] my-auto">
             
             {/* Modal Header */}
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
@@ -812,30 +780,6 @@ export default function VitrinView({
               <div className="space-y-1">
                 <h2 className="text-base font-black text-white">{selectedPost.title}</h2>
                 <p className="text-xs text-slate-300 leading-relaxed">{selectedPost.description}</p>
-              </div>
-
-              {/* 1-5 Star Interactive Rating System */}
-              <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="space-y-0.5 text-center sm:text-right">
-                  <span className="text-xs font-black text-white block">امتیاز شما به این اثر:</span>
-                  <span className="text-[10px] text-slate-400">میانگین فعلی: {formatToPersianDigits(selectedPost.ratingAverage)} از ۵</span>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => handleRatePost(selectedPost.id, star)}
-                      className="p-1 text-slate-600 hover:text-amber-400 transition transform hover:scale-125"
-                    >
-                      <Star 
-                        size={22} 
-                        className={(selectedPost.userRating || 0) >= star ? 'fill-amber-400 text-amber-400' : 'hover:fill-amber-400'} 
-                      />
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Actions (Like & Share) */}

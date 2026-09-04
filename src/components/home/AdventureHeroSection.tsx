@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Shield, Gem, ArrowLeft, UserPlus, Heart, Zap } from 'lucide-react';
+import { Sparkles, Shield, Gem, ArrowLeft, UserPlus, Heart, Zap, LayoutDashboard, SlidersHorizontal, UserCheck } from 'lucide-react';
 import { User } from '../../types';
 import warroomLogoJpg from '../../assets/images/warroom_logo_1787906676836.jpg';
 import boysBannerJpg from '../../assets/images/boys_registration_banner_1788362378043.jpg';
@@ -9,15 +9,25 @@ interface AdventureHeroSectionProps {
   themeMode: 'girls' | 'boys';
   currentUser: User | null;
   onOpenRegister: () => void;
+  onGoToDashboard?: () => void;
 }
 
 export default function AdventureHeroSection({
   themeMode,
   currentUser,
-  onOpenRegister
+  onOpenRegister,
+  onGoToDashboard
 }: AdventureHeroSectionProps) {
   const isGirls = themeMode === 'girls';
   const [logoError, setLogoError] = useState(false);
+
+  const handleBannerAction = () => {
+    if (currentUser && onGoToDashboard) {
+      onGoToDashboard();
+    } else {
+      onOpenRegister();
+    }
+  };
 
   return (
     <div className="w-full space-y-4 text-center">
@@ -72,19 +82,22 @@ export default function AdventureHeroSection({
         </h2>
 
         <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto leading-relaxed px-3">
-          برای شرکت در مسابقات، دریافت کریستال‌ها و رقابت در جدول برترین‌های کشور، روی بنر زیر کلیک کرده و ثبت‌نام خود را تکمیل کنید.
+          {currentUser 
+            ? `شما با حساب رزمنده «${currentUser.first_name} ${currentUser.last_name}» وارد شده‌اید. برای دسترسی مستقیم به پنل روی بنر کلیک کنید.`
+            : 'برای شرکت در مسابقات، دریافت کریستال‌ها و رقابت در جدول برترین‌های کشور، روی بنر زیر کلیک کرده و ثبت‌نام خود را تکمیل کنید.'
+          }
         </p>
       </div>
 
       {/* 2. Interactive Image Registration Banner Based on Gender Selection */}
       <div 
-        onClick={onOpenRegister}
+        onClick={handleBannerAction}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            onOpenRegister();
+            handleBannerAction();
           }
         }}
         className={`group relative rounded-3xl overflow-hidden border-2 p-1.5 shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.01] active:scale-[0.99] ${
@@ -112,20 +125,39 @@ export default function AdventureHeroSection({
               : 'from-[#040813]/95 via-[#040813]/40 to-transparent group-hover:from-[#040813]/90'
           }`} />
 
-          {/* Bottom Action Centerpiece (Click to Register Call to Action) */}
+          {/* Bottom Action Centerpiece (Click to Register or Go to Panel) */}
           <div className="absolute bottom-5 sm:bottom-7 left-0 right-0 flex flex-col items-center justify-center gap-2.5 px-4 z-10">
             <div className={`px-6 sm:px-10 py-3 sm:py-3.5 rounded-2xl font-black text-sm sm:text-base border shadow-2xl flex items-center gap-3 transition transform group-hover:scale-105 ${
               isGirls
                 ? 'bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 text-white border-pink-300/50 shadow-[0_0_35px_rgba(244,63,94,0.9)]'
                 : 'bg-gradient-to-r from-cyan-500 via-blue-600 to-cyan-400 text-white border-cyan-200/50 shadow-[0_0_35px_rgba(6,182,212,0.9)]'
             }`}>
-              <UserPlus size={20} className="group-hover:rotate-12 transition-transform" />
-              <span>{isGirls ? 'ورود و ثبت‌نام دختران' : 'ورود و ثبت‌نام پسران'}</span>
+              {currentUser ? (
+                currentUser.role === 'admin' ? (
+                  <>
+                    <SlidersHorizontal size={20} className="group-hover:rotate-12 transition-transform text-amber-300" />
+                    <span>ورود مستقیم به پنل مدیریت کل</span>
+                  </>
+                ) : (
+                  <>
+                    <LayoutDashboard size={20} className="group-hover:rotate-12 transition-transform" />
+                    <span>ورود مستقیم به پنل کاربری ({currentUser.first_name})</span>
+                  </>
+                )
+              ) : (
+                <>
+                  <UserPlus size={20} className="group-hover:rotate-12 transition-transform" />
+                  <span>{isGirls ? 'ورود و ثبت‌نام دختران' : 'ورود و ثبت‌نام پسران'}</span>
+                </>
+              )}
               <ArrowLeft size={18} className="group-hover:translate-x-[-4px] transition-transform" />
             </div>
 
             <p className="text-[11px] sm:text-xs text-slate-200 font-medium drop-shadow-md bg-black/60 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm">
-              برای آغاز ثبت‌نام و دریافت کد اختصاصی، روی بنر کلیک کنید
+              {currentUser 
+                ? 'حساب کاربری شما فعال و ذخیره است — برای رفتن به اتاق عملیات کلیک کنید'
+                : 'برای آغاز ثبت‌نام و دریافت کد اختصاصی، روی بنر کلیک کنید'
+              }
             </p>
           </div>
 

@@ -129,8 +129,8 @@ export default function CompetitionHero({
 
       {/* Video Player Modal */}
       {showVideoModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 dir-rtl">
-          <div className="bg-[#080d22] border border-cyan-500/50 rounded-3xl p-5 max-w-2xl w-full space-y-4 shadow-[0_0_50px_rgba(6,182,212,0.4)] relative">
+        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+          <div className="bg-[#080d22] border border-cyan-500/50 rounded-3xl p-4 sm:p-6 max-w-2xl w-full space-y-4 shadow-[0_0_50px_rgba(6,182,212,0.4)] relative my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
               <div className="flex items-center gap-2">
                 <Play size={18} className="text-cyan-400 fill-cyan-400" />
@@ -178,8 +178,8 @@ export default function CompetitionHero({
 
       {/* Official Poster Modal */}
       {showPosterModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 dir-rtl">
-          <div className="bg-[#080d22] border border-cyan-500/50 rounded-3xl p-5 max-w-md w-full space-y-4 shadow-[0_0_50px_rgba(6,182,212,0.4)] relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+          <div className="bg-[#080d22] border border-cyan-500/50 rounded-3xl p-4 sm:p-6 max-w-md w-full space-y-4 shadow-[0_0_50px_rgba(6,182,212,0.4)] relative max-h-[85vh] sm:max-h-[88vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
               <div className="flex items-center gap-2">
                 <ImageIcon size={18} className="text-cyan-400" />

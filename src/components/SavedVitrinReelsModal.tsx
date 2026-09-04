@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  X, Bookmark, Heart, MessageCircle, Star, Play, Pause, Volume2, VolumeX, 
+  X, Bookmark, Heart, MessageCircle, Play, Pause, Volume2, VolumeX, 
   Send, Loader2, ChevronDown, Share2, Sparkles, Video, ArrowLeft, CheckCircle2
 } from 'lucide-react';
 import { VitrinPost, VitrinComment, initialVitrinPosts, getAllComments, saveComment, getSavedPostIds, savePostId } from '../data/vitrinData';
@@ -179,13 +179,13 @@ export default function SavedVitrinReelsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 dir-rtl overflow-y-auto font-sans">
+    <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto font-sans">
       <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 20 }}
+        initial={{ opacity: 0, scale: 0.96, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 20 }}
+        exit={{ opacity: 0, scale: 0.96, y: 15 }}
         transition={{ duration: 0.25 }}
-        className="bg-[#070b16] border border-cyan-500/40 rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative"
+        className="bg-[#070b16] border border-cyan-500/40 rounded-3xl max-w-xl w-full max-h-[85vh] sm:max-h-[88vh] flex flex-col shadow-2xl overflow-hidden relative my-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-800/80 bg-slate-950/70 shrink-0">
@@ -403,24 +403,6 @@ export default function SavedVitrinReelsModal({
                             <MessageCircle size={18} />
                             <span>{formatToPersianDigits(postComments.length)}</span>
                           </button>
-                        </div>
-
-                        {/* 1-5 Star Interactive Rating */}
-                        <div className="flex items-center gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() => handleRate(post.id, star)}
-                              className="p-1 text-slate-500 hover:text-amber-400 transition"
-                              title={`ثبت ${star} ستاره`}
-                            >
-                              <Star
-                                size={15}
-                                className={star <= (userRating || post.ratingAverage) ? 'fill-amber-400 text-amber-400' : ''}
-                              />
-                            </button>
-                          ))}
                         </div>
                       </div>
 

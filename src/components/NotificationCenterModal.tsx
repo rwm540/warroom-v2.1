@@ -200,7 +200,7 @@ export default function NotificationCenterModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 dir-rtl font-sans">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 dir-rtl font-sans overflow-y-auto">
       
       {/* Backdrop */}
       <motion.div 
@@ -217,7 +217,7 @@ export default function NotificationCenterModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.94, y: 15 }}
         transition={{ type: 'spring', damping: 25, stiffness: 320 }}
-        className="relative z-10 w-full max-w-2xl bg-[#060a1e] border border-cyan-500/40 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.9),0_0_30px_rgba(6,182,212,0.15)] flex flex-col max-h-[88vh] overflow-hidden"
+        className="relative z-10 w-full max-w-2xl bg-[#060a1e] border border-cyan-500/40 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.9),0_0_30px_rgba(6,182,212,0.15)] flex flex-col max-h-[85vh] sm:max-h-[88vh] overflow-hidden my-auto"
       >
         
         {/* Modal Header */}
