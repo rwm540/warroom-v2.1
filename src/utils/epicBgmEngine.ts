@@ -1,5 +1,8 @@
-// Tactical War Room Epic Music Synthesizer & Sound Effects Engine
-// Uses Web Audio API for 100% reliable, zero-latency, cross-browser cinematic battle audio
+// Tactical War Room Epic Music Synthesizer & Universal Audio Stream Engine
+// Supports both dynamic Web Audio API Synthesis AND Direct Audio Link Streams (MP3/WAV/OGG)
+// with Auto-Random/Shuffle on end, Custom Admin Playlists, and Persistent Global Control.
+
+import { SoundtrackItem, AudioPlaybackMode, AudioSettings } from '../types';
 
 let sharedCtx: AudioContext | null = null;
 
@@ -21,7 +24,7 @@ export function getAudioContext(): AudioContext | null {
 }
 
 // Tactical UI Sound Effects
-export function playTacticalSound(type: 'click' | 'like' | 'comment' | 'correct' | 'wrong' | 'timer' | 'win') {
+export function playTacticalSound(type: 'click' | 'like' | 'comment' | 'correct' | 'wrong' | 'timer' | 'win' | 'switch') {
   const ctx = getAudioContext();
   if (!ctx) return;
   const now = ctx.currentTime;
@@ -40,8 +43,20 @@ export function playTacticalSound(type: 'click' | 'like' | 'comment' | 'correct'
       osc.start(now);
       osc.stop(now + 0.05);
 
+    } else if (type === 'switch') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.06);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.07);
+
     } else if (type === 'like') {
-      // Warm bubbling pop
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
@@ -55,7 +70,6 @@ export function playTacticalSound(type: 'click' | 'like' | 'comment' | 'correct'
       osc.stop(now + 0.1);
 
     } else if (type === 'comment') {
-      // Pleasant radio transmission ping
       const freqs = [659.25, 880, 1174.66];
       freqs.forEach((f, i) => {
         const osc = ctx.createOscillator();
@@ -71,8 +85,7 @@ export function playTacticalSound(type: 'click' | 'like' | 'comment' | 'correct'
       });
 
     } else if (type === 'correct' || type === 'win') {
-      // Victorious major chime
-      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+      const notes = [523.25, 659.25, 783.99, 1046.5];
       notes.forEach((freq, idx) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -87,7 +100,6 @@ export function playTacticalSound(type: 'click' | 'like' | 'comment' | 'correct'
       });
 
     } else if (type === 'wrong') {
-      // Low tactical rejection buzz
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sawtooth';
@@ -101,7 +113,6 @@ export function playTacticalSound(type: 'click' | 'like' | 'comment' | 'correct'
       osc.stop(now + 0.3);
 
     } else if (type === 'timer') {
-      // Clock tick
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'triangle';
@@ -118,71 +129,115 @@ export function playTacticalSound(type: 'click' | 'like' | 'comment' | 'correct'
   }
 }
 
-// =========================================================================
-// EPIC CINEMATIC WAR ROOM MULTI-TRACK MUSIC SYNTHESIZER
-// =========================================================================
+export type SynthTrackId = 'epic_march' | 'cyber_mission' | 'triumph_anthem' | 'strategic_zen';
 
-export type TrackId = 'epic_march' | 'cyber_mission' | 'triumph_anthem' | 'strategic_zen';
-
-export interface TrackInfo {
-  id: TrackId;
-  title: string;
-  subtitle: string;
-  tempo: number;
-  tag: string;
-  color: string;
-}
-
-export const TRACK_LIST: TrackInfo[] = [
+// Default soundtrack presets (includes both synthesizers and high quality audio links)
+export const DEFAULT_SOUNDTRACKS: SoundtrackItem[] = [
   {
-    id: 'epic_march',
+    id: 'track-synth-march',
     title: 'مارش حماسی اتاق جنگ',
     subtitle: 'طبل‌های حماسی، شیپور و ملودی دلاورانه',
+    tag: 'حماسی / سینماتیک',
+    color: 'from-amber-500 to-yellow-400',
+    sourceType: 'synth',
+    synthTrackId: 'epic_march',
     tempo: 120,
-    tag: 'حماسی / عملیاتی',
-    color: 'from-amber-500 to-yellow-400'
+    durationSeconds: 90,
+    is_active: true,
+    order: 1
   },
   {
-    id: 'cyber_mission',
-    title: 'سایبر مأموریت شبانه',
-    subtitle: 'آرپژهای الکترونیک و ریتم تپنده مدرن',
+    id: 'track-url-epic-orchestra',
+    title: 'نوای فتح و افق افتخار',
+    subtitle: 'موسیقی ارکسترال حماسی با ضرب‌آهنگ پیروزی',
+    tag: 'ارکسترال / لینک صوتی',
+    color: 'from-orange-500 to-amber-400',
+    sourceType: 'url',
+    url: 'https://cdn.freesound.org/previews/563/563842_11861866-lq.mp3',
+    durationSeconds: 110,
+    is_active: true,
+    order: 2
+  },
+  {
+    id: 'track-synth-cyber',
+    title: 'سایبر مأموریت و رادار شبانه',
+    subtitle: 'آرپژهای الکترونیک و ریتم تپنده راداری مدرن',
+    tag: 'سایبر / الکترونیک',
+    color: 'from-cyan-500 to-blue-500',
+    sourceType: 'synth',
+    synthTrackId: 'cyber_mission',
     tempo: 128,
-    tag: 'سایبر / راداری',
-    color: 'from-cyan-500 to-blue-500'
+    durationSeconds: 90,
+    is_active: true,
+    order: 3
   },
   {
-    id: 'triumph_anthem',
-    title: 'سرود پیروزی و افتخار',
+    id: 'track-url-tactical-drums',
+    title: 'طبل‌های حماسی فتح خرمشهر',
+    subtitle: 'ریتم پرکاشن حماسی و رزمی میدانی',
+    tag: 'رزمی / لینک صوتی',
+    color: 'from-red-500 to-rose-400',
+    sourceType: 'url',
+    url: 'https://cdn.freesound.org/previews/612/612095_5674468-lq.mp3',
+    durationSeconds: 95,
+    is_active: true,
+    order: 4
+  },
+  {
+    id: 'track-synth-triumph',
+    title: 'سرود پیروزی و افتخار جوخه',
     subtitle: 'هارمونی ماژور، زنگ‌های زرین و سرود فتح',
+    tag: 'افتخار / امیدبخش',
+    color: 'from-emerald-500 to-teal-400',
+    sourceType: 'synth',
+    synthTrackId: 'triumph_anthem',
     tempo: 112,
-    tag: 'پیروزی / افتخار',
-    color: 'from-emerald-500 to-teal-400'
+    durationSeconds: 90,
+    is_active: true,
+    order: 5
   },
   {
-    id: 'strategic_zen',
+    id: 'track-synth-zen',
     title: 'تمرکز و تحلیل راهبردی',
     subtitle: 'فضای آرامش‌بخش، هارمونی‌های عمیق و تفکر',
-    tempo: 90,
     tag: 'آرامش / تمرکز',
-    color: 'from-purple-500 to-indigo-400'
+    color: 'from-purple-500 to-indigo-400',
+    sourceType: 'synth',
+    synthTrackId: 'strategic_zen',
+    tempo: 90,
+    durationSeconds: 120,
+    is_active: true,
+    order: 6
   }
 ];
 
-class MultiTrackSynthesizer {
+export const TRACK_LIST = DEFAULT_SOUNDTRACKS; // backward compat
+
+class UniversalAudioEngine {
   private ctx: AudioContext | null = null;
   private isRunning: boolean = false;
   private masterGain: GainNode | null = null;
   private timerId: number | null = null;
-  private currentStep: number = 0;
+  private synthStep: number = 0;
+  private synthCycleSeconds: number = 0;
   private volume: number = 0.35;
-  private currentTrack: TrackId = 'epic_march';
+  
+  // HTML5 Audio Element for URL-based tracks
+  private audioElement: HTMLAudioElement | null = null;
+  private isUsingUrlAudio: boolean = false;
 
-  // 1. Epic March (D Minor)
+  // Playlist & Settings
+  private playlist: SoundtrackItem[] = [];
+  private currentTrack: SoundtrackItem | null = null;
+  private playbackMode: AudioPlaybackMode = 'random';
+  private autoAdvanceTimerId: number | null = null;
+
+  // Synthesis data
   private marchChords = [
-    { root: 146.83, notes: [293.66, 349.23, 440.0, 587.33] }, // Dm
-    { root: 116.54, notes: [233.08, 293.66, 349.23, 466.16] }, // Bb
-    { root: 174.61, notes: [349.23, 440.0, 523.25, 698.46] },  // F
-    { root: 130.81, notes: [261.63, 329.63, 392.0, 523.25] },  // C
+    { root: 146.83, notes: [293.66, 349.23, 440.0, 587.33] },
+    { root: 116.54, notes: [233.08, 293.66, 349.23, 466.16] },
+    { root: 174.61, notes: [349.23, 440.0, 523.25, 698.46] },
+    { root: 130.81, notes: [261.63, 329.63, 392.0, 523.25] },
   ];
   private marchMelody = [
     587.33, 0, 587.33, 659.25, 698.46, 0, 587.33, 0, 880.0, 0, 783.99, 0, 698.46, 659.25, 587.33, 0,
@@ -191,12 +246,11 @@ class MultiTrackSynthesizer {
     523.25, 0, 659.25, 0, 783.99, 0, 880.0, 0, 659.25, 0, 587.33, 0, 523.25, 440.0, 587.33, 0
   ];
 
-  // 2. Cyber Mission (F# Minor / Synthwave)
   private cyberChords = [
-    { root: 92.50, notes: [185.00, 220.00, 277.18, 370.00] }, // F#m
-    { root: 110.00, notes: [220.00, 277.18, 329.63, 440.00] }, // A
-    { root: 98.00, notes: [196.00, 246.94, 293.66, 392.00] }, // G
-    { root: 82.41, notes: [164.81, 207.65, 246.94, 329.63] }, // E
+    { root: 92.50, notes: [185.00, 220.00, 277.18, 370.00] },
+    { root: 110.00, notes: [220.00, 277.18, 329.63, 440.00] },
+    { root: 98.00, notes: [196.00, 246.94, 293.66, 392.00] },
+    { root: 82.41, notes: [164.81, 207.65, 246.94, 329.63] },
   ];
   private cyberArpNotes = [
     370.00, 440.00, 554.37, 740.00, 554.37, 440.00, 370.00, 440.00,
@@ -205,12 +259,11 @@ class MultiTrackSynthesizer {
     329.63, 415.30, 493.88, 659.25, 493.88, 415.30, 329.63, 415.30
   ];
 
-  // 3. Triumph Anthem (G Major)
   private triumphChords = [
-    { root: 98.00, notes: [196.00, 246.94, 293.66, 392.00] },  // G
-    { root: 82.41, notes: [164.81, 196.00, 246.94, 329.63] },  // Em
-    { root: 130.81, notes: [261.63, 329.63, 392.00, 523.25] }, // C
-    { root: 146.83, notes: [293.66, 369.99, 440.00, 587.33] }  // D
+    { root: 98.00, notes: [196.00, 246.94, 293.66, 392.00] },
+    { root: 82.41, notes: [164.81, 196.00, 246.94, 329.63] },
+    { root: 130.81, notes: [261.63, 329.63, 392.00, 523.25] },
+    { root: 146.83, notes: [293.66, 369.99, 440.00, 587.33] }
   ];
   private triumphMelody = [
     392.00, 0, 493.88, 0, 587.33, 0, 783.99, 0, 783.99, 0, 880.00, 0, 783.99, 587.33, 493.88, 0,
@@ -219,12 +272,11 @@ class MultiTrackSynthesizer {
     587.33, 0, 739.99, 0, 880.00, 0, 1174.66, 0, 987.77, 0, 880.00, 0, 783.99, 0, 587.33, 0
   ];
 
-  // 4. Strategic Zen & Deep Focus (A Minor / Meditative Ambient)
   private zenChords = [
-    { root: 110.00, notes: [220.00, 261.63, 329.63, 440.00] }, // Am
-    { root: 87.31, notes: [174.61, 220.00, 261.63, 349.23] },  // F
-    { root: 130.81, notes: [261.63, 329.63, 392.00, 523.25] }, // C
-    { root: 98.00, notes: [196.00, 246.94, 293.66, 392.00] }   // G
+    { root: 110.00, notes: [220.00, 261.63, 329.63, 440.00] },
+    { root: 87.31, notes: [174.61, 220.00, 261.63, 349.23] },
+    { root: 130.81, notes: [261.63, 329.63, 392.00, 523.25] },
+    { root: 98.00, notes: [196.00, 246.94, 293.66, 392.00] }
   ];
   private zenChimes = [
     440.00, 0, 0, 0, 659.25, 0, 0, 0, 523.25, 0, 0, 0, 880.00, 0, 0, 0,
@@ -233,46 +285,272 @@ class MultiTrackSynthesizer {
     392.00, 0, 0, 0, 587.33, 0, 0, 0, 493.88, 0, 0, 0, 783.99, 0, 0, 0
   ];
 
-  public getTrack(): TrackId {
+  constructor() {
+    this.initPlaylist();
+    this.setupAudioElement();
+  }
+
+  private initPlaylist() {
+    try {
+      const savedList = localStorage.getItem('warroom_soundtracks');
+      if (savedList) {
+        this.playlist = JSON.parse(savedList);
+      } else {
+        this.playlist = [...DEFAULT_SOUNDTRACKS];
+        localStorage.setItem('warroom_soundtracks', JSON.stringify(this.playlist));
+      }
+
+      const savedSettings = localStorage.getItem('warroom_audio_settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.playbackMode) this.playbackMode = parsed.playbackMode;
+        if (parsed.defaultVolume !== undefined) this.volume = parsed.defaultVolume / 100;
+        if (parsed.activeTrackId) {
+          const found = this.playlist.find(t => t.id === parsed.activeTrackId);
+          if (found) this.currentTrack = found;
+        }
+      }
+
+      if (!this.currentTrack && this.playlist.length > 0) {
+        this.currentTrack = this.playlist.find(t => t.is_active) || this.playlist[0];
+      }
+    } catch {
+      this.playlist = [...DEFAULT_SOUNDTRACKS];
+      this.currentTrack = this.playlist[0];
+    }
+  }
+
+  private setupAudioElement() {
+    if (typeof window === 'undefined') return;
+    this.audioElement = new Audio();
+    this.audioElement.crossOrigin = 'anonymous';
+    this.audioElement.loop = false; // We handle loop via playlist mode
+    this.audioElement.volume = this.volume;
+
+    // When URL track ends, automatically advance according to playback mode!
+    this.audioElement.addEventListener('ended', () => {
+      console.log('Track ended naturally, auto-advancing according to mode:', this.playbackMode);
+      this.handleTrackEnded();
+    });
+
+    // Error fallback: if URL fails to load, gracefully fallback to synthesizer
+    this.audioElement.addEventListener('error', (e) => {
+      console.warn('Audio link load failed, switching to backup synth:', e);
+      if (this.isRunning && this.currentTrack?.sourceType === 'url') {
+        // Play synth fallback
+        this.playSynthMode('epic_march');
+      }
+    });
+  }
+
+  // Handle when current track finishes
+  private handleTrackEnded() {
+    if (!this.isRunning) return;
+
+    if (this.playbackMode === 'repeat_one') {
+      // Replay the same track
+      if (this.currentTrack) {
+        this.playTrack(this.currentTrack);
+      }
+    } else if (this.playbackMode === 'random') {
+      // Pick a random track from active playlist
+      this.nextRandomTrack();
+    } else {
+      // Sequential next
+      this.nextSequentialTrack();
+    }
+  }
+
+  public getPlaylist(): SoundtrackItem[] {
+    return this.playlist;
+  }
+
+  public setPlaylist(newPlaylist: SoundtrackItem[]) {
+    this.playlist = newPlaylist;
+    try {
+      localStorage.setItem('warroom_soundtracks', JSON.stringify(newPlaylist));
+      window.dispatchEvent(new CustomEvent('warroom_soundtracks_updated', { detail: newPlaylist }));
+    } catch {}
+
+    // Check if current track was removed or deactivated
+    if (this.currentTrack && !this.playlist.some(t => t.id === this.currentTrack?.id && t.is_active)) {
+      const firstActive = this.playlist.find(t => t.is_active);
+      if (firstActive) {
+        this.playTrack(firstActive);
+      }
+    }
+  }
+
+  public getPlaybackMode(): AudioPlaybackMode {
+    return this.playbackMode;
+  }
+
+  public setPlaybackMode(mode: AudioPlaybackMode) {
+    this.playbackMode = mode;
+    try {
+      const savedSettings = JSON.parse(localStorage.getItem('warroom_audio_settings') || '{}');
+      savedSettings.playbackMode = mode;
+      localStorage.setItem('warroom_audio_settings', JSON.stringify(savedSettings));
+      window.dispatchEvent(new CustomEvent('warroom_audio_settings_updated', { detail: savedSettings }));
+    } catch {}
+  }
+
+  public getCurrentTrack(): SoundtrackItem | null {
+    if (!this.currentTrack && this.playlist.length > 0) {
+      this.currentTrack = this.playlist.find(t => t.is_active) || this.playlist[0];
+    }
     return this.currentTrack;
   }
 
-  public setTrack(trackId: TrackId) {
-    this.currentTrack = trackId;
+  public setTrack(trackIdOrObj: string | SoundtrackItem) {
+    let track: SoundtrackItem | undefined;
+    if (typeof trackIdOrObj === 'string') {
+      track = this.playlist.find(t => t.id === trackIdOrObj || (t.synthTrackId && t.synthTrackId === trackIdOrObj));
+    } else {
+      track = trackIdOrObj;
+    }
+
+    if (!track) return;
+    this.currentTrack = track;
+
     try {
-      localStorage.setItem('warroom_selected_track', trackId);
+      const savedSettings = JSON.parse(localStorage.getItem('warroom_audio_settings') || '{}');
+      savedSettings.activeTrackId = track.id;
+      localStorage.setItem('warroom_audio_settings', JSON.stringify(savedSettings));
+      localStorage.setItem('warroom_selected_track', track.id);
+      window.dispatchEvent(new CustomEvent('warroom_track_changed', { detail: track }));
     } catch {}
 
     if (this.isRunning) {
-      // Re-initialize tempo interval
-      this.restartTimer();
+      this.playTrack(track);
     }
   }
 
-  private getStepDuration(): number {
-    switch (this.currentTrack) {
-      case 'cyber_mission': return 117; // ~128 BPM
-      case 'triumph_anthem': return 134; // ~112 BPM
-      case 'strategic_zen': return 166; // ~90 BPM
-      case 'epic_march':
-      default:
-        return 125; // 120 BPM
+  public nextRandomTrack() {
+    const activeTracks = this.playlist.filter(t => t.is_active);
+    if (activeTracks.length === 0) return;
+    if (activeTracks.length === 1) {
+      this.playTrack(activeTracks[0]);
+      return;
+    }
+
+    // Pick random different track
+    const otherTracks = activeTracks.filter(t => t.id !== this.currentTrack?.id);
+    const pool = otherTracks.length > 0 ? otherTracks : activeTracks;
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    const selected = pool[randomIndex];
+    this.setTrack(selected);
+  }
+
+  public nextSequentialTrack() {
+    const activeTracks = this.playlist.filter(t => t.is_active);
+    if (activeTracks.length === 0) return;
+
+    const currentIndex = activeTracks.findIndex(t => t.id === this.currentTrack?.id);
+    const nextIndex = (currentIndex + 1) % activeTracks.length;
+    this.setTrack(activeTracks[nextIndex]);
+  }
+
+  public nextTrack() {
+    if (this.playbackMode === 'random') {
+      this.nextRandomTrack();
+    } else {
+      this.nextSequentialTrack();
     }
   }
 
-  private restartTimer() {
-    if (this.timerId !== null) {
-      window.clearInterval(this.timerId);
-      this.timerId = null;
-    }
-    const stepDuration = this.getStepDuration();
-    this.timerId = window.setInterval(() => {
-      this.tick();
-    }, stepDuration);
+  public prevTrack() {
+    const activeTracks = this.playlist.filter(t => t.is_active);
+    if (activeTracks.length === 0) return;
+
+    const currentIndex = activeTracks.findIndex(t => t.id === this.currentTrack?.id);
+    const prevIndex = (currentIndex - 1 + activeTracks.length) % activeTracks.length;
+    this.setTrack(activeTracks[prevIndex]);
   }
 
   public start() {
     if (this.isRunning) return;
+    this.isRunning = true;
+
+    try {
+      localStorage.setItem('warroom_music_enabled', 'true');
+    } catch {}
+
+    const track = this.getCurrentTrack();
+    if (track) {
+      this.playTrack(track);
+    } else if (this.playlist.length > 0) {
+      this.playTrack(this.playlist[0]);
+    }
+  }
+
+  public playTrack(track: SoundtrackItem) {
+    this.currentTrack = track;
+    this.isRunning = true;
+
+    // Clear any previous synth or auto-advance timers
+    this.stopSynth();
+    if (this.autoAdvanceTimerId !== null) {
+      window.clearTimeout(this.autoAdvanceTimerId);
+      this.autoAdvanceTimerId = null;
+    }
+
+    // Save current active track
+    try {
+      const savedSettings = JSON.parse(localStorage.getItem('warroom_audio_settings') || '{}');
+      savedSettings.activeTrackId = track.id;
+      localStorage.setItem('warroom_audio_settings', JSON.stringify(savedSettings));
+      window.dispatchEvent(new CustomEvent('warroom_track_changed', { detail: track }));
+    } catch {}
+
+    if (track.sourceType === 'url' && track.url) {
+      // 1. URL Audio Playback
+      this.playUrlAudio(track.url);
+    } else {
+      // 2. Synthesizer Playback
+      const synthId = track.synthTrackId || 'epic_march';
+      this.playSynthMode(synthId);
+
+      // In synth mode, since synthesis is infinite, auto-advance after the track's durationSeconds (or default 90s)
+      const duration = (track.durationSeconds || 90) * 1000;
+      this.autoAdvanceTimerId = window.setTimeout(() => {
+        if (this.isRunning) {
+          console.log('Synth cycle completed, auto-advancing...');
+          this.handleTrackEnded();
+        }
+      }, duration);
+    }
+  }
+
+  private playUrlAudio(url: string) {
+    this.isUsingUrlAudio = true;
+    if (this.audioElement) {
+      try {
+        this.audioElement.pause();
+        this.audioElement.src = url;
+        this.audioElement.volume = this.volume;
+        this.audioElement.currentTime = 0;
+        const playPromise = this.audioElement.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.warn('URL Audio play blocked or failed:', err);
+            // Fallback to synth if URL is blocked
+            this.playSynthMode('epic_march');
+          });
+        }
+      } catch (e) {
+        console.warn('Audio URL error:', e);
+        this.playSynthMode('epic_march');
+      }
+    }
+  }
+
+  private playSynthMode(synthId: SynthTrackId) {
+    this.isUsingUrlAudio = false;
+    if (this.audioElement) {
+      this.audioElement.pause();
+    }
+
     this.ctx = getAudioContext();
     if (!this.ctx) return;
 
@@ -280,41 +558,35 @@ class MultiTrackSynthesizer {
       this.ctx.resume().catch(() => {});
     }
 
-    this.isRunning = true;
-    this.currentStep = 0;
-
-    // Load saved track preference if available
-    try {
-      const saved = localStorage.getItem('warroom_selected_track') as TrackId;
-      if (saved && ['epic_march', 'cyber_mission', 'triumph_anthem', 'strategic_zen'].includes(saved)) {
-        this.currentTrack = saved;
-      }
-    } catch {}
-
-    // Master Gain with smooth fade in
+    this.synthStep = 0;
     this.masterGain = this.ctx.createGain();
     this.masterGain.gain.setValueAtTime(0.01, this.ctx.currentTime);
     this.masterGain.gain.linearRampToValueAtTime(this.volume, this.ctx.currentTime + 1.2);
     this.masterGain.connect(this.ctx.destination);
 
-    this.restartTimer();
+    let stepDuration = 125;
+    if (synthId === 'cyber_mission') stepDuration = 117;
+    else if (synthId === 'triumph_anthem') stepDuration = 134;
+    else if (synthId === 'strategic_zen') stepDuration = 166;
+
+    this.timerId = window.setInterval(() => {
+      this.tickSynth(synthId);
+    }, stepDuration);
   }
 
-  public stop() {
-    this.isRunning = false;
+  private stopSynth() {
     if (this.timerId !== null) {
       window.clearInterval(this.timerId);
       this.timerId = null;
     }
-
     if (this.masterGain && this.ctx) {
       try {
         const now = this.ctx.currentTime;
-        this.masterGain.gain.linearRampToValueAtTime(0.001, now + 0.5);
+        this.masterGain.gain.linearRampToValueAtTime(0.001, now + 0.4);
         setTimeout(() => {
           this.masterGain?.disconnect();
           this.masterGain = null;
-        }, 550);
+        }, 450);
       } catch {
         this.masterGain.disconnect();
         this.masterGain = null;
@@ -322,8 +594,28 @@ class MultiTrackSynthesizer {
     }
   }
 
+  public stop() {
+    this.isRunning = false;
+    try {
+      localStorage.setItem('warroom_music_enabled', 'false');
+    } catch {}
+
+    if (this.autoAdvanceTimerId !== null) {
+      window.clearTimeout(this.autoAdvanceTimerId);
+      this.autoAdvanceTimerId = null;
+    }
+
+    if (this.audioElement) {
+      this.audioElement.pause();
+    }
+    this.stopSynth();
+  }
+
   public setVolume(vol: number) {
     this.volume = Math.max(0, Math.min(1, vol));
+    if (this.audioElement) {
+      this.audioElement.volume = this.volume;
+    }
     if (this.masterGain && this.ctx) {
       this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
     }
@@ -337,12 +629,13 @@ class MultiTrackSynthesizer {
     return this.isRunning;
   }
 
-  private tick() {
+  // Synthesizer step tick
+  private tickSynth(synthId: SynthTrackId) {
     if (!this.isRunning || !this.ctx || !this.masterGain) return;
     const now = this.ctx.currentTime;
-    const step = this.currentStep;
+    const step = this.synthStep;
 
-    switch (this.currentTrack) {
+    switch (synthId) {
       case 'cyber_mission':
         this.tickCyber(now, step);
         break;
@@ -358,10 +651,9 @@ class MultiTrackSynthesizer {
         break;
     }
 
-    this.currentStep = (this.currentStep + 1) % 64;
+    this.synthStep = (this.synthStep + 1) % 64;
   }
 
-  // --- Track 1: Epic March ---
   private tickMarch(now: number, step: number) {
     const barIdx = Math.floor(step / 16) % 4;
     const chord = this.marchChords[barIdx];
@@ -387,36 +679,29 @@ class MultiTrackSynthesizer {
     }
   }
 
-  // --- Track 2: Cyber Mission (Synthwave / Electro) ---
   private tickCyber(now: number, step: number) {
     const barIdx = Math.floor(step / 16) % 4;
     const chord = this.cyberChords[barIdx];
     const beatInBar = step % 16;
 
-    // Four-on-the-floor kick
     if (beatInBar % 4 === 0) {
       this.playCyberKick(now, 0.32);
     }
-    // Cyber Hi-hat on every off-beat 16th
     if (beatInBar % 2 === 1) {
       this.playHiHat(now, 0.06);
     }
-    // Snare / Clap on 4 and 12
     if (beatInBar === 4 || beatInBar === 12) {
       this.playCyberClap(now, 0.18);
     }
-    // Rolling 16th Bass
     const bassOct = beatInBar % 2 === 0 ? chord.root : chord.root * 1.5;
     this.playCyberBass(now, bassOct, 0.18, 0.12);
 
-    // Cyber Arpeggio
     const arpFreq = this.cyberArpNotes[step % 32];
     if (arpFreq) {
       this.playCyberArp(now, arpFreq, 0.09, 0.12);
     }
   }
 
-  // --- Track 3: Triumph Anthem (Major Fanfare) ---
   private tickTriumph(now: number, step: number) {
     const barIdx = Math.floor(step / 16) % 4;
     const chord = this.triumphChords[barIdx];
@@ -432,7 +717,6 @@ class MultiTrackSynthesizer {
       chord.notes.forEach((freq) => {
         this.playBrassNote(now, freq, 0.09, 2.0);
       });
-      // Victorious Bell Chime
       this.playChime(now, chord.notes[2] * 2, 0.15, 1.2);
     }
     if (beatInBar === 0 || beatInBar === 8) {
@@ -444,30 +728,24 @@ class MultiTrackSynthesizer {
     }
   }
 
-  // --- Track 4: Strategic Zen (Deep Ambient Focus) ---
   private tickZen(now: number, step: number) {
     const barIdx = Math.floor(step / 16) % 4;
     const chord = this.zenChords[barIdx];
     const beatInBar = step % 16;
 
-    // Gentle deep sub heart-pulse on beat 0
     if (beatInBar === 0) {
       this.playSubPulse(now, chord.root * 0.5, 0.20, 1.8);
-      // Soft ambient chord wash
       chord.notes.forEach((freq) => {
         this.playPadNote(now, freq, 0.06, 2.8);
       });
     }
-
-    // Melodic crystal chimes
     const chimeFreq = this.zenChimes[step % 64];
     if (chimeFreq > 0) {
       this.playChime(now, chimeFreq, 0.11, 0.9);
     }
   }
 
-  // --- Sound Generators ---
-
+  // --- Audio Synthesis Generator primitives ---
   private playWarDrum(time: number, gainLevel: number) {
     if (!this.ctx || !this.masterGain) return;
     const osc = this.ctx.createOscillator();
@@ -707,4 +985,4 @@ class MultiTrackSynthesizer {
   }
 }
 
-export const battleMusicSynth = new MultiTrackSynthesizer();
+export const battleMusicSynth = new UniversalAudioEngine();

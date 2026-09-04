@@ -35,8 +35,10 @@ import {
   Zap,
   ExternalLink,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  Music
 } from 'lucide-react';
+import AdminSoundtrackManager from './AdminSoundtrackManager';
 import { 
   User, 
   Group, 
@@ -135,7 +137,7 @@ export default function AdminPanel({
   onNavigate
 }: AdminPanelProps) {
   const [activeAdminTab, setActiveAdminTab] = useState<
-    'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news' | 'site_editor' | 'notifications'
+    'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news' | 'site_editor' | 'notifications' | 'soundtracks'
   >('submissions');
 
   // LOCAL NOTIFICATION FORM STATES
@@ -614,6 +616,19 @@ export default function AdminPanel({
         >
           <FileText size={15} />
           <span>مدیریت محتوای سایت و صفحات</span>
+        </button>
+
+        <button
+          onClick={() => setActiveAdminTab('soundtracks')}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
+            activeAdminTab === 'soundtracks' 
+              ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-cyan-400 text-slate-950 border-amber-400 font-black shadow-[0_0_20px_rgba(245,158,11,0.4)]' 
+              : 'bg-[#080d21] text-cyan-300 border-cyan-500/40 hover:border-cyan-400 hover:text-white'
+          }`}
+          id="btn-tab-soundtracks"
+        >
+          <Radio size={15} className="text-cyan-400" />
+          <span>مدیریت موسیقی و رادیو اتاق جنگ</span>
         </button>
 
         <button
@@ -2317,6 +2332,11 @@ export default function AdminPanel({
           </div>
 
         </div>
+      )}
+
+      {/* 11. SOUNDTRACKS & AUDIO RADIO MANAGER TAB */}
+      {activeAdminTab === 'soundtracks' && (
+        <AdminSoundtrackManager triggerAlert={triggerAlert} />
       )}
 
     </div>

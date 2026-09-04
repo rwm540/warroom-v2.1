@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   CheckCircle2, 
@@ -18,6 +18,9 @@ import {
   FileText, 
   Flame, 
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Navigation,
   User as UserIcon,
   HelpCircle,
   Building,
@@ -114,6 +117,10 @@ export default function JourneyView({
   const [showSavedReelsModal, setShowSavedReelsModal] = useState(false);
   const [savedPostsCount, setSavedPostsCount] = useState(0);
 
+  // Map Scroll and Navigation Refs
+  const mapScrollContainerRef = useRef<HTMLDivElement>(null);
+  const activeStageRef = useRef<HTMLDivElement>(null);
+
   // Integrated Profile state
   const [showProfileDrawer, setShowProfileDrawer] = useState(initialOpenProfile);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -124,6 +131,37 @@ export default function JourneyView({
     const ids = getSavedPostIds(currentUser?.id);
     setSavedPostsCount(ids.length);
   }, [currentUser, showSavedReelsModal, showProfileDrawer]);
+
+  // Smoothly center the active in-progress stage on load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (activeStageRef.current) {
+        activeStageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 450);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const scrollToActiveStage = () => {
+    if (activeStageRef.current) {
+      activeStageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const scrollToTopStage = () => {
+    if (mapScrollContainerRef.current) {
+      mapScrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const scrollToBottomStage = () => {
+    if (mapScrollContainerRef.current) {
+      mapScrollContainerRef.current.scrollTo({ 
+        top: mapScrollContainerRef.current.scrollHeight, 
+        behavior: 'smooth' 
+      });
+    }
+  };
 
   const PREDEFINED_AVATARS = [
     { id: 'av1', name: 'رزمنده سایبری ۱', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80' },
@@ -479,196 +517,240 @@ export default function JourneyView({
         </section>
 
         {/* ========================================================================= */}
-        {/* 3. MAIN INTERACTIVE SERPENTINE JOURNEY MAP (Centered & Clean)            */}
+        {/* 3. MAIN INTERACTIVE SERPENTINE JOURNEY MAP (Scrollable & Spacious)       */}
         {/* ========================================================================= */}
-        <div className="relative flex-1 min-h-0 w-full max-w-xl mx-auto flex justify-center items-center py-1 lg:overflow-hidden">
+        <div className="relative flex-1 min-h-0 w-full max-w-xl mx-auto rounded-2xl bg-[#080d19]/80 border border-slate-800/80 backdrop-blur-md overflow-hidden flex flex-col shadow-[inset_0_2px_12px_rgba(0,0,0,0.6)]">
           
-          <div className="relative w-full h-full flex justify-center items-center py-1 min-h-[460px] lg:min-h-0">
-            
-            {/* SVG Winding Road Path with Textured Glowing Curves */}
-            <svg 
-              className="absolute inset-0 w-full h-full pointer-events-none" 
-              viewBox="0 0 400 900" 
-              preserveAspectRatio="none"
+          {/* Top Subtle Atmospheric Fade Mask */}
+          <div className="absolute top-0 inset-x-0 h-8 bg-gradient-to-b from-[#080d19] via-[#080d19]/80 to-transparent pointer-events-none z-20" />
+          
+          {/* Bottom Subtle Atmospheric Fade Mask */}
+          <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-[#080d19] via-[#080d19]/80 to-transparent pointer-events-none z-20" />
+
+          {/* Quick Floating Navigation Pill & Quick-Jump Actions */}
+          <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5 pointer-events-auto">
+            <button
+              onClick={scrollToActiveStage}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 hover:text-white text-[11px] font-bold shadow-lg transition backdrop-blur-md group cursor-pointer"
+              title="پرش مستقیم به مرحله در حال انجام"
             >
-              <defs>
-                {/* Road Surface Gradient */}
-                <linearGradient id="roadGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.45" />
-                  <stop offset="45%" stopColor="#f59e0b" stopOpacity="0.55" />
-                  <stop offset="100%" stopColor="#0f172a" stopOpacity="0.35" />
-                </linearGradient>
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping group-hover:scale-125" />
+              <span>مرحله جاری</span>
+              <Navigation size={11} className="text-amber-400 rotate-45" />
+            </button>
+          </div>
 
-                <linearGradient id="roadBorder" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#34d399" stopOpacity="0.75" />
-                  <stop offset="45%" stopColor="#fbbf24" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="#475569" stopOpacity="0.4" />
-                </linearGradient>
+          <div className="absolute top-2 right-2 z-30 flex items-center gap-1 pointer-events-auto">
+            <button
+              onClick={scrollToTopStage}
+              className="p-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-cyan-400 text-xs shadow-md transition backdrop-blur-md cursor-pointer"
+              title="شروع مسیر (بالا)"
+            >
+              <ChevronUp size={14} />
+            </button>
+            <button
+              onClick={scrollToBottomStage}
+              className="p-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-amber-400 text-xs shadow-md transition backdrop-blur-md cursor-pointer"
+              title="پایان مسیر (پایین)"
+            >
+              <ChevronDown size={14} />
+            </button>
+          </div>
 
-                <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="5" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-              </defs>
+          {/* Scrollable Map Track */}
+          <div 
+            ref={mapScrollContainerRef}
+            className="w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth custom-scrollbar-thin px-3 py-6 relative overscroll-contain"
+          >
+            <div className="relative w-full max-w-lg mx-auto h-[980px] sm:h-[1060px] flex flex-col justify-between items-center py-6">
+              
+              {/* SVG Winding Road Path with Textured Glowing Curves */}
+              <svg 
+                className="absolute inset-0 w-full h-full pointer-events-none" 
+                viewBox="0 0 400 900" 
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  {/* Road Surface Gradient */}
+                  <linearGradient id="roadGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.45" />
+                    <stop offset="45%" stopColor="#f59e0b" stopOpacity="0.55" />
+                    <stop offset="100%" stopColor="#0f172a" stopOpacity="0.35" />
+                  </linearGradient>
 
-              {/* Road Glow Aura */}
-              <path
-                d="M 200 35 
-                   C 200 95, 110 115, 110 185 
-                   C 110 255, 290 275, 290 345 
-                   C 290 415, 120 435, 120 505 
-                   C 120 575, 280 595, 280 665 
-                   C 280 735, 140 755, 140 815
-                   L 260 885"
-                fill="none"
-                stroke="url(#roadGlow)"
-                strokeWidth="70"
-                strokeLinecap="round"
-                filter="url(#glowFilter)"
-                opacity="0.35"
-              />
+                  <linearGradient id="roadBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#34d399" stopOpacity="0.75" />
+                    <stop offset="45%" stopColor="#fbbf24" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#475569" stopOpacity="0.4" />
+                  </linearGradient>
 
-              {/* Main Asphalt Road Base */}
-              <path
-                d="M 200 35 
-                   C 200 95, 110 115, 110 185 
-                   C 110 255, 290 275, 290 345 
-                   C 290 415, 120 435, 120 505 
-                   C 120 575, 280 595, 280 665 
-                   C 280 735, 140 755, 140 815
-                   L 260 885"
-                fill="none"
-                stroke="#172236"
-                strokeWidth="50"
-                strokeLinecap="round"
-              />
+                  <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
 
-              {/* Road Outer Golden/Emerald Luminous Edge Borders */}
-              <path
-                d="M 200 35 
-                   C 200 95, 110 115, 110 185 
-                   C 110 255, 290 275, 290 345 
-                   C 290 415, 120 435, 120 505 
-                   C 120 575, 280 595, 280 665 
-                   C 280 735, 140 755, 140 815
-                   L 260 885"
-                fill="none"
-                stroke="url(#roadBorder)"
-                strokeWidth="52"
-                strokeLinecap="round"
-                opacity="0.3"
-              />
+                {/* Road Glow Aura */}
+                <path
+                  d="M 200 35 
+                     C 200 95, 110 115, 110 185 
+                     C 110 255, 290 275, 290 345 
+                     C 290 415, 120 435, 120 505 
+                     C 120 575, 280 595, 280 665 
+                     C 280 735, 140 755, 140 815
+                     L 260 885"
+                  fill="none"
+                  stroke="url(#roadGlow)"
+                  strokeWidth="70"
+                  strokeLinecap="round"
+                  filter="url(#glowFilter)"
+                  opacity="0.35"
+                />
 
-              {/* Center Dashed Highway Line */}
-              <path
-                d="M 200 35 
-                   C 200 95, 110 115, 110 185 
-                   C 110 255, 290 275, 290 345 
-                   C 290 415, 120 435, 120 505 
-                   C 120 575, 280 595, 280 665 
-                   C 280 735, 140 755, 140 815
-                   L 260 885"
-                fill="none"
-                stroke="#facc15"
-                strokeWidth="2"
-                strokeDasharray="7 9"
-                opacity="0.85"
-              />
-            </svg>
+                {/* Main Asphalt Road Base */}
+                <path
+                  d="M 200 35 
+                     C 200 95, 110 115, 110 185 
+                     C 110 255, 290 275, 290 345 
+                     C 290 415, 120 435, 120 505 
+                     C 120 575, 280 595, 280 665 
+                     C 280 735, 140 755, 140 815
+                     L 260 885"
+                  fill="none"
+                  stroke="#172236"
+                  strokeWidth="50"
+                  strokeLinecap="round"
+                />
 
-            {/* Stages Embedded Along the S-Curve Road */}
-            <div className="relative w-full h-full flex flex-col justify-between items-center py-1 z-10">
-              {stages.map((stage, idx) => {
-                const isCompleted = stage.status === 'completed';
-                const isInProgress = stage.status === 'in_progress';
-                const isLocked = stage.status === 'locked';
+                {/* Road Outer Golden/Emerald Luminous Edge Borders */}
+                <path
+                  d="M 200 35 
+                     C 200 95, 110 115, 110 185 
+                     C 110 255, 290 275, 290 345 
+                     C 290 415, 120 435, 120 505 
+                     C 120 575, 280 595, 280 665 
+                     C 280 735, 140 755, 140 815
+                     L 260 885"
+                  fill="none"
+                  stroke="url(#roadBorder)"
+                  strokeWidth="52"
+                  strokeLinecap="round"
+                  opacity="0.3"
+                />
 
-                // Balanced horizontal offsets matching the S-curves
-                const xOffsets = [
-                  'translate-x-0', // Stage 1 (top center)
-                  '-translate-x-16 sm:-translate-x-20', // Stage 2 (curve left)
-                  'translate-x-14 sm:translate-x-18', // Stage 3 (curve right)
-                  '-translate-x-14 sm:-translate-x-18', // Stage 4 (curve left)
-                  'translate-x-12 sm:translate-x-16', // Stage 5 (curve right)
-                  '-translate-x-12 sm:-translate-x-16', // Stage 6 (curve left)
-                  'translate-x-12 sm:translate-x-16' // Stage 7 (curve right)
-                ];
+                {/* Center Dashed Highway Line */}
+                <path
+                  d="M 200 35 
+                     C 200 95, 110 115, 110 185 
+                     C 110 255, 290 275, 290 345 
+                     C 290 415, 120 435, 120 505 
+                     C 120 575, 280 595, 280 665 
+                     C 280 735, 140 755, 140 815
+                     L 260 885"
+                  fill="none"
+                  stroke="#facc15"
+                  strokeWidth="2"
+                  strokeDasharray="7 9"
+                  opacity="0.85"
+                />
+              </svg>
 
-                return (
-                  <motion.div
-                    key={stage.id}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className={`relative flex items-center justify-center ${xOffsets[idx]} my-0`}
-                  >
-                    {/* Stage Interactive Node Button */}
-                    <div 
-                      onClick={() => handleStageClick(stage)}
-                      className="flex flex-row items-center gap-1.5 sm:gap-2 cursor-pointer group select-none"
+              {/* Stages Embedded Along the S-Curve Road */}
+              <div className="relative w-full h-full flex flex-col justify-between items-center py-2 z-10">
+                {stages.map((stage, idx) => {
+                  const isCompleted = stage.status === 'completed';
+                  const isInProgress = stage.status === 'in_progress';
+                  const isLocked = stage.status === 'locked';
+
+                  // Balanced horizontal offsets matching the S-curves
+                  const xOffsets = [
+                    'translate-x-0', // Stage 1 (top center)
+                    '-translate-x-16 sm:-translate-x-20', // Stage 2 (curve left)
+                    'translate-x-14 sm:translate-x-18', // Stage 3 (curve right)
+                    '-translate-x-14 sm:-translate-x-18', // Stage 4 (curve left)
+                    'translate-x-12 sm:translate-x-16', // Stage 5 (curve right)
+                    '-translate-x-12 sm:-translate-x-16', // Stage 6 (curve left)
+                    'translate-x-12 sm:translate-x-16' // Stage 7 (curve right)
+                  ];
+
+                  return (
+                    <motion.div
+                      key={stage.id}
+                      ref={isInProgress ? activeStageRef : undefined}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className={`relative flex items-center justify-center ${xOffsets[idx]} my-2`}
                     >
-                      {/* Circular Stage Emblem */}
-                      <div className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-lg ${
-                        isCompleted 
-                          ? 'bg-[#06241a] border-2 border-emerald-400 shadow-[0_0_18px_rgba(16,185,129,0.7)]'
-                          : isInProgress
-                          ? 'bg-[#2b1e06] border-2 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse'
-                          : 'bg-[#101726] border-2 border-slate-700/80 shadow-[0_0_10px_rgba(0,0,0,0.6)] opacity-90'
-                      }`}>
-                        
-                        {/* Status Icon */}
-                        {renderStageIcon(stage.iconName, stage.status)}
-
-                        {/* Top Number Indicator Pin */}
-                        <div className={`absolute -top-1 -right-1 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center font-mono text-[8px] sm:text-[9px] font-black border shadow ${
-                          isCompleted
-                            ? 'bg-emerald-500 text-slate-950 border-slate-950'
+                      {/* Stage Interactive Node Button */}
+                      <div 
+                        onClick={() => handleStageClick(stage)}
+                        className="flex flex-row items-center gap-1.5 sm:gap-2 cursor-pointer group select-none"
+                      >
+                        {/* Circular Stage Emblem */}
+                        <div className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-lg ${
+                          isCompleted 
+                            ? 'bg-[#06241a] border-2 border-emerald-400 shadow-[0_0_18px_rgba(16,185,129,0.7)]'
                             : isInProgress
-                            ? 'bg-amber-500 text-slate-950 border-slate-950 animate-bounce'
-                            : 'bg-slate-800 text-slate-400 border-slate-700'
+                            ? 'bg-[#2b1e06] border-2 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse'
+                            : 'bg-[#101726] border-2 border-slate-700/80 shadow-[0_0_10px_rgba(0,0,0,0.6)] opacity-90'
                         }`}>
-                          {formatToPersianDigits(stage.number)}
-                        </div>
-                      </div>
+                          
+                          {/* Status Icon */}
+                          {renderStageIcon(stage.iconName, stage.status)}
 
-                      {/* Attached Label Pill (Matching exact design) */}
-                      <div className={`px-2.5 py-1 rounded-xl backdrop-blur-md border transition-all text-right shadow-md flex flex-col justify-center min-w-[95px] max-w-[135px] ${
-                        isCompleted
-                          ? 'bg-[#081f18]/90 border-emerald-500/50 group-hover:border-emerald-400'
-                          : isInProgress
-                          ? 'bg-[#231805]/95 border-amber-500/70 group-hover:border-amber-400'
-                          : 'bg-[#0d1424]/90 border-slate-800 group-hover:border-slate-600'
-                      }`}>
-                        <h4 className="font-black text-[11px] sm:text-xs text-white leading-tight truncate">
-                          {stage.title}
-                        </h4>
-                        
-                        <div className="flex items-center gap-1 mt-0.5">
-                          {isCompleted && (
-                            <span className="text-[9px] font-bold text-emerald-400 flex items-center gap-0.5">
-                              <CheckCircle2 size={10} className="text-emerald-400 shrink-0" />
-                              <span>تکمیل شد</span>
-                            </span>
-                          )}
-                          {isInProgress && (
-                            <span className="text-[9px] font-bold text-amber-300 flex items-center gap-0.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0" />
-                              <span>در حال انجام</span>
-                            </span>
-                          )}
-                          {isLocked && (
-                            <span className="text-[9px] font-medium text-slate-400 flex items-center gap-0.5">
-                              <Lock size={9} className="text-slate-500 shrink-0" />
-                              <span>قفل شده</span>
-                            </span>
-                          )}
+                          {/* Top Number Indicator Pin */}
+                          <div className={`absolute -top-1 -right-1 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center font-mono text-[8px] sm:text-[9px] font-black border shadow ${
+                            isCompleted
+                              ? 'bg-emerald-500 text-slate-950 border-slate-950'
+                              : isInProgress
+                              ? 'bg-amber-500 text-slate-950 border-slate-950 animate-bounce'
+                              : 'bg-slate-800 text-slate-400 border-slate-700'
+                          }`}>
+                            {formatToPersianDigits(stage.number)}
+                          </div>
                         </div>
-                      </div>
 
-                    </div>
-                  </motion.div>
-                );
-              })}
+                        {/* Attached Label Pill (Matching exact design) */}
+                        <div className={`px-2.5 py-1 rounded-xl backdrop-blur-md border transition-all text-right shadow-md flex flex-col justify-center min-w-[95px] max-w-[135px] ${
+                          isCompleted
+                            ? 'bg-[#081f18]/90 border-emerald-500/50 group-hover:border-emerald-400'
+                            : isInProgress
+                            ? 'bg-[#231805]/95 border-amber-500/70 group-hover:border-amber-400'
+                            : 'bg-[#0d1424]/90 border-slate-800 group-hover:border-slate-600'
+                        }`}>
+                          <h4 className="font-black text-[11px] sm:text-xs text-white leading-tight truncate">
+                            {stage.title}
+                          </h4>
+                          
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {isCompleted && (
+                              <span className="text-[9px] font-bold text-emerald-400 flex items-center gap-0.5">
+                                <CheckCircle2 size={10} className="text-emerald-400 shrink-0" />
+                                <span>تکمیل شد</span>
+                              </span>
+                            )}
+                            {isInProgress && (
+                              <span className="text-[9px] font-bold text-amber-300 flex items-center gap-0.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0" />
+                                <span>در حال انجام</span>
+                              </span>
+                            )}
+                            {isLocked && (
+                              <span className="text-[9px] font-medium text-slate-400 flex items-center gap-0.5">
+                                <Lock size={9} className="text-slate-500 shrink-0" />
+                                <span>قفل شده</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
             </div>
 
           </div>

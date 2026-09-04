@@ -199,3 +199,28 @@ export interface StudentShowcase {
   created_at: string;
 }
 
+export type AudioPlaybackMode = 'random' | 'sequential' | 'repeat_one';
+
+export interface SoundtrackItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  tag: string;
+  color: string;
+  sourceType: 'url' | 'synth';
+  url?: string;
+  synthTrackId?: 'epic_march' | 'cyber_mission' | 'triumph_anthem' | 'strategic_zen';
+  tempo?: number;
+  durationSeconds?: number;
+  is_active: boolean;
+  order: number;
+}
+
+export interface AudioSettings {
+  playbackMode: AudioPlaybackMode;
+  autoPlayEnabled: boolean;
+  defaultVolume: number;
+  activeTrackId: string;
+}
+
+
