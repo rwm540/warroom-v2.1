@@ -99,25 +99,39 @@ export default function HomeView({
   };
 
   return (
-    <div className={`w-full min-h-screen transition-colors duration-500 font-sans p-0 md:p-4 lg:p-6 flex justify-center ${
-      isGirls ? 'bg-[#0e0410] text-pink-50' : 'bg-[#030712] text-slate-100'
+    <div className={`w-full min-h-screen transition-colors duration-700 font-sans p-0 md:p-4 lg:p-6 flex justify-center ${
+      isGirls ? 'girls-atmosphere-bg text-pink-50' : 'boys-atmosphere-bg text-slate-100'
     }`}>
       
       {/* Dynamic Background Ambient Aura */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className={`absolute -top-40 right-1/2 translate-x-1/2 w-[700px] h-[500px] blur-[160px] rounded-full transition-all duration-700 ${
-          isGirls ? 'bg-pink-600/15' : 'bg-cyan-500/15'
-        }`} />
-        <div className={`absolute bottom-0 right-10 w-[500px] h-[400px] blur-[150px] rounded-full transition-all duration-700 ${
-          isGirls ? 'bg-purple-600/15' : 'bg-amber-500/10'
-        }`} />
+        {isGirls ? (
+          <>
+            <div className="absolute top-0 inset-x-0 h-[35vh] bg-gradient-to-b from-[#020005] via-[#090112]/70 to-transparent" />
+            <div className="absolute -bottom-24 -left-20 w-[550px] sm:w-[700px] h-[550px] sm:h-[700px] blur-[140px] sm:blur-[170px] rounded-full bg-[#ff1389]/30 transition-all duration-700" />
+            <div className="absolute -bottom-24 -right-20 w-[600px] sm:w-[750px] h-[600px] sm:h-[750px] blur-[150px] sm:blur-[180px] rounded-full bg-[#7c3aed]/35 transition-all duration-700" />
+            <div className="absolute bottom-[25%] left-1/2 -translate-x-1/2 w-[500px] h-[400px] blur-[160px] rounded-full bg-[#4a0d67]/25" />
+          </>
+        ) : (
+          <>
+            <div className="absolute top-0 inset-x-0 h-[40vh] bg-gradient-to-b from-[#010206] via-[#020512]/60 to-transparent" />
+            {/* Bottom-left Crimson-Red Aura matching reference wallpaper */}
+            <div className="absolute -bottom-24 -left-20 w-[550px] sm:w-[700px] h-[550px] sm:h-[700px] blur-[140px] sm:blur-[170px] rounded-full bg-[#dc2626]/30 transition-all duration-700" />
+            {/* Bottom-right Electric Cobalt-Blue Aura matching reference wallpaper */}
+            <div className="absolute -bottom-24 -right-20 w-[600px] sm:w-[750px] h-[600px] sm:h-[750px] blur-[150px] sm:blur-[180px] rounded-full bg-[#2563eb]/35 transition-all duration-700" />
+            {/* Deep Indigo convergence */}
+            <div className="absolute bottom-[22%] left-1/2 -translate-x-1/2 w-[500px] h-[400px] blur-[160px] rounded-full bg-[#371b6e]/25" />
+            {/* Fine Cyber Grid */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.08)_1px,transparent_1px)] bg-[size:28px_28px] opacity-60" />
+          </>
+        )}
       </div>
 
       {/* Responsive Container: Mobile-Optimized + Full Desktop Experience */}
-      <div className={`w-full max-w-[500px] md:max-w-6xl min-h-screen md:min-h-0 relative shadow-[0_0_60px_rgba(0,0,0,0.95)] border-x md:border md:rounded-3xl flex flex-col pb-3 md:pb-6 overflow-hidden z-10 transition-colors duration-500 ${
+      <div className={`w-full max-w-[500px] md:max-w-6xl min-h-screen md:min-h-0 relative shadow-[0_0_70px_rgba(0,0,0,0.95)] border-x md:border md:rounded-3xl flex flex-col pb-3 md:pb-6 overflow-hidden z-10 transition-colors duration-500 ${
         isGirls 
-          ? 'bg-[#120516]/95 border-pink-500/30' 
-          : 'bg-[#050b18]/95 border-cyan-500/25'
+          ? 'girls-card-surface border-fuchsia-500/35 shadow-[0_0_80px_rgba(255,19,137,0.22)]' 
+          : 'boys-card-surface border-blue-500/35 shadow-[0_0_80px_rgba(37,99,235,0.22)]'
       }`}>
         
         <div className="relative z-10 flex-1 flex flex-col">
@@ -183,6 +197,7 @@ export default function HomeView({
             <Footer 
               onNavigate={(tab) => setActiveTab(tab)}
               onOpenAbout={() => setActiveTab('About')}
+              themeMode={themeMode}
             />
 
           </div>
@@ -202,7 +217,7 @@ export default function HomeView({
             <div className={`border rounded-3xl p-4 sm:p-6 max-w-md w-full text-right relative space-y-4 shadow-2xl my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto ${
               isGirls 
                 ? 'bg-[#150718] border-pink-500/50 shadow-pink-900/40 text-pink-50' 
-                : 'bg-[#081224] border-cyan-500/50 shadow-cyan-900/40 text-slate-100'
+                : 'boys-card-surface border-blue-500/50 shadow-[0_0_35px_rgba(37,99,235,0.35)] text-slate-100'
             }`}>
               
               <button
@@ -213,17 +228,19 @@ export default function HomeView({
               </button>
 
               <div className="flex items-center gap-2.5 border-b border-slate-700/50 pb-3">
-                <div className={`p-2 rounded-xl ${isGirls ? 'bg-pink-950 text-pink-400' : 'bg-cyan-950 text-cyan-400'}`}>
+                <div className={`p-2 rounded-xl ${isGirls ? 'bg-pink-950 text-pink-400' : 'bg-blue-950 text-blue-400 border border-blue-500/40'}`}>
                   <BookOpen size={20} />
                 </div>
                 <div>
                   <h3 className="text-sm sm:text-base font-black text-white">راهنما و قوانین ماجراجویی اتاق جنگ</h3>
-                  <span className="text-[10px] text-amber-300 font-mono">پرونده بزرگ هفت‌خوان</span>
+                  <span className={`text-[10px] font-mono ${isGirls ? 'text-pink-300' : 'text-blue-300'}`}>پرونده بزرگ هفت‌خوان</span>
                 </div>
               </div>
 
               <div className="space-y-3 text-xs text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pl-1">
-                <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1">
+                <div className={`p-3 rounded-2xl space-y-1 border ${
+                  isGirls ? 'bg-slate-900/60 border-slate-800' : 'bg-[#081228]/80 border-blue-900/50'
+                }`}>
                   <strong className="text-white flex items-center gap-1.5">
                     <CheckCircle size={14} className="text-emerald-400" />
                     <span>۱. ساختار هفت مرحله مسابقه:</span>
@@ -233,9 +250,11 @@ export default function HomeView({
                   </p>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1">
+                <div className={`p-3 rounded-2xl space-y-1 border ${
+                  isGirls ? 'bg-slate-900/60 border-slate-800' : 'bg-[#081228]/80 border-blue-900/50'
+                }`}>
                   <strong className="text-white flex items-center gap-1.5">
-                    <Gem size={14} className="text-cyan-400" />
+                    <Gem size={14} className={isGirls ? 'text-pink-400' : 'text-blue-400'} />
                     <span>۲. کریستال‌ها و رده‌بندی:</span>
                   </strong>
                   <p className="text-slate-300 text-[11px]">
@@ -243,7 +262,9 @@ export default function HomeView({
                   </p>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1">
+                <div className={`p-3 rounded-2xl space-y-1 border ${
+                  isGirls ? 'bg-slate-900/60 border-slate-800' : 'bg-[#081228]/80 border-blue-900/50'
+                }`}>
                   <strong className="text-white flex items-center gap-1.5">
                     <Trophy size={14} className="text-amber-400" />
                     <span>۳. جوایز و کدهای تخفیف:</span>
@@ -260,10 +281,10 @@ export default function HomeView({
                     setShowGuideModal(false);
                     setActiveTab('Journey');
                   }}
-                  className={`w-full py-3 rounded-2xl font-black text-xs text-slate-950 transition flex items-center justify-center gap-2 ${
+                  className={`w-full py-3 rounded-2xl font-black text-xs transition flex items-center justify-center gap-2 ${
                     isGirls 
-                      ? 'bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-300' 
-                      : 'bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300'
+                      ? 'girls-button-neon text-white shadow-[0_0_20px_rgba(255,19,137,0.4)]' 
+                      : 'boys-button-tactical text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]'
                   }`}
                 >
                   <span>ورود به نقشه مراحل مسابقه</span>

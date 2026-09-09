@@ -40,8 +40,8 @@ export default function AdventureHeroSection({
           {!logoError ? (
             <div className={`relative p-2 rounded-3xl transition-all duration-300 ${
               isGirls 
-                ? 'neon-logo-glow-pink bg-gradient-to-tr from-pink-500/30 to-purple-500/20' 
-                : 'neon-logo-glow bg-gradient-to-tr from-amber-500/30 via-cyan-500/20 to-blue-500/30'
+                ? 'neon-logo-glow-girls bg-gradient-to-tr from-[#ff1389]/30 via-purple-600/25 to-[#7c3aed]/35 border border-fuchsia-500/40' 
+                : 'neon-logo-glow-boys bg-gradient-to-tr from-[#dc2626]/35 via-slate-950/60 to-[#2563eb]/40 border border-blue-500/50 shadow-[0_0_25px_rgba(37,99,235,0.4)]'
             }`}>
               <img 
                 src={warroomLogoJpg} 
@@ -53,19 +53,19 @@ export default function AdventureHeroSection({
               
               <div className={`absolute -bottom-2 right-1/2 translate-x-1/2 px-3.5 py-0.5 rounded-full text-xs font-black tracking-wide border shadow-md whitespace-nowrap ${
                 isGirls 
-                  ? 'bg-pink-950 text-pink-300 border-pink-500/60 shadow-[0_0_15px_rgba(244,63,94,0.5)]' 
-                  : 'bg-slate-950 text-cyan-300 border-cyan-400/60 shadow-[0_0_15px_rgba(6,182,212,0.5)]'
+                  ? 'bg-[#180126] text-fuchsia-200 border-fuchsia-500/70 shadow-[0_0_15px_rgba(255,19,137,0.6)]' 
+                  : 'bg-[#030718] text-blue-200 border-blue-500/70 shadow-[0_0_15px_rgba(37,99,235,0.6)]'
               }`}>
                 اتاق جنگ
               </div>
             </div>
           ) : (
             <div className="flex items-center justify-center gap-3">
-              <Shield size={36} className={isGirls ? 'text-pink-400' : 'text-cyan-400'} />
+              <Shield size={36} className={isGirls ? 'text-fuchsia-400' : 'text-blue-400'} />
               <h1 className={`text-4xl sm:text-5xl md:text-6xl font-black tracking-tight drop-shadow-2xl font-serif ${
                 isGirls 
-                  ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-300 to-amber-200' 
-                  : 'text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-cyan-300'
+                  ? 'text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-300 to-purple-300' 
+                  : 'text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-red-400'
               }`}>
                 اتاق جنگ
               </h1>
@@ -73,7 +73,9 @@ export default function AdventureHeroSection({
           )}
 
           <span className={`h-1 w-32 rounded-full blur-sm mt-3 ${
-            isGirls ? 'bg-pink-500' : 'bg-amber-400'
+            isGirls 
+              ? 'bg-gradient-to-r from-transparent via-[#ff1389] to-transparent' 
+              : 'bg-gradient-to-r from-transparent via-[#2563eb] to-[#dc2626]'
           }`} />
         </div>
 
@@ -102,8 +104,8 @@ export default function AdventureHeroSection({
         }}
         className={`group relative rounded-3xl overflow-hidden border-2 p-1.5 shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-[1.01] active:scale-[0.99] ${
           isGirls
-            ? 'bg-gradient-to-b from-pink-950/80 to-[#120516] border-pink-500/60 shadow-[0_0_45px_rgba(244,63,94,0.4)] hover:border-pink-400 hover:shadow-[0_0_60px_rgba(244,63,94,0.6)]'
-            : 'bg-gradient-to-b from-[#111f3d]/90 to-[#060c18] border-cyan-400/60 shadow-[0_0_45px_rgba(6,182,212,0.4)] hover:border-cyan-300 hover:shadow-[0_0_60px_rgba(6,182,212,0.6)]'
+            ? 'bg-gradient-to-b from-[#21052c]/90 via-[#100118]/95 to-[#040008] border-fuchsia-500/60 shadow-[0_0_45px_rgba(255,19,137,0.4)] hover:border-fuchsia-400 hover:shadow-[0_0_65px_rgba(255,19,137,0.65)]'
+            : 'bg-gradient-to-b from-[#0e1832]/95 via-[#050b18]/95 to-[#010207] border-blue-500/60 shadow-[0_0_45px_rgba(37,99,235,0.4)] hover:border-blue-400 hover:shadow-[0_0_65px_rgba(37,99,235,0.65)]'
         }`}
       >
         
@@ -121,16 +123,16 @@ export default function AdventureHeroSection({
           {/* Glowing Atmospheric Overlays */}
           <div className={`absolute inset-0 bg-gradient-to-t transition-opacity duration-300 ${
             isGirls
-              ? 'from-[#0e0410]/95 via-[#0e0410]/40 to-transparent group-hover:from-[#0e0410]/90'
-              : 'from-[#040813]/95 via-[#040813]/40 to-transparent group-hover:from-[#040813]/90'
+              ? 'from-[#050009]/95 via-[#050009]/40 to-transparent group-hover:from-[#050009]/90'
+              : 'from-[#010207]/95 via-[#020512]/45 to-transparent group-hover:from-[#010207]/90'
           }`} />
 
           {/* Bottom Action Centerpiece (Click to Register or Go to Panel) */}
           <div className="absolute bottom-5 sm:bottom-7 left-0 right-0 flex flex-col items-center justify-center gap-2.5 px-4 z-10">
             <div className={`px-6 sm:px-10 py-3 sm:py-3.5 rounded-2xl font-black text-sm sm:text-base border shadow-2xl flex items-center gap-3 transition transform group-hover:scale-105 ${
               isGirls
-                ? 'bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 text-white border-pink-300/50 shadow-[0_0_35px_rgba(244,63,94,0.9)]'
-                : 'bg-gradient-to-r from-cyan-500 via-blue-600 to-cyan-400 text-white border-cyan-200/50 shadow-[0_0_35px_rgba(6,182,212,0.9)]'
+                ? 'girls-button-neon text-white border-pink-200/50 shadow-[0_0_35px_rgba(255,19,137,0.85)]'
+                : 'boys-button-tactical text-white border-blue-200/50 shadow-[0_0_35px_rgba(37,99,235,0.85)]'
             }`}>
               {currentUser ? (
                 currentUser.role === 'admin' ? (

@@ -169,10 +169,12 @@ export default function AdminSoundtrackManager({ triggerAlert }: AdminSoundtrack
     if (testingUrl && testAudioObj) {
       testAudioObj.pause();
       setTestingUrl(false);
+      setTestAudioObj(null);
       return;
     }
 
     try {
+      battleMusicSynth.stop(); // Pause background music to prevent audio overlap
       const audio = new Audio(newUrl.trim());
       audio.crossOrigin = 'anonymous';
       audio.volume = 0.5;
@@ -180,9 +182,14 @@ export default function AdminSoundtrackManager({ triggerAlert }: AdminSoundtrack
         setTestingUrl(true);
         setTestAudioObj(audio);
         triggerAlert('صدای فایل لینک با موفقیت پخش گردید.');
-        audio.onended = () => setTestingUrl(false);
+        audio.onended = () => {
+          setTestingUrl(false);
+          setTestAudioObj(null);
+        };
       }).catch(err => {
         console.error('Audio test failed:', err);
+        setTestingUrl(false);
+        setTestAudioObj(null);
         triggerAlert('خطا در بارگذاری لینک صوت! از دسترس بودن فایل مطمئن شوید.');
       });
     } catch {

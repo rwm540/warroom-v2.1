@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShieldAlert, 
@@ -42,6 +42,7 @@ interface NavbarProps {
   isAdminView: boolean;
   setIsAdminView: (val: boolean) => void;
   unreadTicketsCount?: number;
+  campaignTheme?: 'girls' | 'boys';
 }
 
 export default function Navbar({
@@ -54,10 +55,12 @@ export default function Navbar({
   unreadNotificationsCount = 0,
   isAdminView,
   setIsAdminView,
-  unreadTicketsCount = 0
+  unreadTicketsCount = 0,
+  campaignTheme = 'boys'
 }: NavbarProps) {
   const [copied, setCopied] = useState(false);
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
+  const isGirls = campaignTheme === 'girls' || currentUser?.gender === 'دختر';
 
   const copyPersonalCode = () => {
     if (currentUser?.personal_code) {
@@ -105,20 +108,18 @@ export default function Navbar({
     setIsMobileMoreOpen(false);
   };
 
-  // Full Desktop Navigation items (Web desktop/laptop)
+  // Full Desktop Navigation items (Web desktop/laptop) - Dashboard is exclusive to Admin
   const desktopNavItems: { id: string; label: string; icon: any; badge?: string }[] = [
     { id: 'Home', label: 'صفحه اصلی سایت', icon: Home },
     { id: 'Journey', label: 'نقشه مراحل بازی', icon: Gamepad2 },
     { id: 'Rewards', label: 'جوایز و امتیازات', icon: Gift },
-    { id: 'Dashboard', label: 'داشبورد عملیات', icon: LayoutDashboard },
     { id: 'Vitrin', label: 'ویترین و آثار', icon: Grid },
   ];
 
-  // Android Mobile Bottom Navigation (Core 4 tabs)
+  // Android Mobile Bottom Navigation (Core 3 tabs)
   const mobileBottomItems = [
     { id: 'Journey', label: 'نقشه بازی', icon: Gamepad2 },
     { id: 'Rewards', label: 'جوایز و امتیازات', icon: Gift },
-    { id: 'Dashboard', label: 'داشبورد عملیات', icon: LayoutDashboard },
     { id: 'Vitrin', label: 'ویترین و آثار', icon: Grid },
   ];
 
@@ -162,7 +163,11 @@ export default function Navbar({
       {/* ========================================================================= */}
       {/* 1. TOP HEADER (DESKTOP & MOBILE TOP BAR)                                  */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-40 bg-[#050816]/95 backdrop-blur-md border-b border-cyan-500/20 shadow-[0_4px_25px_rgba(0,0,0,0.7)] dir-rtl font-sans">
+      <header className={`sticky top-0 z-40 backdrop-blur-md border-b shadow-[0_4px_25px_rgba(0,0,0,0.7)] dir-rtl font-sans transition-colors duration-500 ${
+        isGirls 
+          ? 'bg-[#150220]/95 border-fuchsia-500/30' 
+          : 'bg-[#060c20]/95 border-blue-500/30 shadow-[0_4px_25px_rgba(0,0,0,0.8),0_0_20px_rgba(37,99,235,0.15)]'
+      }`}>
         
         {/* Top Utility Bar */}
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between border-b border-slate-800/80 text-xs">
@@ -173,63 +178,73 @@ export default function Navbar({
             className="flex items-center gap-2.5 sm:gap-3 shrink-0 cursor-pointer group select-none transition-transform hover:scale-[1.02]"
             title="بازگشت به صفحه اصلی سایت"
           >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-600 to-rose-600 p-[1.5px] shadow-[0_0_12px_rgba(6,182,212,0.4)] group-hover:shadow-[0_0_18px_rgba(6,182,212,0.7)] transition-shadow">
-              <div className="w-full h-full bg-[#070b1e] rounded-[11px] flex items-center justify-center text-cyan-400 font-bold group-hover:text-cyan-300">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl p-[1.5px] transition-shadow ${
+              isGirls
+                ? 'bg-gradient-to-br from-fuchsia-400 via-pink-500 to-purple-600 shadow-[0_0_12px_rgba(255,19,137,0.5)] group-hover:shadow-[0_0_18px_rgba(255,19,137,0.8)]'
+                : 'bg-gradient-to-br from-blue-500 via-indigo-600 to-red-600 shadow-[0_0_12px_rgba(37,99,235,0.5)] group-hover:shadow-[0_0_18px_rgba(37,99,235,0.8)]'
+            }`}>
+              <div className={`w-full h-full rounded-[11px] flex items-center justify-center font-bold ${
+                isGirls ? 'bg-[#1a0229] text-fuchsia-400 group-hover:text-pink-300' : 'bg-[#060c22] text-blue-400 group-hover:text-blue-300'
+              }`}>
                 <ShieldAlert size={18} className="animate-pulse" />
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h1 className="font-black text-xs sm:text-sm md:text-base text-white tracking-tight group-hover:text-cyan-300 transition-colors">اتاق جنگ</h1>
+                <h1 className={`font-black text-xs sm:text-sm md:text-base text-white tracking-tight transition-colors ${
+                  isGirls ? 'group-hover:text-fuchsia-300' : 'group-hover:text-blue-300'
+                }`}>اتاق جنگ</h1>
               </div>
               <p className="text-[10px] text-slate-400 font-medium hidden md:block">سامانه ارزیابی، مسابقه و آموزش‌های استراتژیک دانش‌آموزی</p>
             </div>
           </div>
 
-          {/* User Controls / Status */}
-          {currentUser && (
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Actions Bar: User Controls */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* User Controls / Status */}
+            {currentUser && (
+              <>
+                {/* Leader Squad Management (Desktop trigger) */}
+                {currentUser.role === 'leader' && (
+                  <button
+                    onClick={onOpenSquadModal}
+                    className="hidden md:flex items-center gap-1 bg-red-900/40 hover:bg-red-900/70 border border-red-700/60 text-red-200 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-[0_0_10px_rgba(220,38,38,0.2)]"
+                  >
+                    <Users size={14} />
+                    <span>مدیریت جوخه</span>
+                  </button>
+                )}
 
-              {/* Leader Squad Management (Desktop trigger) */}
-              {currentUser.role === 'leader' && (
+                {/* Admin Panel Switcher (Visible on both mobile & desktop) */}
+                {currentUser.role === 'admin' && (
+                  <button
+                    onClick={() => {
+                      const target = !isAdminView;
+                      setIsAdminView(target);
+                      setCurrentTab(target ? 'Admin' : 'Journey');
+                    }}
+                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition border ${
+                      isAdminView 
+                        ? 'bg-amber-500 text-black border-amber-400 font-black shadow-[0_0_12px_rgba(245,158,11,0.5)]' 
+                        : 'bg-amber-950/40 text-amber-300 border-amber-800/60 hover:bg-amber-900/50'
+                    }`}
+                  >
+                    <SlidersHorizontal size={13} />
+                    <span>{isAdminView ? 'خروج از ادمین' : 'پنل ادمین'}</span>
+                  </button>
+                )}
+
+                {/* Logout Button */}
                 <button
-                  onClick={onOpenSquadModal}
-                  className="hidden md:flex items-center gap-1 bg-red-900/40 hover:bg-red-900/70 border border-red-700/60 text-red-200 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-[0_0_10px_rgba(220,38,38,0.2)]"
+                  onClick={onLogout}
+                  className="p-1.5 bg-slate-900 hover:bg-red-950/80 border border-slate-800 hover:border-red-800 text-slate-400 hover:text-red-300 rounded-lg transition"
+                  title="خروج از سامانه"
                 >
-                  <Users size={14} />
-                  <span>مدیریت جوخه</span>
+                  <LogOut size={16} />
                 </button>
-              )}
-
-              {/* Admin Panel Switcher (Visible on both mobile & desktop) */}
-              {currentUser.role === 'admin' && (
-                <button
-                  onClick={() => {
-                    const target = !isAdminView;
-                    setIsAdminView(target);
-                    setCurrentTab(target ? 'Admin' : 'Dashboard');
-                  }}
-                  className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition border ${
-                    isAdminView 
-                      ? 'bg-amber-500 text-black border-amber-400 font-black shadow-[0_0_12px_rgba(245,158,11,0.5)]' 
-                      : 'bg-amber-950/40 text-amber-300 border-amber-800/60 hover:bg-amber-900/50'
-                  }`}
-                >
-                  <SlidersHorizontal size={13} />
-                  <span>{isAdminView ? 'خروج از ادمین' : 'پنل ادمین'}</span>
-                </button>
-              )}
-
-              {/* Logout Button */}
-              <button
-                onClick={onLogout}
-                className="p-1.5 bg-slate-900 hover:bg-red-950/80 border border-slate-800 hover:border-red-800 text-slate-400 hover:text-red-300 rounded-lg transition"
-                title="خروج از سامانه"
-              >
-                <LogOut size={16} />
-              </button>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* ========================================================================= */}
@@ -249,11 +264,15 @@ export default function Navbar({
                       onClick={() => handleSelectTab(item.id, false)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-200 border cursor-pointer ${
                         isActive
-                          ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                          : 'bg-slate-900/60 text-slate-300 hover:text-white border-slate-800/80 hover:border-cyan-500/30 hover:bg-slate-800/80'
+                          ? isGirls
+                            ? 'girls-button-neon text-white border-pink-300/50 shadow-[0_0_15px_rgba(255,19,137,0.5)]'
+                            : 'boys-button-tactical text-white border-blue-300/50 shadow-[0_0_15px_rgba(37,99,235,0.5)]'
+                          : isGirls
+                            ? 'bg-[#180224]/70 text-slate-300 hover:text-white border-fuchsia-950/80 hover:border-fuchsia-500/40 hover:bg-[#250638]/80'
+                            : 'bg-[#091126]/70 text-slate-300 hover:text-white border-blue-950/80 hover:border-blue-500/40 hover:bg-[#0e1d40]/80'
                       }`}
                     >
-                      <Icon size={15} strokeWidth={1.8} className={isActive ? 'text-slate-950' : 'text-cyan-400'} />
+                      <Icon size={15} strokeWidth={1.8} className={isActive ? 'text-white' : isGirls ? 'text-fuchsia-400' : 'text-blue-400'} />
                       <span>{item.label}</span>
                       {item.badge && (
                         <span className="bg-rose-500 text-white text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold">
@@ -307,7 +326,11 @@ export default function Navbar({
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-              className="relative z-10 w-full bg-[#070c20] border-t border-x border-cyan-500/40 rounded-t-3xl p-5 pb-8 shadow-[0_-15px_50px_rgba(0,0,0,0.95)] max-h-[85vh] overflow-y-auto"
+              className={`relative z-10 w-full border-t border-x rounded-t-3xl p-5 pb-8 shadow-[0_-15px_50px_rgba(0,0,0,0.95)] max-h-[85vh] overflow-y-auto ${
+                isGirls 
+                  ? 'bg-[#14021e] border-fuchsia-500/40' 
+                  : 'bg-[#060c20] border-blue-500/40 shadow-[0_-15px_50px_rgba(0,0,0,0.95),0_0_20px_rgba(37,99,235,0.2)]'
+              }`}
             >
               
               {/* Android Top Handle Bar */}
@@ -316,7 +339,9 @@ export default function Navbar({
               {/* Sheet Header */}
               <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+                  <div className={`w-8 h-8 rounded-xl border flex items-center justify-center ${
+                    isGirls ? 'bg-fuchsia-950 border-fuchsia-500/40 text-fuchsia-400' : 'bg-blue-950 border-blue-500/40 text-blue-400'
+                  }`}>
                     <Sparkles size={16} />
                   </div>
                   <div>
@@ -347,14 +372,20 @@ export default function Navbar({
                       onClick={() => handleSelectTab(item.id, !!item.isAdmin, !!item.isNotification)}
                       className={`w-full p-3 rounded-2xl border transition-all flex items-center justify-between text-right ${
                         isActive
-                          ? 'bg-gradient-to-r from-cyan-950/90 to-slate-900 border-cyan-500/60 shadow-[0_0_15px_rgba(6,182,212,0.2)] text-white'
-                          : 'bg-[#050816] hover:bg-slate-900/90 border-slate-800/80 text-slate-300'
+                          ? isGirls
+                            ? 'bg-gradient-to-r from-fuchsia-950/90 to-purple-950 border-fuchsia-500/60 shadow-[0_0_15px_rgba(255,19,137,0.3)] text-white'
+                            : 'bg-gradient-to-r from-blue-950/90 to-slate-900 border-blue-500/60 shadow-[0_0_15px_rgba(37,99,235,0.3)] text-white'
+                          : isGirls
+                            ? 'bg-[#180224]/80 hover:bg-[#260538] border-fuchsia-950/80 text-slate-300'
+                            : 'bg-[#060e24] hover:bg-slate-900/90 border-blue-950/80 text-slate-300'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${
                           isActive
-                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
+                            ? isGirls
+                              ? 'bg-fuchsia-500/25 text-fuchsia-300 border-fuchsia-500/50'
+                              : 'bg-blue-500/25 text-blue-300 border-blue-500/50'
                             : 'bg-slate-900 text-slate-400 border-slate-800'
                         }`}>
                           <Icon size={18} strokeWidth={1.6} />

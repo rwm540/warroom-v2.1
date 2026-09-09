@@ -17,34 +17,54 @@ import {
 interface FooterProps {
   onNavigate: (tab: string) => void;
   onOpenAbout: () => void;
+  themeMode?: 'girls' | 'boys';
 }
 
-export default function Footer({ onNavigate, onOpenAbout }: FooterProps) {
+export default function Footer({ onNavigate, onOpenAbout, themeMode = 'boys' }: FooterProps) {
   const [activeTrustModal, setActiveTrustModal] = useState<'enamad' | 'zarinpal' | 'contact' | null>(null);
+  const isGirls = themeMode === 'girls';
 
   return (
-    <footer className="mt-12 mb-2 md:mb-6 px-4 py-8 border-t border-cyan-500/30 bg-[#05091a]/95 text-slate-200 dir-rtl rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.8)] relative overflow-hidden">
+    <footer className={`mt-12 mb-2 md:mb-6 px-4 py-8 border-t text-slate-200 dir-rtl rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.8)] relative overflow-hidden transition-colors duration-500 ${
+      isGirls 
+        ? 'border-fuchsia-500/30 bg-[#12021c]/95 shadow-[0_-10px_30px_rgba(255,19,137,0.15)]' 
+        : 'border-blue-500/35 bg-[#050b1d]/95 shadow-[0_-10px_30px_rgba(0,0,0,0.8),0_0_25px_rgba(37,99,235,0.15)]'
+    }`}>
       
       {/* Background Accent Gradients */}
-      <div className="absolute top-0 right-1/4 w-72 h-72 bg-cyan-600/10 blur-[100px] pointer-events-none rounded-full" />
-      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-amber-600/10 blur-[100px] pointer-events-none rounded-full" />
+      <div className={`absolute top-0 right-1/4 w-72 h-72 blur-[100px] pointer-events-none rounded-full ${
+        isGirls ? 'bg-fuchsia-600/15' : 'bg-blue-600/15'
+      }`} />
+      <div className={`absolute bottom-0 left-1/4 w-72 h-72 blur-[100px] pointer-events-none rounded-full ${
+        isGirls ? 'bg-pink-600/15' : 'bg-red-600/15'
+      }`} />
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         
         {/* Top Grid: Brand Info + Contact Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-right pb-8 border-b border-cyan-500/15">
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 text-right pb-8 border-b ${
+          isGirls ? 'border-fuchsia-500/20' : 'border-blue-500/20'
+        }`}>
           
           {/* Col 1: About Platform & Brand */}
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 via-red-800 to-black p-[1px] shadow-[0_0_12px_rgba(220,38,38,0.5)]">
-                <div className="w-full h-full bg-[#070b1e] rounded-[11px] flex items-center justify-center text-red-500 font-bold">
+              <div className={`w-10 h-10 rounded-xl p-[1px] ${
+                isGirls 
+                  ? 'bg-gradient-to-br from-pink-500 via-fuchsia-600 to-purple-800 shadow-[0_0_12px_rgba(255,19,137,0.5)]' 
+                  : 'bg-gradient-to-br from-blue-500 via-indigo-600 to-red-600 shadow-[0_0_12px_rgba(37,99,235,0.5)]'
+              }`}>
+                <div className={`w-full h-full rounded-[11px] flex items-center justify-center font-bold ${
+                  isGirls ? 'bg-[#1a0229] text-fuchsia-400' : 'bg-[#060c22] text-blue-400'
+                }`}>
                   <Shield size={22} className="animate-pulse" />
                 </div>
               </div>
               <div>
                 <h2 className="text-sm font-black text-white tracking-tight">سامانه ملی «اتاق جنگ»</h2>
-                <p className="text-[10px] text-cyan-400 font-semibold">سامانه استراتژیک و ارزیابی اتاق جنگ</p>
+                <p className={`text-[10px] font-semibold ${isGirls ? 'text-pink-400' : 'text-blue-400'}`}>
+                  {isGirls ? 'پویش دختران پیشگام و مقتدر' : 'سامانه استراتژیک و ارزیابی اتاق جنگ'}
+                </p>
               </div>
             </div>
 
@@ -64,7 +84,9 @@ export default function Footer({ onNavigate, onOpenAbout }: FooterProps) {
               <span className="text-slate-700">•</span>
               <button 
                 onClick={() => setActiveTrustModal('contact')}
-                className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition"
+                className={`text-xs font-bold flex items-center gap-1 transition ${
+                  isGirls ? 'text-pink-400 hover:text-pink-300' : 'text-blue-400 hover:text-blue-300'
+                }`}
               >
                 <Phone size={14} />
                 <span>اطلاعات تماس</span>
@@ -74,8 +96,10 @@ export default function Footer({ onNavigate, onOpenAbout }: FooterProps) {
 
           {/* Col 2: Contact & Support Info */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-cyan-300 font-black text-xs border-b border-cyan-500/20 pb-2">
-              <Phone size={16} className="text-cyan-400" />
+            <div className={`flex items-center gap-2 font-black text-xs border-b pb-2 ${
+              isGirls ? 'text-pink-300 border-fuchsia-500/20' : 'text-blue-300 border-blue-500/20'
+            }`}>
+              <Phone size={16} className={isGirls ? 'text-pink-400' : 'text-blue-400'} />
               <span>ارتباط با دبیرخانه و پشتیبانی</span>
             </div>
 
@@ -93,7 +117,7 @@ export default function Footer({ onNavigate, onOpenAbout }: FooterProps) {
               <li className="flex items-center gap-2">
                 <Mail size={14} className="text-amber-400 shrink-0" />
                 <span>پست الکترونیکی:</span>
-                <span className="font-mono text-cyan-300">support@warroom.ir</span>
+                <span className={`font-mono ${isGirls ? 'text-pink-300' : 'text-blue-300'}`}>support@warroom.ir</span>
               </li>
               <li className="flex items-start gap-2 pt-1">
                 <MapPin size={14} className="text-amber-400 shrink-0 mt-0.5" />
@@ -106,7 +130,11 @@ export default function Footer({ onNavigate, onOpenAbout }: FooterProps) {
             <div className="pt-1">
               <button
                 onClick={() => onNavigate('Support')}
-                className="w-full bg-cyan-950/80 hover:bg-cyan-900/90 border border-cyan-500/50 text-cyan-300 font-bold text-xs py-2 rounded-xl transition flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(6,182,212,0.2)]"
+                className={`w-full font-bold text-xs py-2 rounded-xl transition flex items-center justify-center gap-2 ${
+                  isGirls 
+                    ? 'girls-button-neon text-white border border-pink-400/40 shadow-[0_0_15px_rgba(255,19,137,0.3)]' 
+                    : 'boys-button-tactical text-white border border-blue-400/40 shadow-[0_0_15px_rgba(37,99,235,0.3)]'
+                }`}
               >
                 <MessageCircle size={15} />
                 <span>ارسال تیکت پشتیبانی آنلاین ۲۴/۷</span>

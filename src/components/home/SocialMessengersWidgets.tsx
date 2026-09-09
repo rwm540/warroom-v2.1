@@ -30,7 +30,7 @@ export default function SocialMessengersWidgets({
         <div className={`rounded-3xl p-4 sm:p-5 border transition-all flex flex-col justify-between ${
           isGirls
             ? 'bg-gradient-to-br from-[#1d091b] to-[#0e040f] border-pink-500/40'
-            : 'bg-gradient-to-br from-[#0c162b] to-[#050b17] border-slate-800 hover:border-amber-500/50'
+            : 'bg-gradient-to-br from-[#0c162f] via-[#050b1a] to-[#140612] border-blue-900/50 hover:border-blue-500/60 shadow-[0_0_20px_rgba(37,99,235,0.15)]'
         }`}>
           <div className="space-y-2 mb-3">
             <div className="flex items-center justify-between">
@@ -63,7 +63,7 @@ export default function SocialMessengersWidgets({
         <div className={`rounded-3xl p-4 sm:p-5 border transition-all flex flex-col justify-between ${
           isGirls
             ? 'bg-gradient-to-br from-[#1d091b] to-[#0e040f] border-pink-500/40'
-            : 'bg-gradient-to-br from-[#0c162b] to-[#050b17] border-slate-800 hover:border-emerald-500/50'
+            : 'bg-gradient-to-br from-[#0c162f] via-[#050b1a] to-[#140612] border-blue-900/50 hover:border-blue-500/60 shadow-[0_0_20px_rgba(37,99,235,0.15)]'
         }`}>
           <div className="space-y-2 mb-3">
             <div className="flex items-center justify-between">
@@ -85,7 +85,11 @@ export default function SocialMessengersWidgets({
 
           <button
             onClick={() => handleOpenMessenger('بله (Bale)', 'https://ble.ir/warroom')}
-            className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-md flex items-center justify-center gap-2 transition"
+            className={`w-full py-2.5 rounded-2xl text-white font-black text-xs shadow-md flex items-center justify-center gap-2 transition ${
+              isGirls 
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950' 
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+            }`}
           >
             <span>کانال اتاق جنگ در بله</span>
             <ExternalLink size={13} />
@@ -103,17 +107,17 @@ export default function SocialMessengersWidgets({
           className={`cursor-pointer rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border transition-all flex items-center justify-between group ${
             isGirls
               ? 'bg-[#150718] border-pink-900/50 hover:border-pink-500/70 shadow-lg'
-              : 'bg-[#081224] border-slate-800 hover:border-cyan-500/70 shadow-lg'
+              : 'bg-[#091228] border-blue-900/50 hover:border-blue-500/70 shadow-lg'
           }`}
         >
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition group-hover:scale-105 ${
-              isGirls ? 'bg-pink-950/80 text-pink-400 border border-pink-800' : 'bg-cyan-950/80 text-cyan-400 border border-cyan-800'
+              isGirls ? 'bg-pink-950/80 text-pink-400 border border-pink-800' : 'bg-blue-950/80 text-blue-400 border border-blue-800'
             }`}>
               <MapIcon size={20} />
             </div>
             <div className="text-right">
-              <h5 className="text-xs sm:text-sm font-black text-white group-hover:text-amber-300 transition">
+              <h5 className={`text-xs sm:text-sm font-black text-white transition ${isGirls ? 'group-hover:text-pink-300' : 'group-hover:text-blue-300'}`}>
                 مراحل مسابقه
               </h5>
               <span className="text-[10px] text-slate-400">نقشه ۷ مرحله ماجراجویی</span>
@@ -128,17 +132,17 @@ export default function SocialMessengersWidgets({
           className={`cursor-pointer rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border transition-all flex items-center justify-between group ${
             isGirls
               ? 'bg-[#150718] border-pink-900/50 hover:border-pink-500/70 shadow-lg'
-              : 'bg-[#081224] border-slate-800 hover:border-cyan-500/70 shadow-lg'
+              : 'bg-[#091228] border-blue-900/50 hover:border-blue-500/70 shadow-lg'
           }`}
         >
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition group-hover:scale-105 ${
-              isGirls ? 'bg-purple-950/80 text-purple-400 border border-purple-800' : 'bg-amber-950/80 text-amber-400 border border-amber-800'
+              isGirls ? 'bg-purple-950/80 text-purple-400 border border-purple-800' : 'bg-red-950/80 text-red-400 border border-red-800'
             }`}>
               <BookOpen size={20} />
             </div>
             <div className="text-right">
-              <h5 className="text-xs sm:text-sm font-black text-white group-hover:text-amber-300 transition">
+              <h5 className={`text-xs sm:text-sm font-black text-white transition ${isGirls ? 'group-hover:text-purple-300' : 'group-hover:text-red-300'}`}>
                 راهنمای مسابقه
               </h5>
               <span className="text-[10px] text-slate-400">قوانین و نحوه امتیازگیری</span>

@@ -40,8 +40,8 @@ export default function TopHeader({
   return (
     <header className={`sticky top-0 z-30 w-full backdrop-blur-md border-b px-2 sm:px-4 py-2 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.6)] dir-rtl ${
       isGirls 
-        ? 'bg-[#15051c]/95 border-pink-500/30' 
-        : 'bg-[#060b1e]/95 border-cyan-500/20'
+        ? 'bg-gradient-to-r from-[#170222]/95 via-[#080010]/95 to-[#1c0328]/95 border-fuchsia-500/30' 
+        : 'bg-gradient-to-r from-[#0d162e]/95 via-[#030713]/95 to-[#1c0915]/95 border-blue-500/30 shadow-[0_4px_25px_rgba(0,0,0,0.8),0_0_20px_rgba(37,99,235,0.2)]'
     }`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-4">
         
@@ -49,8 +49,8 @@ export default function TopHeader({
         <div className="flex items-center gap-1.5 shrink-0">
           <div className={`flex items-center gap-1.5 p-1 rounded-2xl border shadow-md ${
             isGirls
-              ? 'bg-pink-950/80 border-pink-500/40 shadow-[0_0_15px_rgba(244,63,94,0.4)]'
-              : 'bg-cyan-950/70 border-cyan-500/35 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+              ? 'bg-[#180126]/90 border-fuchsia-500/50 shadow-[0_0_15px_rgba(255,19,137,0.4)]'
+              : 'bg-[#060c20]/90 border-blue-500/50 shadow-[0_0_15px_rgba(37,99,235,0.4),0_0_15px_rgba(220,38,38,0.25)]'
           }`}>
             <img 
               src={warroomLogoJpg} 
@@ -67,7 +67,11 @@ export default function TopHeader({
           {currentUser && (
             <button 
               onClick={onOpenProfile}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-[#080e26] hover:bg-cyan-950/60 border border-cyan-500/30 transition shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-xl transition shadow-md border ${
+                isGirls
+                  ? 'bg-[#1a0429] hover:bg-[#25063b] border-fuchsia-500/40 text-fuchsia-200 shadow-[0_0_10px_rgba(255,19,137,0.2)]'
+                  : 'bg-[#081129] hover:bg-[#0e1d44] border-blue-500/40 text-blue-200 shadow-[0_0_10px_rgba(37,99,235,0.25)]'
+              }`}
               title="شناسنامه و کد اختصاصی رزمنده"
             >
               {/* Personal Code (Hidden on Mobile) */}
@@ -77,7 +81,7 @@ export default function TopHeader({
 
               {/* Name & Icon */}
               <div className="flex items-center gap-1 min-w-0">
-                <UserIcon size={14} className="text-cyan-400 shrink-0" />
+                <UserIcon size={14} className={isGirls ? 'text-fuchsia-400 shrink-0' : 'text-blue-400 shrink-0'} />
                 <span className="text-[11px] sm:text-xs font-black text-slate-100 truncate max-w-[100px] xs:max-w-[140px] sm:max-w-none">
                   {currentUser.first_name} {currentUser.last_name}
                 </span>
@@ -94,15 +98,23 @@ export default function TopHeader({
             <div className="flex items-center gap-1">
               <button
                 onClick={onOpenLogin}
-                className="px-2 py-1.5 rounded-xl text-xs font-bold text-slate-200 bg-[#0d142d] hover:bg-[#121c3f] border border-cyan-500/30 transition flex items-center gap-1"
+                className={`px-2 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1 ${
+                  isGirls 
+                    ? 'text-pink-200 bg-[#160224] hover:bg-[#24043b] border-fuchsia-500/40' 
+                    : 'text-blue-100 bg-[#070f26] hover:bg-[#0d1a40] border-blue-500/40'
+                }`}
                 title="ورود به سامانه"
               >
-                <LogIn size={13} className="text-cyan-400" />
+                <LogIn size={13} className={isGirls ? 'text-fuchsia-400' : 'text-blue-400'} />
                 <span className="text-[11px]">ورود</span>
               </button>
               <button
                 onClick={onOpenRegister}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-black text-slate-950 bg-cyan-400 hover:bg-cyan-300 border border-cyan-300 transition flex items-center gap-1 shadow-[0_0_10px_rgba(34,211,238,0.4)]"
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-black text-white transition flex items-center gap-1 shadow-lg ${
+                  isGirls
+                    ? 'girls-button-neon border border-pink-300/40'
+                    : 'boys-button-tactical border border-blue-300/40'
+                }`}
                 title="ثبت‌نام جدید"
               >
                 <UserPlus size={13} />

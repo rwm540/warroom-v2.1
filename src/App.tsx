@@ -65,6 +65,7 @@ import OnboardingCommanderTutorial from './components/OnboardingCommanderTutoria
 import LoadingScreen from './components/LoadingScreen';
 import ProfileModal from './components/ProfileModal';
 import BackgroundMusic from './components/BackgroundMusic';
+import PersistentMusicBar from './components/PersistentMusicBar';
 import NotificationCenterModal from './components/NotificationCenterModal';
 import LiveNotificationToast from './components/LiveNotificationToast';
 
@@ -279,12 +280,12 @@ export default function App() {
     if (activeUser) {
       if (activeUser.role === 'admin') {
         setIsAdminMode(true);
-        setActiveTab('Dashboard');
-        localStorage.setItem('warroom_active_tab', 'Dashboard');
+        setActiveTab('Admin');
+        localStorage.setItem('warroom_active_tab', 'Admin');
       } else {
         setIsAdminMode(false);
-        setActiveTab('Dashboard');
-        localStorage.setItem('warroom_active_tab', 'Dashboard');
+        setActiveTab('Journey');
+        localStorage.setItem('warroom_active_tab', 'Journey');
       }
       setShowAuthScreen(false);
       triggerAlert(`ورود مستقیم با نشست فعال: ${activeUser.first_name} ${activeUser.last_name}`);
@@ -467,12 +468,12 @@ export default function App() {
     }
     if (user.role === 'admin') {
       setIsAdminMode(true);
-      setActiveTab('Dashboard');
-      localStorage.setItem('warroom_active_tab', 'Dashboard');
+      setActiveTab('Admin');
+      localStorage.setItem('warroom_active_tab', 'Admin');
     } else {
       setIsAdminMode(false);
-      setActiveTab('Dashboard');
-      localStorage.setItem('warroom_active_tab', 'Dashboard');
+      setActiveTab('Journey');
+      localStorage.setItem('warroom_active_tab', 'Journey');
       setShowOnboardingTutorial(true); // Launch Commander Guided Tutorial
     }
     triggerAlert(`خوش آمدید رزمنده ${user.first_name} ${user.last_name}`);
@@ -491,12 +492,12 @@ export default function App() {
       // User is already logged in! Never show auth or registration screen. Directly go to panel.
       if (activeUser.role === 'admin') {
         setIsAdminMode(true);
-        setActiveTab('Dashboard');
-        localStorage.setItem('warroom_active_tab', 'Dashboard');
+        setActiveTab('Admin');
+        localStorage.setItem('warroom_active_tab', 'Admin');
       } else {
         setIsAdminMode(false);
-        setActiveTab('Dashboard');
-        localStorage.setItem('warroom_active_tab', 'Dashboard');
+        setActiveTab('Journey');
+        localStorage.setItem('warroom_active_tab', 'Journey');
       }
       setShowAuthScreen(false);
       triggerAlert(`نشست فعال شناسایی شد: ورود مستقیم به پنل ${activeUser.first_name} ${activeUser.last_name}`);
@@ -513,27 +514,58 @@ export default function App() {
       setShowAuthScreen(false);
       if (currentUser.role === 'admin') {
         setIsAdminMode(true);
+        setActiveTab('Admin');
+        localStorage.setItem('warroom_active_tab', 'Admin');
       } else {
         setIsAdminMode(false);
+        setActiveTab('Journey');
+        localStorage.setItem('warroom_active_tab', 'Journey');
       }
-      setActiveTab('Dashboard');
-      localStorage.setItem('warroom_active_tab', 'Dashboard');
     }
   }, [currentUser, showAuthScreen]);
 
+  // Guard: Regular users are routed to Journey if they attempt to access Dashboard
+  useEffect(() => {
+    if (!isAdminMode && activeTab === 'Dashboard') {
+      setActiveTab('Journey');
+      localStorage.setItem('warroom_active_tab', 'Journey');
+    }
+  }, [isAdminMode, activeTab]);
+
+  const isGirlsTheme = campaignTheme === 'girls' || currentUser?.gender === 'دختر';
+
   return (
-    <div className="bg-[#030611] text-slate-100 min-h-screen w-full overflow-x-hidden flex flex-col relative font-sans dir-rtl">
+    <div className={`text-slate-100 min-h-screen w-full overflow-x-hidden flex flex-col relative font-sans dir-rtl transition-colors duration-700 ${
+      isGirlsTheme ? 'girls-atmosphere-bg' : 'boys-atmosphere-bg'
+    }`}>
       
       {/* Loading Screen with Radar & Logo */}
       {isLoading && (
-        <LoadingScreen onComplete={() => setIsLoading(false)} />
+        <LoadingScreen onComplete={() => setIsLoading(false)} isGirls={isGirlsTheme} />
       )}
 
       {/* Background Epic Music Toggle */}
       <BackgroundMusic />
 
-      {/* Background Cyber Radar Grid Accent */}
-      <div className="fixed inset-0 bg-[linear-gradient(rgba(220,38,38,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(220,38,38,0.015)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none z-0" />
+      {/* Dynamic Background Atmosphere */}
+      {isGirlsTheme ? (
+        /* Girls Wallpaper Atmosphere: Obsidian top, Neon Magenta bottom-left, Royal Violet bottom-right */
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute top-0 inset-x-0 h-[40vh] bg-gradient-to-b from-[#020005] via-[#080110]/60 to-transparent" />
+          <div className="absolute -bottom-24 -left-20 w-[550px] sm:w-[700px] h-[550px] sm:h-[700px] blur-[140px] sm:blur-[170px] rounded-full bg-[#ff1389]/30 pointer-events-none transition-all duration-700" />
+          <div className="absolute -bottom-24 -right-20 w-[600px] sm:w-[750px] h-[600px] sm:h-[750px] blur-[150px] sm:blur-[180px] rounded-full bg-[#7c3aed]/35 pointer-events-none transition-all duration-700" />
+          <div className="absolute bottom-[20%] left-1/2 -translate-x-1/2 w-[500px] h-[400px] blur-[160px] rounded-full bg-[#4a0d67]/25 pointer-events-none" />
+        </div>
+      ) : (
+        /* Boys Wallpaper Atmosphere: Exactly matching uploaded wallpaper (Obsidian void top, Crimson Red bottom-left, Electric Cobalt Blue bottom-right, Central violet blend, and crisp 32px grid) */
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute top-0 inset-x-0 h-[45vh] bg-gradient-to-b from-[#000104] via-[#010309]/85 to-transparent" />
+          <div className="absolute -bottom-20 -left-20 w-[550px] sm:w-[750px] h-[550px] sm:h-[750px] blur-[130px] sm:blur-[160px] rounded-full bg-gradient-to-tr from-[#991b1b] via-[#dc2626] to-[#e11d48] opacity-65 pointer-events-none transition-all duration-700" />
+          <div className="absolute -bottom-20 -right-20 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] blur-[140px] sm:blur-[170px] rounded-full bg-gradient-to-tl from-[#1e40af] via-[#2563eb] to-[#3b82f6] opacity-70 pointer-events-none transition-all duration-700" />
+          <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 w-[550px] h-[350px] blur-[150px] rounded-full bg-[#581c87]/35 pointer-events-none" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.075)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.075)_1px,transparent_1px)] bg-[size:32px_32px] opacity-80" />
+        </div>
+      )}
 
       {/* Global Toast Alert Notification (Swipeable right on Touch/Mobile + Close X Button) */}
       <AnimatePresence>
@@ -697,6 +729,7 @@ export default function App() {
               unreadNotificationsCount={unreadNotificationsCount}
               isAdminView={isAdminMode}
               setIsAdminView={setIsAdminMode}
+              campaignTheme={campaignTheme}
             />
 
             {/* Main Content Body */}
@@ -937,8 +970,11 @@ export default function App() {
         />
       )}
 
-      {/* Global Persistent Multi-Track Background Music System */}
-      <BackgroundMusic />
+      {/* Global Fixed Persistent Music Player Bar (Visible across all tabs and views) */}
+      <PersistentMusicBar 
+        hasBottomNav={Boolean(!showAuthScreen && currentUser)} 
+        isGirls={isGirlsTheme}
+      />
 
     </div>
   );

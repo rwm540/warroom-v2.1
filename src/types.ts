@@ -76,6 +76,7 @@ export interface MissionSubmission {
   awarded_score: number;
   admin_note?: string;
   submitted_at: string;
+  is_in_vitrin?: boolean;
 }
 
 export interface Training {

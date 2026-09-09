@@ -18,27 +18,33 @@ import {
   Send, 
   Filter, 
   ShieldAlert, 
-  Download,
-  Newspaper,
-  Check,
-  Home,
-  ArrowLeft,
-  ArrowRight,
-  Headphones,
-  MessageSquare,
-  CheckCircle,
-  RefreshCw,
-  AlertTriangle,
-  Bell,
-  Radio,
-  Volume2,
-  Zap,
-  ExternalLink,
-  ShieldCheck,
-  Sparkles,
-  Music
+  Download, 
+  Newspaper, 
+  Check, 
+  Home, 
+  ArrowLeft, 
+  ArrowRight, 
+  Headphones, 
+  MessageSquare, 
+  CheckCircle, 
+  RefreshCw, 
+  AlertTriangle, 
+  Bell, 
+  Radio, 
+  Volume2, 
+  Zap, 
+  ExternalLink, 
+  ShieldCheck, 
+  Sparkles, 
+  Music,
+  LayoutDashboard,
+  Activity,
+  Star,
+  Eye
 } from 'lucide-react';
+import { publishSubmissionToVitrin, removeSubmissionFromVitrin } from '../data/vitrinData';
 import AdminSoundtrackManager from './AdminSoundtrackManager';
+import DashboardView from './DashboardView';
 import { 
   User, 
   Group, 
@@ -223,23 +229,68 @@ export default function AdminPanel({
     category: 'عملیاتی'
   });
 
+  const [publishToVitrinInForm, setPublishToVitrinInForm] = useState(false);
+
+  // TOGGLE VITRIN PUBLICATION FOR SUBMISSIONS
+  const handleToggleVitrinPublication = (sub: MissionSubmission) => {
+    const isCurrentlyInVitrin = sub.is_in_vitrin;
+    if (isCurrentlyInVitrin) {
+      removeSubmissionFromVitrin(sub.id);
+      setSubmissions(prev => prev.map(s => s.id === sub.id ? { ...s, is_in_vitrin: false } : s));
+      triggerAlert(`اثر «${sub.user_name}» از ویترین عمومی برداشته شد.`);
+    } else {
+      publishSubmissionToVitrin({
+        id: sub.id,
+        user_name: sub.user_name,
+        personal_code: sub.personal_code,
+        mission_title: sub.mission_title,
+        file_path: sub.file_path,
+        file_name: sub.file_name,
+        file_type: sub.file_type,
+        user_note: sub.user_note,
+        awarded_score: sub.awarded_score || 100
+      });
+      setSubmissions(prev => prev.map(s => s.id === sub.id ? { ...s, is_in_vitrin: true, status: 'approved' } : s));
+      triggerAlert(`اثر «${sub.user_name}» با موفقیت تأیید و در ویترین عمومی منتشر شد!`);
+    }
+  };
+
   // SUBMIT GRADING HANDLER
   const handleGradeSubmit = (sub: MissionSubmission) => {
     const mission = missions.find(m => m.id === sub.mission_id);
     const maxScore = mission?.max_score || 100;
     const finalScore = gradeStatus === 'approved' ? Math.min(gradeScore, maxScore) : 0;
+    const shouldPublishToVitrin = gradeStatus === 'approved' && publishToVitrinInForm;
+
+    if (shouldPublishToVitrin) {
+      publishSubmissionToVitrin({
+        id: sub.id,
+        user_name: sub.user_name,
+        personal_code: sub.personal_code,
+        mission_title: sub.mission_title,
+        file_path: sub.file_path,
+        file_name: sub.file_name,
+        file_type: sub.file_type,
+        user_note: sub.user_note,
+        awarded_score: finalScore
+      });
+    } else if (gradeStatus === 'rejected') {
+      removeSubmissionFromVitrin(sub.id);
+    }
 
     setSubmissions(prev => prev.map(s => 
       s.id === sub.id ? {
         ...s,
         status: gradeStatus,
         awarded_score: finalScore,
-        admin_note: adminNote
+        admin_note: adminNote,
+        is_in_vitrin: shouldPublishToVitrin ? true : (gradeStatus === 'rejected' ? false : s.is_in_vitrin)
       } : s
     ));
 
     setGradingSubId(null);
-    triggerAlert(`ارسال رزمنده ${sub.user_name} ارزیابی شد. وضعیت: ${gradeStatus === 'approved' ? 'تأیید' : 'رد'} | امتیاز: ${finalScore}`);
+    setPublishToVitrinInForm(false);
+    triggerAlert(`ارسال رزمنده ${sub.user_name} ارزیابی شد. وضعیت: ${gradeStatus === 'approved' ? 'تأیید' : 'رد'} | امتیاز: ${finalScore}${shouldPublishToVitrin ? ' (منتشر در ویترین)' : ''}`);
   };
 
   // MANUAL MEDAL AWARD SUBMIT
@@ -534,6 +585,19 @@ export default function AdminPanel({
       <div className="w-full overflow-x-auto no-scrollbar pb-2 border-b border-slate-800 flex items-center gap-1.5 text-xs font-bold">
         
         <button
+          onClick={() => setActiveAdminTab('overview')}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
+            activeAdminTab === 'overview' 
+              ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 border-amber-400 font-black shadow-[0_0_15px_rgba(245,158,11,0.4)]' 
+              : 'bg-[#080d21] text-amber-300 border-amber-500/40 hover:text-white'
+          }`}
+          id="btn-tab-overview"
+        >
+          <LayoutDashboard size={15} />
+          <span>داشبورد عملیات ستاد</span>
+        </button>
+
+        <button
           onClick={() => setActiveAdminTab('submissions')}
           className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
             activeAdminTab === 'submissions' 
@@ -647,6 +711,53 @@ export default function AdminPanel({
 
       </div>
 
+      {/* 0. OPERATIONS DASHBOARD & MONITORING TAB */}
+      {activeAdminTab === 'overview' && (
+        <div className="space-y-4">
+          <div className="bg-slate-950/90 border border-amber-500/30 p-4 rounded-2xl flex items-center justify-between flex-wrap gap-3 shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+            <div>
+              <h3 className="text-sm font-black text-white flex items-center gap-2">
+                <LayoutDashboard className="text-amber-400" size={18} />
+                داشبورد عملیات و مرکز فرماندهی ستاد
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                نظارت هوشمند لحظه‌ای بر وضعیت رزمندگان، جوخه‌ها، مأموریت‌ها و رتبه‌بندی
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono bg-amber-500/10 text-amber-300 px-3 py-1 rounded-xl border border-amber-500/30">
+                {formatToPersianDigits(users.length)} رزمنده • {formatToPersianDigits(groups.length)} جوخه
+              </span>
+            </div>
+          </div>
+
+          <DashboardView
+            currentUser={currentUser}
+            users={users}
+            groups={groups}
+            missions={missions}
+            submissions={submissions}
+            announcements={announcements}
+            news={news}
+            medals={medals}
+            userMedals={userMedals}
+            tickets={tickets}
+            setTickets={setTickets}
+            replies={replies}
+            setReplies={setReplies}
+            triggerAlert={triggerAlert}
+            onNavigate={(tab) => {
+              if (tab === 'submissions' || tab === 'users' || tab === 'missions' || tab === 'medals' || tab === 'tickets' || tab === 'trainings' || tab === 'soundtracks' || tab === 'notifications') {
+                setActiveAdminTab(tab as any);
+              } else if (onNavigate) {
+                onNavigate(tab);
+              }
+            }}
+            onOpenSquadModal={() => setActiveAdminTab('users')}
+          />
+        </div>
+      )}
+
       {/* 1. SUBMISSIONS REVIEW & GRADING TAB */}
       {activeAdminTab === 'submissions' && (
         <div className="space-y-4">
@@ -713,18 +824,34 @@ export default function AdminPanel({
 
                   {/* Grading trigger / form */}
                   {!isGradingThis ? (
-                    <button
-                      onClick={() => {
-                        setGradingSubId(sub.id);
-                        setGradeStatus(sub.status === 'pending' ? 'approved' : sub.status);
-                        setGradeScore(sub.awarded_score || maxScore);
-                        setAdminNote(sub.admin_note || '');
-                      }}
-                      className="w-full sm:w-auto bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 text-xs font-bold py-2 px-4 rounded-xl transition flex items-center justify-center gap-1.5"
-                    >
-                      <Edit3 size={14} />
-                      <span>{sub.status === 'pending' ? 'ارزیابی و ثبت امتیاز' : 'ویرایش ارزیابی و بازخورد'}</span>
-                    </button>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button
+                        onClick={() => {
+                          setGradingSubId(sub.id);
+                          setGradeStatus(sub.status === 'pending' ? 'approved' : sub.status);
+                          setGradeScore(sub.awarded_score || maxScore);
+                          setAdminNote(sub.admin_note || '');
+                          setPublishToVitrinInForm(!!sub.is_in_vitrin);
+                        }}
+                        className="bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 text-xs font-bold py-2 px-4 rounded-xl transition flex items-center justify-center gap-1.5"
+                      >
+                        <Edit3 size={14} />
+                        <span>{sub.status === 'pending' ? 'ارزیابی و ثبت امتیاز' : 'ویرایش ارزیابی و بازخورد'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleVitrinPublication(sub)}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border ${
+                          sub.is_in_vitrin 
+                            ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-500/50 text-emerald-300'
+                            : 'bg-indigo-500/20 hover:bg-indigo-500/30 border-indigo-500/50 text-indigo-300'
+                        }`}
+                        title="انتشار یا عدم انتشار اثر در بخش ویترین و آثار سایت"
+                      >
+                        <Star size={14} className={sub.is_in_vitrin ? 'fill-emerald-400 text-emerald-400' : ''} />
+                        <span>{sub.is_in_vitrin ? 'منتشر در ویترین (کلیک برای لغو)' : 'تأیید و انتشار در ویترین آثار'}</span>
+                      </button>
+                    </div>
                   ) : (
                     <div className="bg-slate-950 p-4 rounded-2xl border border-amber-500/50 space-y-3">
                       <h4 className="text-xs font-black text-amber-400">فرم ثبت نمره و بازخورد هیئت داوران:</h4>
@@ -757,6 +884,21 @@ export default function AdminPanel({
                           </div>
                         )}
                       </div>
+
+                      {gradeStatus === 'approved' && (
+                        <label className="flex items-center gap-2 p-2.5 bg-slate-900/90 rounded-xl border border-slate-800 cursor-pointer text-xs text-amber-200">
+                          <input 
+                            type="checkbox"
+                            checked={publishToVitrinInForm}
+                            onChange={(e) => setPublishToVitrinInForm(e.target.checked)}
+                            className="w-4 h-4 rounded text-amber-500 bg-slate-950 border-slate-700 focus:ring-amber-400"
+                          />
+                          <span className="font-bold flex items-center gap-1.5">
+                            <Star size={14} className="text-amber-400 fill-amber-400" />
+                            تأیید و انتشار همزمان در بخش «ویترین و آثار» برای عموم
+                          </span>
+                        </label>
+                      )}
 
                       <div>
                         <label className="block text-[11px] font-bold text-slate-300 mb-1">بازخورد و پیام داور به رزمنده:</label>

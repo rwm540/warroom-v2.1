@@ -71,33 +71,38 @@ export default function GenderRegistrationBanners({
         {/* Banner 2: Registration for Boys */}
         <div className={`relative rounded-3xl p-4 sm:p-5 transition-all overflow-hidden flex flex-col justify-between border ${
           !isGirls 
-            ? 'bg-gradient-to-br from-[#0a182c] via-[#071020] to-[#040812] border-cyan-400/60 shadow-[0_0_25px_rgba(6,182,212,0.3)]' 
-            : 'bg-[#091120]/70 border-cyan-900/40 hover:border-cyan-500/40'
+            ? 'bg-gradient-to-br from-[#0c1735]/95 via-[#040816]/95 to-[#1c0816]/95 border-blue-500/60 shadow-[0_0_35px_rgba(37,99,235,0.4),0_0_20px_rgba(220,38,38,0.25)]' 
+            : 'bg-[#060c1c]/70 border-blue-900/40 hover:border-blue-500/40'
         }`}>
+          {/* Subtle Grid + Ambient Glow matching wallpaper */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none opacity-60" />
+          <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-red-600/30 blur-2xl rounded-full pointer-events-none" />
+          <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-600/35 blur-2xl rounded-full pointer-events-none" />
+
           {/* Top Tag */}
-          <div className="flex items-center justify-between mb-3">
-            <span className="bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-              <Shield size={11} className="text-cyan-400" />
+          <div className="relative z-10 flex items-center justify-between mb-3">
+            <span className="bg-blue-950/90 text-blue-300 border border-blue-500/40 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <Shield size={11} className="text-blue-400" />
               <span>ویژه پسران ماجراجو</span>
             </span>
-            <span className="text-[10px] text-cyan-300/80 font-mono">ظرفیت فعال</span>
+            <span className="text-[10px] text-blue-300/80 font-mono">ظرفیت فعال</span>
           </div>
 
-          <div className="space-y-2 mb-4">
+          <div className="relative z-10 space-y-2 mb-4">
             <h4 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
               <span>ثبت‌نام پسران</span>
-              <span className="text-xs text-cyan-400 font-normal">(رده فاتحان)</span>
+              <span className="text-xs text-blue-400 font-normal">(رده فاتحان)</span>
             </h4>
             <p className="text-[11px] text-slate-300 leading-relaxed">
               تشکیل جوخه‌های عملیاتی، حل معماهای رمزآلود، فتح مراحل هفت‌خوان و رقابت بر سر جوایز میلیاردی مسابقات.
             </p>
-            <div className="flex items-center gap-3 text-[10px] text-cyan-200/70 pt-1">
+            <div className="flex items-center gap-3 text-[10px] text-blue-200/70 pt-1">
               <span className="flex items-center gap-1">
-                <CheckCircle2 size={12} className="text-cyan-400" />
+                <CheckCircle2 size={12} className="text-blue-400" />
                 <span>عملیات جوخه‌ای</span>
               </span>
               <span className="flex items-center gap-1">
-                <CheckCircle2 size={12} className="text-cyan-400" />
+                <CheckCircle2 size={12} className="text-red-400" />
                 <span>رده‌بندی استانی</span>
               </span>
             </div>
@@ -105,7 +110,7 @@ export default function GenderRegistrationBanners({
 
           <button
             onClick={() => onOpenRegister('individual_male')}
-            className="w-full py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-cyan-900/30 flex items-center justify-center gap-2 transition transform active:scale-95"
+            className="relative z-10 w-full py-2.5 sm:py-3 rounded-2xl boys-button-tactical text-white font-black text-xs sm:text-sm shadow-lg shadow-blue-900/40 flex items-center justify-center gap-2 transition transform active:scale-95"
           >
             <span>ورود و ثبت‌نام پسران</span>
             <ArrowLeft size={15} />

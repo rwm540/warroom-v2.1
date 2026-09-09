@@ -326,18 +326,24 @@ export default function AuthView({
   };
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center p-2.5 sm:p-4 transition-colors duration-500 dir-rtl font-sans relative overflow-x-hidden ${
-      isGirls ? 'bg-[#0f0412] text-pink-50' : 'bg-[#030713] text-slate-100'
+    <div className={`min-h-screen flex flex-col items-center justify-center p-2.5 sm:p-4 transition-colors duration-700 dir-rtl font-sans relative overflow-x-hidden ${
+      isGirls ? 'girls-atmosphere-bg text-pink-50' : 'bg-[#030713] text-slate-100'
     }`}>
 
-      {/* Atmospheric Neon Background Lighting */}
+      {/* Atmospheric Neon Background Lighting (Obsidian top, Neon Magenta bottom-left, Royal Violet bottom-right) */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className={`absolute top-0 right-1/2 translate-x-1/2 w-[600px] h-[400px] blur-[150px] rounded-full transition-all duration-700 ${
-          isGirls ? 'bg-pink-600/20' : 'bg-cyan-500/20'
-        }`} />
-        <div className={`absolute bottom-0 right-10 w-[500px] h-[350px] blur-[140px] rounded-full transition-all duration-700 ${
-          isGirls ? 'bg-purple-600/20' : 'bg-blue-600/15'
-        }`} />
+        {isGirls ? (
+          <>
+            <div className="absolute top-0 inset-x-0 h-[35vh] bg-gradient-to-b from-[#020005] via-[#090112]/70 to-transparent" />
+            <div className="absolute -bottom-24 -left-20 w-[550px] sm:w-[700px] h-[550px] sm:h-[700px] blur-[140px] sm:blur-[170px] rounded-full bg-[#ff1389]/30 transition-all duration-700" />
+            <div className="absolute -bottom-24 -right-20 w-[600px] sm:w-[750px] h-[600px] sm:h-[750px] blur-[150px] sm:blur-[180px] rounded-full bg-[#7c3aed]/35 transition-all duration-700" />
+          </>
+        ) : (
+          <>
+            <div className="absolute top-0 right-1/2 translate-x-1/2 w-[600px] h-[400px] blur-[150px] rounded-full bg-cyan-500/20 transition-all duration-700" />
+            <div className="absolute bottom-0 right-10 w-[500px] h-[350px] blur-[140px] rounded-full bg-blue-600/15 transition-all duration-700" />
+          </>
+        )}
       </div>
 
       {/* Top Header */}
@@ -348,7 +354,7 @@ export default function AuthView({
             onClick={onBackToHome}
             className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-md cursor-pointer ${
               isGirls
-                ? 'bg-rose-950/70 hover:bg-rose-900/90 text-pink-200 border-pink-500/50 hover:border-pink-400 shadow-[0_0_15px_rgba(244,63,94,0.2)]'
+                ? 'bg-[#180126]/80 hover:bg-[#25033c]/90 text-pink-200 border-fuchsia-500/50 hover:border-fuchsia-400 shadow-[0_0_15px_rgba(255,19,137,0.25)]'
                 : 'bg-slate-900/80 hover:bg-cyan-950/90 text-cyan-200 border-cyan-500/50 hover:border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
             }`}
             title="بازگشت به صفحه اصلی سایت"
@@ -359,7 +365,7 @@ export default function AuthView({
         )}
 
         <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mr-auto">
-          <Shield size={14} className={isGirls ? 'text-pink-400' : 'text-cyan-400'} />
+          <Shield size={14} className={isGirls ? 'text-fuchsia-400' : 'text-cyan-400'} />
           <span>{isGirls ? 'بخش دختران' : 'بخش پسران'}</span>
         </div>
       </div>
@@ -367,14 +373,14 @@ export default function AuthView({
       {/* Main Card */}
       <div className={`w-full max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 backdrop-blur-2xl relative z-10 border transition-all duration-300 shadow-2xl my-auto ${
         isGirls
-          ? 'bg-[#18081c]/95 border-pink-500/40 shadow-[0_0_50px_rgba(244,63,94,0.3)]'
+          ? 'girls-card-surface border-fuchsia-500/40 shadow-[0_0_60px_rgba(255,19,137,0.3)]'
           : 'bg-[#060e20]/95 border-cyan-400/40 shadow-[0_0_50px_rgba(6,182,212,0.3)]'
       }`}>
 
         {/* 1. Luminous Neon Logo Header (Clean - No unnecessary text) */}
         <div className="flex flex-col items-center justify-center space-y-2 mb-3.5 text-center">
           <div className={`relative p-1.5 rounded-2xl transition-transform hover:scale-105 duration-300 ${
-            isGirls ? 'neon-logo-glow-pink' : 'neon-logo-glow'
+            isGirls ? 'neon-logo-glow-girls' : 'neon-logo-glow'
           }`}>
             <img 
               src={warroomLogoJpg} 
@@ -385,7 +391,7 @@ export default function AuthView({
           </div>
 
           <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${
-            isGirls ? 'neon-text-pink' : 'neon-text-cyan'
+            isGirls ? 'neon-text-girls' : 'neon-text-cyan'
           }`}>
             اتاق جنگ
           </h1>
@@ -401,7 +407,7 @@ export default function AuthView({
               className={`py-1.5 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 ${
                 activeTab === 'register'
                   ? isGirls
-                    ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-900/40'
+                    ? 'girls-button-neon text-white shadow-lg'
                     : 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-lg shadow-cyan-900/40'
                   : 'text-slate-400 hover:text-white'
               }`}
@@ -419,7 +425,7 @@ export default function AuthView({
               className={`py-1.5 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 ${
                 activeTab === 'login'
                   ? isGirls
-                    ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-900/40'
+                    ? 'girls-button-neon text-white shadow-lg'
                     : 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-lg shadow-cyan-900/40'
                   : 'text-slate-400 hover:text-white'
               }`}
@@ -632,7 +638,7 @@ export default function AuthView({
               disabled={isSubmitting}
               className={`w-full py-3 rounded-2xl font-black text-xs sm:text-sm transition transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-xl ${
                 isGirls
-                  ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-fuchsia-600 text-white shadow-pink-900/40'
+                  ? 'girls-button-neon text-white shadow-[0_0_25px_rgba(255,19,137,0.4)]'
                   : 'bg-gradient-to-r from-cyan-400 via-teal-400 to-blue-500 text-slate-950 shadow-cyan-900/40'
               }`}
             >
@@ -728,7 +734,7 @@ export default function AuthView({
               type="submit"
               className={`w-full py-3 rounded-2xl font-black text-xs sm:text-sm transition transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-xl ${
                 isGirls
-                  ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-fuchsia-600 text-white shadow-pink-900/40'
+                  ? 'girls-button-neon text-white shadow-[0_0_25px_rgba(255,19,137,0.4)]'
                   : 'bg-gradient-to-r from-cyan-400 via-teal-400 to-blue-500 text-slate-950 shadow-cyan-900/40'
               }`}
             >

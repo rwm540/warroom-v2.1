@@ -24,20 +24,23 @@ export default function ThemeSwitcherHeader({
           onClick={() => setThemeMode('girls')}
           className={`relative cursor-pointer rounded-2xl sm:rounded-3xl p-3 sm:p-5 transition-all duration-300 overflow-hidden flex flex-col justify-between select-none ${
             isGirls
-              ? 'bg-gradient-to-br from-pink-950/90 via-rose-950/70 to-[#18081a] border-2 border-pink-500 shadow-[0_0_30px_rgba(244,63,94,0.45)] scale-[1.02]'
-              : 'bg-[#120a17]/70 border border-pink-900/40 hover:border-pink-500/50 opacity-75 hover:opacity-100'
+              ? 'bg-gradient-to-br from-[#240532]/95 via-[#0f0117]/95 to-[#020005] border-2 border-fuchsia-500 shadow-[0_0_35px_rgba(255,19,137,0.45)] scale-[1.02]'
+              : 'bg-[#0f0216]/70 border border-fuchsia-950/60 hover:border-fuchsia-500/50 opacity-75 hover:opacity-100'
           }`}
         >
-          {/* Ambient Glow */}
+          {/* Ambient Dual-Tone Glow matching uploaded artwork */}
           {isGirls && (
-            <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/20 blur-2xl rounded-full pointer-events-none" />
+            <>
+              <div className="absolute -bottom-6 -left-6 w-28 h-28 bg-[#ff1389]/40 blur-xl rounded-full pointer-events-none" />
+              <div className="absolute -bottom-6 -right-6 w-28 h-28 bg-[#7c3aed]/40 blur-xl rounded-full pointer-events-none" />
+            </>
           )}
 
           {/* Top Indicator */}
           <div className="flex items-center justify-between z-10">
             <span className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
               isGirls 
-                ? 'bg-pink-500 text-white shadow-sm' 
+                ? 'girls-button-neon text-white shadow-sm' 
                 : 'bg-pink-950/60 text-pink-300 border border-pink-800/40'
             }`}>
               <Heart size={12} className="fill-current" />
@@ -45,7 +48,7 @@ export default function ThemeSwitcherHeader({
             </span>
 
             {isGirls && (
-              <span className="w-2 h-2 rounded-full bg-pink-400 animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-[#ff1389] animate-ping" />
             )}
           </div>
 
@@ -53,7 +56,7 @@ export default function ThemeSwitcherHeader({
           <div className="my-2.5 z-10 text-right">
             <h3 className="text-sm sm:text-lg font-black text-pink-100 flex items-center gap-1.5">
               <span>ورود دختران</span>
-              <Sparkles size={16} className="text-pink-400" />
+              <Sparkles size={16} className="text-fuchsia-400" />
             </h3>
             <p className="text-[10px] sm:text-xs text-pink-200/80 mt-0.5 line-clamp-1">
               تم اختصاصی، مأموریت‌ها و جوایز ویژه
@@ -61,11 +64,11 @@ export default function ThemeSwitcherHeader({
           </div>
 
           {/* Action Trigger */}
-          <div className="flex items-center justify-between pt-1 border-t border-pink-500/20 z-10">
-            <span className="text-[10px] sm:text-xs text-pink-300 font-bold">
-              {isGirls ? '✓ پوسته فعال' : 'انتخاب تم صورتی'}
+          <div className="flex items-center justify-between pt-1 border-t border-fuchsia-500/25 z-10">
+            <span className="text-[10px] sm:text-xs text-fuchsia-300 font-bold">
+              {isGirls ? '✓ پوسته فعال' : 'انتخاب تم دختران'}
             </span>
-            <div className={`p-1 sm:p-1.5 rounded-xl ${isGirls ? 'bg-pink-500 text-slate-950' : 'bg-pink-950/80 text-pink-400'}`}>
+            <div className={`p-1 sm:p-1.5 rounded-xl ${isGirls ? 'bg-gradient-to-r from-[#ff1389] to-[#7c3aed] text-white shadow-md' : 'bg-pink-950/80 text-pink-400'}`}>
               <ArrowLeft size={13} />
             </div>
           </div>
@@ -76,48 +79,52 @@ export default function ThemeSwitcherHeader({
           onClick={() => setThemeMode('boys')}
           className={`relative cursor-pointer rounded-2xl sm:rounded-3xl p-3 sm:p-5 transition-all duration-300 overflow-hidden flex flex-col justify-between select-none ${
             !isGirls
-              ? 'bg-gradient-to-br from-cyan-950/90 via-blue-950/70 to-[#081224] border-2 border-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.45)] scale-[1.02]'
-              : 'bg-[#081120]/70 border border-cyan-900/40 hover:border-cyan-500/50 opacity-75 hover:opacity-100'
+              ? 'bg-gradient-to-br from-[#0c1735]/95 via-[#040816]/95 to-[#1c0816]/95 border-2 border-blue-500 shadow-[0_0_35px_rgba(37,99,235,0.5),0_0_20px_rgba(220,38,38,0.35)] scale-[1.02]'
+              : 'bg-[#060c1c]/70 border border-blue-900/40 hover:border-blue-500/50 opacity-75 hover:opacity-100'
           }`}
         >
-          {/* Ambient Glow */}
+          {/* Ambient Glows (Electric Cobalt Blue bottom-right + Crimson Red bottom-left with crisp grid) */}
           {!isGirls && (
-            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/20 blur-2xl rounded-full pointer-events-none" />
+            <>
+              <div className="absolute -bottom-4 -left-4 w-28 h-28 bg-red-600/35 blur-xl rounded-full pointer-events-none" />
+              <div className="absolute -bottom-4 -right-4 w-28 h-28 bg-blue-600/40 blur-xl rounded-full pointer-events-none" />
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:22px_22px] opacity-45 pointer-events-none" />
+            </>
           )}
 
           {/* Top Indicator */}
           <div className="flex items-center justify-between z-10">
             <span className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
               !isGirls 
-                ? 'bg-cyan-400 text-slate-950 shadow-sm' 
-                : 'bg-cyan-950/60 text-cyan-300 border border-cyan-800/40'
+                ? 'bg-gradient-to-r from-blue-600 to-red-600 text-white shadow-sm' 
+                : 'bg-blue-950/60 text-blue-300 border border-blue-800/40'
             }`}>
               <Zap size={12} className="fill-current" />
               <span>بخش پسران</span>
             </span>
 
             {!isGirls && (
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
             )}
           </div>
 
           {/* Center Graphic / Text */}
           <div className="my-2.5 z-10 text-right">
-            <h3 className="text-sm sm:text-lg font-black text-cyan-100 flex items-center gap-1.5">
+            <h3 className="text-sm sm:text-lg font-black text-blue-100 flex items-center gap-1.5">
               <span>ورود پسران</span>
-              <Shield size={16} className="text-cyan-400" />
+              <Shield size={16} className="text-blue-400" />
             </h3>
-            <p className="text-[10px] sm:text-xs text-cyan-200/80 mt-0.5 line-clamp-1">
-              تم سایبری، جوخه‌بندی و مأموریت‌های استراتژیک
+            <p className="text-[10px] sm:text-xs text-blue-200/80 mt-0.5 line-clamp-1">
+              تم تاکتیکال، جوخه‌بندی و مأموریت‌های استراتژیک
             </p>
           </div>
 
           {/* Action Trigger */}
-          <div className="flex items-center justify-between pt-1 border-t border-cyan-500/20 z-10">
-            <span className="text-[10px] sm:text-xs text-cyan-300 font-bold">
-              {!isGirls ? '✓ پوسته فعال' : 'انتخاب تم آبی'}
+          <div className="flex items-center justify-between pt-1 border-t border-blue-500/25 z-10">
+            <span className="text-[10px] sm:text-xs text-blue-300 font-bold">
+              {!isGirls ? '✓ پوسته فعال' : 'انتخاب تم پسران'}
             </span>
-            <div className={`p-1 sm:p-1.5 rounded-xl ${!isGirls ? 'bg-cyan-400 text-slate-950' : 'bg-cyan-950/80 text-cyan-400'}`}>
+            <div className={`p-1 sm:p-1.5 rounded-xl ${!isGirls ? 'bg-gradient-to-r from-blue-600 to-red-600 text-white shadow-md' : 'bg-blue-950/80 text-blue-400'}`}>
               <ArrowLeft size={13} />
             </div>
           </div>

@@ -54,6 +54,7 @@ import { formatToPersianDigits } from '../utils/jalali';
 import { getSavedPostIds } from '../data/vitrinData';
 import SavedVitrinReelsModal from './SavedVitrinReelsModal';
 import StageQuizModal from './StageQuizModal';
+import DailyChallengeModal from './DailyChallengeModal';
 
 interface JourneyViewProps {
   currentUser: User | null;
@@ -116,6 +117,13 @@ export default function JourneyView({
   // Saved Vitrin Posts Reels Modal state
   const [showSavedReelsModal, setShowSavedReelsModal] = useState(false);
   const [savedPostsCount, setSavedPostsCount] = useState(0);
+
+  // Daily Challenge Modal State
+  const [showDailyChallengeModal, setShowDailyChallengeModal] = useState(false);
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const [isDailyChallengeDone, setIsDailyChallengeDone] = useState<boolean>(() => {
+    return localStorage.getItem(`warroom_daily_challenge_${todayKey}`) === 'true';
+  });
 
   // Map Scroll and Navigation Refs
   const mapScrollContainerRef = useRef<HTMLDivElement>(null);
@@ -517,6 +525,32 @@ export default function JourneyView({
         </section>
 
         {/* ========================================================================= */}
+        {/* 2.5 DAILY CHALLENGE QUICK BANNER (چالش روزانه در کنار مسیر)               */}
+        {/* ========================================================================= */}
+        <div 
+          onClick={() => setShowDailyChallengeModal(true)}
+          className="w-full max-w-md mx-auto my-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-[#0b1328]/95 to-amber-500/10 border border-amber-500/40 hover:border-amber-400 cursor-pointer transition shadow-[0_0_15px_rgba(245,158,11,0.15)] flex items-center justify-between group select-none"
+        >
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isDailyChallengeDone ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isDailyChallengeDone ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+            </span>
+            <span className="text-xs font-black text-amber-300 flex items-center gap-1">
+              <Flame size={14} className={isDailyChallengeDone ? 'text-emerald-400' : 'text-amber-400 animate-pulse'} />
+              {isDailyChallengeDone ? 'چالش روزانه امروز تکمیل شد' : 'چالش روزانه فعال است'}
+            </span>
+            <span className="text-[10px] text-amber-200/90 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40 font-mono">
+              {isDailyChallengeDone ? 'تکمیل شد ✅' : '+۱۵۰ امتیاز'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1 text-[11px] font-bold text-amber-300 group-hover:text-amber-200">
+            <span>{isDailyChallengeDone ? 'مشاهده معما' : 'ورود به چالش'}</span>
+            <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
         {/* 3. MAIN INTERACTIVE SERPENTINE JOURNEY MAP (Centered, Clean & Balanced)   */}
         {/* ========================================================================= */}
         <div className="relative flex-1 min-h-0 w-full max-w-lg mx-auto flex justify-center items-center py-1 overflow-y-auto lg:overflow-hidden no-scrollbar">
@@ -633,78 +667,139 @@ export default function JourneyView({
                 ];
 
                 return (
-                  <motion.div
-                    key={stage.id}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: idx * 0.04 }}
-                    className={`relative flex items-center justify-center ${xOffsets[idx]} my-0`}
-                  >
-                    {/* Stage Interactive Node Button */}
-                    <div 
-                      onClick={() => handleStageClick(stage)}
-                      className="flex flex-row items-center gap-1.5 sm:gap-2 cursor-pointer group select-none"
+                  <React.Fragment key={stage.id}>
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: idx * 0.04 }}
+                      className={`relative flex items-center justify-center ${xOffsets[idx]} my-0`}
                     >
-                      {/* Circular Stage Emblem */}
-                      <div className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-lg ${
-                        isCompleted 
-                          ? 'bg-[#06241a] border-2 border-emerald-400 shadow-[0_0_18px_rgba(16,185,129,0.7)]'
-                          : isInProgress
-                          ? 'bg-[#2b1e06] border-2 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse'
-                          : 'bg-[#101726] border-2 border-slate-700/80 shadow-[0_0_10px_rgba(0,0,0,0.6)] opacity-90'
-                      }`}>
-                        
-                        {/* Status Icon */}
-                        {renderStageIcon(stage.iconName, stage.status)}
-
-                        {/* Top Number Indicator Pin */}
-                        <div className={`absolute -top-1 -right-1 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center font-mono text-[8px] sm:text-[9px] font-black border shadow ${
-                          isCompleted
-                            ? 'bg-emerald-500 text-slate-950 border-slate-950'
+                      {/* Stage Interactive Node Button */}
+                      <div 
+                        onClick={() => handleStageClick(stage)}
+                        className="flex flex-row items-center gap-1.5 sm:gap-2 cursor-pointer group select-none"
+                      >
+                        {/* Circular Stage Emblem */}
+                        <div className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-lg ${
+                          isCompleted 
+                            ? 'bg-[#06241a] border-2 border-emerald-400 shadow-[0_0_18px_rgba(16,185,129,0.7)]'
                             : isInProgress
-                            ? 'bg-amber-500 text-slate-950 border-slate-950 animate-bounce'
-                            : 'bg-slate-800 text-slate-400 border-slate-700'
+                            ? 'bg-[#2b1e06] border-2 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.9)] animate-pulse'
+                            : 'bg-[#101726] border-2 border-slate-700/80 shadow-[0_0_10px_rgba(0,0,0,0.6)] opacity-90'
                         }`}>
-                          {formatToPersianDigits(stage.number)}
-                        </div>
-                      </div>
+                          
+                          {/* Status Icon */}
+                          {renderStageIcon(stage.iconName, stage.status)}
 
-                      {/* Attached Label Pill (Matching exact design) */}
-                      <div className={`px-2.5 py-1 rounded-xl backdrop-blur-md border transition-all text-right shadow-md flex flex-col justify-center min-w-[95px] max-w-[135px] ${
-                        isCompleted
-                          ? 'bg-[#081f18]/90 border-emerald-500/50 group-hover:border-emerald-400'
-                          : isInProgress
-                          ? 'bg-[#231805]/95 border-amber-500/70 group-hover:border-amber-400'
-                          : 'bg-[#0d1424]/90 border-slate-800 group-hover:border-slate-600'
-                      }`}>
-                        <h4 className="font-black text-[11px] sm:text-xs text-white leading-tight truncate">
-                          {stage.title}
-                        </h4>
-                        
-                        <div className="flex items-center gap-1 mt-0.5">
-                          {isCompleted && (
-                            <span className="text-[9px] font-bold text-emerald-400 flex items-center gap-0.5">
-                              <CheckCircle2 size={10} className="text-emerald-400 shrink-0" />
-                              <span>تکمیل شد</span>
-                            </span>
-                          )}
-                          {isInProgress && (
-                            <span className="text-[9px] font-bold text-amber-300 flex items-center gap-0.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0" />
-                              <span>در حال انجام</span>
-                            </span>
-                          )}
-                          {isLocked && (
-                            <span className="text-[9px] font-medium text-slate-400 flex items-center gap-0.5">
-                              <Lock size={9} className="text-slate-500 shrink-0" />
-                              <span>قفل شده</span>
-                            </span>
-                          )}
+                          {/* Top Number Indicator Pin */}
+                          <div className={`absolute -top-1 -right-1 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center font-mono text-[8px] sm:text-[9px] font-black border shadow ${
+                            isCompleted
+                              ? 'bg-emerald-500 text-slate-950 border-slate-950'
+                              : isInProgress
+                              ? 'bg-amber-500 text-slate-950 border-slate-950 animate-bounce'
+                              : 'bg-slate-800 text-slate-400 border-slate-700'
+                          }`}>
+                            {formatToPersianDigits(stage.number)}
+                          </div>
                         </div>
-                      </div>
 
-                    </div>
-                  </motion.div>
+                        {/* Attached Label Pill (Matching exact design) */}
+                        <div className={`px-2.5 py-1 rounded-xl backdrop-blur-md border transition-all text-right shadow-md flex flex-col justify-center min-w-[95px] max-w-[135px] ${
+                          isCompleted
+                            ? 'bg-[#081f18]/90 border-emerald-500/50 group-hover:border-emerald-400'
+                            : isInProgress
+                            ? 'bg-[#231805]/95 border-amber-500/70 group-hover:border-amber-400'
+                            : 'bg-[#0d1424]/90 border-slate-800 group-hover:border-slate-600'
+                        }`}>
+                          <h4 className="font-black text-[11px] sm:text-xs text-white leading-tight truncate">
+                            {stage.title}
+                          </h4>
+                          
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {isCompleted && (
+                              <span className="text-[9px] font-bold text-emerald-400 flex items-center gap-0.5">
+                                <CheckCircle2 size={10} className="text-emerald-400 shrink-0" />
+                                <span>تکمیل شد</span>
+                              </span>
+                            )}
+                            {isInProgress && (
+                              <span className="text-[9px] font-bold text-amber-300 flex items-center gap-0.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0" />
+                                <span>در حال انجام</span>
+                              </span>
+                            )}
+                            {isLocked && (
+                              <span className="text-[9px] font-medium text-slate-400 flex items-center gap-0.5">
+                                <Lock size={9} className="text-slate-500 shrink-0" />
+                                <span>قفل شده</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
+                    </motion.div>
+
+                    {/* Dedicated Daily Challenge Stage Node (مرحله چالش روزانه در کنار مسیر اصلی) */}
+                    {idx === 3 && (
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="relative flex items-center justify-center translate-x-14 sm:translate-x-18 my-0 z-20"
+                      >
+                        <div 
+                          onClick={() => setShowDailyChallengeModal(true)}
+                          className="flex flex-row items-center gap-1.5 sm:gap-2 cursor-pointer group select-none"
+                          title="چالش روزانه اتاق جنگ - کلیک جهت ورود و دریافت ۱۵۰ امتیاز"
+                        >
+                          <div className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-lg ${
+                            isDailyChallengeDone 
+                              ? 'bg-[#06241a] border-2 border-emerald-400 shadow-[0_0_18px_rgba(16,185,129,0.7)]'
+                              : 'bg-[#2b1704] border-2 border-amber-400 shadow-[0_0_22px_rgba(245,158,11,0.9)] animate-pulse'
+                          }`}>
+                            {isDailyChallengeDone ? (
+                              <CheckCircle2 size={20} className="text-emerald-400" />
+                            ) : (
+                              <Flame size={20} className="text-amber-400 animate-bounce" />
+                            )}
+
+                            <div className={`absolute -top-1 -right-1 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center font-mono text-[8px] sm:text-[9px] font-black border shadow ${
+                              isDailyChallengeDone
+                                ? 'bg-emerald-500 text-slate-950 border-slate-950'
+                                : 'bg-gradient-to-r from-amber-400 to-rose-500 text-slate-950 border-slate-950'
+                            }`}>
+                              ⚡
+                            </div>
+                          </div>
+
+                          <div className={`px-2.5 py-1 rounded-xl backdrop-blur-md border transition-all text-right shadow-md flex flex-col justify-center min-w-[95px] max-w-[135px] ${
+                            isDailyChallengeDone
+                              ? 'bg-[#081f18]/90 border-emerald-500/50 group-hover:border-emerald-400'
+                              : 'bg-[#271404]/95 border-amber-500/80 group-hover:border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.25)]'
+                          }`}>
+                            <h4 className="font-black text-[11px] sm:text-xs text-amber-300 leading-tight truncate">
+                              چالش روزانه
+                            </h4>
+                            
+                            <div className="flex items-center gap-1 mt-0.5">
+                              {isDailyChallengeDone ? (
+                                <span className="text-[9px] font-bold text-emerald-400 flex items-center gap-0.5">
+                                  <CheckCircle2 size={10} className="text-emerald-400 shrink-0" />
+                                  <span>تکمیل شد</span>
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold text-amber-300 flex items-center gap-0.5 animate-pulse">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                                  <span>امروز فعال</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </div>
@@ -1161,6 +1256,27 @@ export default function JourneyView({
         onNavigateToVitrin={() => {
           setShowSavedReelsModal(false);
           onNavigateTab?.('Vitrin');
+        }}
+      />
+
+      {/* ========================================================================= */}
+      {/* 9. DAILY CHALLENGE MODAL (مودال اختصاصی چالش روزانه)                       */}
+      {/* ========================================================================= */}
+      <DailyChallengeModal
+        isOpen={showDailyChallengeModal}
+        onClose={() => setShowDailyChallengeModal(false)}
+        triggerAlert={triggerAlert}
+        onAwardPoints={(pts) => {
+          setIsDailyChallengeDone(true);
+          try {
+            const savedUserData = localStorage.getItem('warroom_current_user_data');
+            if (savedUserData) {
+              const u = JSON.parse(savedUserData);
+              u.points = (u.points || 0) + pts;
+              localStorage.setItem('warroom_current_user_data', JSON.stringify(u));
+              window.dispatchEvent(new Event('storage'));
+            }
+          } catch {}
         }}
       />
 

@@ -25,6 +25,7 @@ import {
   VitrinPost, 
   VitrinComment, 
   initialVitrinPosts, 
+  getAllVitrinPosts,
   getSavedPostIds, 
   savePostId, 
   getAllComments, 
@@ -44,14 +45,18 @@ export default function VitrinView({
 }: VitrinViewProps) {
   const isGirls = currentUser?.gender === 'دختر' || localStorage.getItem('hisstory_theme_mode') === 'girls';
 
-  // Initialize posts with saved bookmark status from localStorage
+  // Initialize posts with all vitrin posts including admin-approved user submissions
   const [posts, setPosts] = useState<VitrinPost[]>(() => {
-    const savedIds = getSavedPostIds(currentUser?.id);
-    return initialVitrinPosts.map(p => ({
-      ...p,
-      isBookmarked: savedIds.includes(p.id)
-    }));
+    return getAllVitrinPosts(currentUser?.id);
   });
+
+  useEffect(() => {
+    const handleVitrinUpdated = () => {
+      setPosts(getAllVitrinPosts(currentUser?.id));
+    };
+    window.addEventListener('warroom_vitrin_updated', handleVitrinUpdated);
+    return () => window.removeEventListener('warroom_vitrin_updated', handleVitrinUpdated);
+  }, [currentUser?.id]);
 
   // Lazy Loading for Vitrin Feed: Display 1 post initially, load 1 next post per scroll/trigger
   const [visiblePostsCount, setVisiblePostsCount] = useState<number>(1);

@@ -322,6 +322,8 @@ class UniversalAudioEngine {
 
   private setupAudioElement() {
     if (typeof window === 'undefined') return;
+    if (this.audioElement) return;
+
     this.audioElement = new Audio();
     this.audioElement.crossOrigin = 'anonymous';
     this.audioElement.loop = false; // We handle loop via playlist mode
@@ -329,16 +331,22 @@ class UniversalAudioEngine {
 
     // When URL track ends, automatically advance according to playback mode!
     this.audioElement.addEventListener('ended', () => {
-      console.log('Track ended naturally, auto-advancing according to mode:', this.playbackMode);
-      this.handleTrackEnded();
+      if (this.isRunning && this.isUsingUrlAudio) {
+        console.log('Track ended naturally, auto-advancing according to mode:', this.playbackMode);
+        this.handleTrackEnded();
+      }
     });
 
-    // Error fallback: if URL fails to load, gracefully fallback to synthesizer
+    // Error fallback: ONLY if actively expecting this URL track to play
     this.audioElement.addEventListener('error', (e) => {
-      console.warn('Audio link load failed, switching to backup synth:', e);
-      if (this.isRunning && this.currentTrack?.sourceType === 'url') {
-        // Play synth fallback
-        this.playSynthMode('epic_march');
+      if (this.isRunning && this.isUsingUrlAudio && this.currentTrack?.sourceType === 'url' && this.audioElement?.src) {
+        console.warn('Audio link load failed, switching to backup synth:', e);
+        const token = this.playbackToken;
+        try {
+          this.audioElement.removeAttribute('src');
+          this.audioElement.load();
+        } catch {}
+        this.playSynthMode('epic_march', token);
       }
     });
   }
@@ -459,6 +467,10 @@ class UniversalAudioEngine {
     }
   }
 
+  public playNext() {
+    this.nextTrack();
+  }
+
   public prevTrack() {
     const activeTracks = this.playlist.filter(t => t.is_active);
     if (activeTracks.length === 0) return;
@@ -468,9 +480,57 @@ class UniversalAudioEngine {
     this.setTrack(activeTracks[prevIndex]);
   }
 
+  public playPrevious() {
+    this.prevTrack();
+  }
+
+  // Token generation to enforce strictly ONE single audio stream and prevent race conditions
+  private playbackToken: number = 0;
+
+  public stopAllAudio(): number {
+    this.playbackToken++;
+    const currentToken = this.playbackToken;
+
+    // 1. Cancel any auto-advance timer
+    if (this.autoAdvanceTimerId !== null) {
+      window.clearTimeout(this.autoAdvanceTimerId);
+      this.autoAdvanceTimerId = null;
+    }
+
+    // 2. Kill synth interval timer immediately
+    if (this.timerId !== null) {
+      window.clearInterval(this.timerId);
+      this.timerId = null;
+    }
+
+    // 3. Immediately silence and disconnect Web Audio master gain
+    if (this.masterGain) {
+      try {
+        if (this.ctx && this.ctx.state !== 'closed') {
+          this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+        }
+        this.masterGain.disconnect();
+      } catch {}
+      this.masterGain = null;
+    }
+
+    // 4. Fully halt, silence, and unload HTML5 audio element
+    if (this.audioElement) {
+      try {
+        this.audioElement.pause();
+        this.audioElement.currentTime = 0;
+        this.audioElement.removeAttribute('src');
+        this.audioElement.load();
+      } catch {}
+    }
+    this.isUsingUrlAudio = false;
+
+    return currentToken;
+  }
+
   public start() {
+    // Strictly prevent starting if already running - ONE track only!
     if (this.isRunning) return;
-    this.isRunning = true;
 
     try {
       localStorage.setItem('warroom_music_enabled', 'true');
@@ -485,70 +545,96 @@ class UniversalAudioEngine {
   }
 
   public playTrack(track: SoundtrackItem) {
-    this.currentTrack = track;
+    if (!track) return;
+
+    // Atomically stop all audio first
+    const token = this.stopAllAudio();
     this.isRunning = true;
+    this.currentTrack = track;
 
-    // Clear any previous synth or auto-advance timers
-    this.stopSynth();
-    if (this.autoAdvanceTimerId !== null) {
-      window.clearTimeout(this.autoAdvanceTimerId);
-      this.autoAdvanceTimerId = null;
-    }
-
-    // Save current active track
+    // Persist and dispatch active track state
     try {
+      localStorage.setItem('warroom_music_enabled', 'true');
       const savedSettings = JSON.parse(localStorage.getItem('warroom_audio_settings') || '{}');
       savedSettings.activeTrackId = track.id;
       localStorage.setItem('warroom_audio_settings', JSON.stringify(savedSettings));
       window.dispatchEvent(new CustomEvent('warroom_track_changed', { detail: track }));
+      window.dispatchEvent(new CustomEvent('warroom_music_state_changed', { 
+        detail: { isRunning: true, track } 
+      }));
     } catch {}
 
     if (track.sourceType === 'url' && track.url) {
-      // 1. URL Audio Playback
-      this.playUrlAudio(track.url);
+      // 1. Single URL Audio Playback
+      this.playUrlAudio(track.url, token);
     } else {
-      // 2. Synthesizer Playback
+      // 2. Single Synthesizer Playback
       const synthId = track.synthTrackId || 'epic_march';
-      this.playSynthMode(synthId);
+      this.playSynthMode(synthId, token);
 
-      // In synth mode, since synthesis is infinite, auto-advance after the track's durationSeconds (or default 90s)
+      // Auto-advance after track duration
       const duration = (track.durationSeconds || 90) * 1000;
       this.autoAdvanceTimerId = window.setTimeout(() => {
-        if (this.isRunning) {
-          console.log('Synth cycle completed, auto-advancing...');
+        if (this.isRunning && this.playbackToken === token) {
+          console.log('Synth cycle completed, auto-advancing to next track...');
           this.handleTrackEnded();
         }
       }, duration);
     }
   }
 
-  private playUrlAudio(url: string) {
+  private playUrlAudio(url: string, token: number) {
     this.isUsingUrlAudio = true;
-    if (this.audioElement) {
-      try {
-        this.audioElement.pause();
-        this.audioElement.src = url;
-        this.audioElement.volume = this.volume;
-        this.audioElement.currentTime = 0;
-        const playPromise = this.audioElement.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((err) => {
-            console.warn('URL Audio play blocked or failed:', err);
-            // Fallback to synth if URL is blocked
-            this.playSynthMode('epic_march');
-          });
-        }
-      } catch (e) {
+    if (!this.audioElement) {
+      this.setupAudioElement();
+    }
+    if (!this.audioElement) return;
+
+    try {
+      this.audioElement.src = url;
+      this.audioElement.volume = this.volume;
+      this.audioElement.currentTime = 0;
+      const playPromise = this.audioElement.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          // If playback was cancelled or another track took over, do nothing
+          if (this.isRunning && this.playbackToken === token) {
+            console.warn('URL Audio blocked or network failed, switching cleanly to backup synth:', err);
+            try {
+              if (this.audioElement) {
+                this.audioElement.pause();
+                this.audioElement.removeAttribute('src');
+                this.audioElement.load();
+              }
+            } catch {}
+            this.playSynthMode('epic_march', token);
+          }
+        });
+      }
+    } catch (e) {
+      if (this.isRunning && this.playbackToken === token) {
         console.warn('Audio URL error:', e);
-        this.playSynthMode('epic_march');
+        this.playSynthMode('epic_march', token);
       }
     }
   }
 
-  private playSynthMode(synthId: SynthTrackId) {
+  private playSynthMode(synthId: SynthTrackId, token: number) {
+    if (!this.isRunning || this.playbackToken !== token) return;
     this.isUsingUrlAudio = false;
+
+    // Guarantee audio element is halted and detached
     if (this.audioElement) {
-      this.audioElement.pause();
+      try {
+        this.audioElement.pause();
+        this.audioElement.removeAttribute('src');
+      } catch {}
+    }
+
+    // Guarantee any previous synth interval is dead
+    if (this.timerId !== null) {
+      window.clearInterval(this.timerId);
+      this.timerId = null;
     }
 
     this.ctx = getAudioContext();
@@ -561,7 +647,7 @@ class UniversalAudioEngine {
     this.synthStep = 0;
     this.masterGain = this.ctx.createGain();
     this.masterGain.gain.setValueAtTime(0.01, this.ctx.currentTime);
-    this.masterGain.gain.linearRampToValueAtTime(this.volume, this.ctx.currentTime + 1.2);
+    this.masterGain.gain.linearRampToValueAtTime(this.volume, this.ctx.currentTime + 0.8);
     this.masterGain.connect(this.ctx.destination);
 
     let stepDuration = 125;
@@ -570,45 +656,35 @@ class UniversalAudioEngine {
     else if (synthId === 'strategic_zen') stepDuration = 166;
 
     this.timerId = window.setInterval(() => {
-      this.tickSynth(synthId);
-    }, stepDuration);
-  }
-
-  private stopSynth() {
-    if (this.timerId !== null) {
-      window.clearInterval(this.timerId);
-      this.timerId = null;
-    }
-    if (this.masterGain && this.ctx) {
-      try {
-        const now = this.ctx.currentTime;
-        this.masterGain.gain.linearRampToValueAtTime(0.001, now + 0.4);
-        setTimeout(() => {
-          this.masterGain?.disconnect();
-          this.masterGain = null;
-        }, 450);
-      } catch {
-        this.masterGain.disconnect();
-        this.masterGain = null;
+      if (this.isRunning && this.playbackToken === token) {
+        this.tickSynth(synthId);
+      } else {
+        if (this.timerId !== null) {
+          window.clearInterval(this.timerId);
+          this.timerId = null;
+        }
       }
-    }
+    }, stepDuration);
   }
 
   public stop() {
     this.isRunning = false;
     try {
       localStorage.setItem('warroom_music_enabled', 'false');
+      window.dispatchEvent(new CustomEvent('warroom_music_state_changed', { 
+        detail: { isRunning: false, track: this.currentTrack } 
+      }));
     } catch {}
 
-    if (this.autoAdvanceTimerId !== null) {
-      window.clearTimeout(this.autoAdvanceTimerId);
-      this.autoAdvanceTimerId = null;
-    }
+    this.stopAllAudio();
+  }
 
-    if (this.audioElement) {
-      this.audioElement.pause();
+  public toggle() {
+    if (this.isRunning) {
+      this.stop();
+    } else {
+      this.start();
     }
-    this.stopSynth();
   }
 
   public setVolume(vol: number) {
@@ -616,8 +692,10 @@ class UniversalAudioEngine {
     if (this.audioElement) {
       this.audioElement.volume = this.volume;
     }
-    if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+    if (this.masterGain && this.ctx && this.ctx.state !== 'closed') {
+      try {
+        this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      } catch {}
     }
   }
 
