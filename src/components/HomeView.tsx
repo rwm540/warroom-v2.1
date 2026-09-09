@@ -128,7 +128,7 @@ export default function HomeView({
       </div>
 
       {/* Responsive Container: Mobile-Optimized + Full Desktop Experience */}
-      <div className={`w-full max-w-[500px] md:max-w-6xl min-h-screen md:min-h-0 relative shadow-[0_0_70px_rgba(0,0,0,0.95)] border-x md:border md:rounded-3xl flex flex-col pb-3 md:pb-6 overflow-hidden z-10 transition-colors duration-500 ${
+      <div className={`w-full max-w-[500px] md:max-w-6xl min-h-screen md:min-h-0 relative shadow-[0_0_70px_rgba(0,0,0,0.95)] border-x md:border md:rounded-3xl flex flex-col pb-10 md:pb-8 overflow-hidden z-10 transition-colors duration-500 ${
         isGirls 
           ? 'girls-card-surface border-fuchsia-500/35 shadow-[0_0_80px_rgba(255,19,137,0.22)]' 
           : 'boys-card-surface border-blue-500/35 shadow-[0_0_80px_rgba(37,99,235,0.22)]'
@@ -176,16 +176,6 @@ export default function HomeView({
                 onOpenGuide={() => setShowGuideModal(true)}
                 triggerAlert={triggerAlert}
               />
-            </section>
-
-            {/* Quick Stats Strip */}
-            <div className="pt-2">
-              <StatsStrip stats={homeStats || homeStatsData} />
-            </div>
-
-            {/* FAQ Accordion */}
-            <section aria-label="پرسش‌های متداول">
-              <FaqAccordion faqs={faqs || faqsData} />
             </section>
 
             {/* 7. About Us Section (درباره ما) */}

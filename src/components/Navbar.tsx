@@ -38,6 +38,7 @@ interface NavbarProps {
   onLogout: () => void;
   onOpenSquadModal: () => void;
   onOpenNotifications?: () => void;
+  onOpenGamePortal?: () => void;
   unreadNotificationsCount?: number;
   isAdminView: boolean;
   setIsAdminView: (val: boolean) => void;
@@ -52,6 +53,7 @@ export default function Navbar({
   onLogout,
   onOpenSquadModal,
   onOpenNotifications,
+  onOpenGamePortal,
   unreadNotificationsCount = 0,
   isAdminView,
   setIsAdminView,

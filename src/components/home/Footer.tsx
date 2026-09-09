@@ -25,7 +25,7 @@ export default function Footer({ onNavigate, onOpenAbout, themeMode = 'boys' }: 
   const isGirls = themeMode === 'girls';
 
   return (
-    <footer className={`mt-12 mb-2 md:mb-6 px-4 py-8 border-t text-slate-200 dir-rtl rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.8)] relative overflow-hidden transition-colors duration-500 ${
+    <footer className={`mt-12 mb-2 md:mb-6 px-4 pt-8 pb-36 md:pb-14 border-t text-slate-200 dir-rtl rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.8)] relative overflow-hidden transition-colors duration-500 ${
       isGirls 
         ? 'border-fuchsia-500/30 bg-[#12021c]/95 shadow-[0_-10px_30px_rgba(255,19,137,0.15)]' 
         : 'border-blue-500/35 bg-[#050b1d]/95 shadow-[0_-10px_30px_rgba(0,0,0,0.8),0_0_25px_rgba(37,99,235,0.15)]'

@@ -7,7 +7,10 @@ interface AboutSectionProps {
 
 export default function AboutSection({ onOpenMore }: AboutSectionProps) {
   return (
-    <div className="my-4 p-4 rounded-2xl bg-[#0a0f24]/90 backdrop-blur-xl border border-amber-500/30 relative overflow-hidden dir-rtl shadow-[0_4px_20px_rgba(0,0,0,0.5)] group hover:border-amber-400/60 transition-all">
+    <div 
+      onClick={onOpenMore}
+      className="my-4 p-4 rounded-2xl bg-[#0a0f24]/90 backdrop-blur-xl border border-amber-500/30 relative overflow-hidden dir-rtl shadow-[0_4px_20px_rgba(0,0,0,0.5)] group hover:border-amber-400/60 transition-all cursor-pointer"
+    >
       {/* Background Subtle Tactical Grid Texture */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(245,158,11,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(245,158,11,0.03)_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
 
@@ -24,20 +27,12 @@ export default function AboutSection({ onOpenMore }: AboutSectionProps) {
               <span className="text-[10px] text-amber-300/80 font-bold block">معرفی اهداف و رسالت سامانه</span>
             </div>
           </div>
-          <Sparkles size={16} className="text-amber-400 animate-pulse" />
+          <ChevronLeft size={18} className="text-amber-400 group-hover:translate-x-[-3px] transition-transform" />
         </div>
 
         <p className="text-xs text-slate-300 leading-relaxed text-justify">
           پلتفرم اتاق جنگ، سامانه جامع شبیه‌سازی تصمیم‌گیری استراتژیک، ارزیابی هوشمند و رقابت‌های گروهی دانش‌آموزی است که با هدف ارتقای آگاهی و تفکر تفکیکی طراحی گردیده است.
         </p>
-
-        <button
-          onClick={onOpenMore}
-          className="w-full mt-1 py-2 px-3 rounded-xl bg-amber-950/60 hover:bg-amber-900/80 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center justify-between transition-colors shadow-sm"
-        >
-          <span>مشاهده کامل صفحه «درباره ما»</span>
-          <ChevronLeft size={16} className="text-amber-400" />
-        </button>
       </div>
     </div>
   );

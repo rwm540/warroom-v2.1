@@ -47,6 +47,16 @@ export default function DailyChallengeModal({
   const [isCorrect, setIsCorrect] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<string>('');
 
+  // Notify global app layout to hide bottom navigation menu while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [isOpen]);
+
   // Daily Challenge Question Data
   const dailyQuestion = {
     title: 'رمزگشایی مختصات دیده‌بانی شبانه',

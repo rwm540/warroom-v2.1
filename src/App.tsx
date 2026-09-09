@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, ShieldAlert, X } from 'lucide-react';
+import { Bell, ShieldAlert, X, Radio } from 'lucide-react';
 
 // Types
 import { 
@@ -43,31 +43,77 @@ import {
   FaqItem 
 } from './data/home';
 
-// Views
+// Static Base Views
 import HomeView from './components/HomeView';
 import Navbar from './components/Navbar';
 import BottomNavigation from './components/home/BottomNavigation';
 import AuthView from './components/AuthView';
-import DashboardView from './components/DashboardView';
-import JourneyView from './components/JourneyView';
-import MissionsView from './components/MissionsView';
-import TrainingsView from './components/TrainingsView';
-import SupportView from './components/SupportView';
-import ContactView from './components/ContactView';
-import AboutView from './components/AboutView';
-import ProfileView from './components/ProfileView';
-import AdminPanel from './components/AdminPanel';
-import SquadManagementModal from './components/SquadManagementModal';
-import RewardsLeaderboardView from './components/RewardsLeaderboardView';
-import PrizesPointsView from './components/PrizesPointsView';
-import VitrinView from './components/VitrinView';
-import OnboardingCommanderTutorial from './components/OnboardingCommanderTutorial';
 import LoadingScreen from './components/LoadingScreen';
-import ProfileModal from './components/ProfileModal';
 import BackgroundMusic from './components/BackgroundMusic';
 import PersistentMusicBar from './components/PersistentMusicBar';
-import NotificationCenterModal from './components/NotificationCenterModal';
-import LiveNotificationToast from './components/LiveNotificationToast';
+
+// Lazy Loaded Views & Heavy Modals for Fast Initial Loading
+const DashboardView = lazy(() => import('./components/DashboardView'));
+const JourneyView = lazy(() => import('./components/JourneyView'));
+const MissionsView = lazy(() => import('./components/MissionsView'));
+const TrainingsView = lazy(() => import('./components/TrainingsView'));
+const SupportView = lazy(() => import('./components/SupportView'));
+const ContactView = lazy(() => import('./components/ContactView'));
+const AboutView = lazy(() => import('./components/AboutView'));
+const ProfileView = lazy(() => import('./components/ProfileView'));
+const AdminPanel = lazy(() => import('./components/AdminPanel'));
+const SquadManagementModal = lazy(() => import('./components/SquadManagementModal'));
+const PrizesPointsView = lazy(() => import('./components/PrizesPointsView'));
+const VitrinView = lazy(() => import('./components/VitrinView'));
+const OnboardingCommanderTutorial = lazy(() => import('./components/OnboardingCommanderTutorial'));
+const ProfileModal = lazy(() => import('./components/ProfileModal'));
+const GameSelectionPortalModal = lazy(() => import('./components/GameSelectionPortalModal'));
+const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal'));
+const LiveNotificationToast = lazy(() => import('./components/LiveNotificationToast'));
+
+const ViewFallback = () => (
+  <div className="w-full min-h-[360px] py-12 flex flex-col items-center justify-center p-6 text-center text-slate-300 font-sans dir-rtl select-none">
+    {/* Tactical Radar Scope Frame */}
+    <div className="relative flex items-center justify-center mb-5">
+      <div className="w-44 h-44 sm:w-52 sm:h-52 rounded-full border border-emerald-500/40 relative flex items-center justify-center shadow-[0_0_35px_rgba(16,185,129,0.22)] bg-[#030e06]/85 backdrop-blur-md overflow-hidden">
+        
+        {/* Concentric Range Rings */}
+        <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-full border border-emerald-500/30 absolute" />
+        <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full border border-emerald-500/20 absolute" />
+
+        {/* Crosshair Axes */}
+        <div className="w-full h-[1px] bg-emerald-500/35 absolute" />
+        <div className="h-full w-[1px] bg-emerald-500/35 absolute" />
+
+        {/* Rotating Radar Sweeper */}
+        <div className="w-full h-full rounded-full absolute pointer-events-none overflow-hidden animate-[radar-spin_2.4s_linear_infinite]">
+          <div className="absolute top-0 right-1/2 translate-x-1/2 w-[2px] h-1/2 bg-gradient-to-t from-emerald-500 via-emerald-400 to-emerald-200 shadow-[0_0_10px_#34d399]" />
+        </div>
+
+        {/* Pulsing Target Blip */}
+        <div className="absolute top-[28%] right-[32%] flex items-center justify-center">
+          <span className="w-3 h-3 rounded-full bg-emerald-400/50 animate-ping absolute" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 shadow-[0_0_8px_#10b981]" />
+        </div>
+
+        {/* Center Icon */}
+        <div className="relative z-10 p-3 rounded-2xl bg-[#020c05] border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+          <Radio size={22} className="text-emerald-400 animate-pulse" />
+        </div>
+      </div>
+    </div>
+
+    {/* Text Description */}
+    <div className="space-y-1.5 max-w-xs">
+      <h3 className="text-sm sm:text-base font-black text-white tracking-wide flex items-center justify-center gap-2 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">
+        <span>اسکن رادار و بارگذاری اطلاعات استراتژیک...</span>
+      </h3>
+      <p className="text-[11px] font-mono text-emerald-400/80">
+        در حال برقراری ارتباط با اتاق جنگ
+      </p>
+    </div>
+  </div>
+);
 
 export default function App() {
   // Global Data State
@@ -234,11 +280,10 @@ export default function App() {
         setCampaignTheme(saved);
       }
     };
+    handleStorage();
     window.addEventListener('storage', handleStorage);
-    const interval = setInterval(handleStorage, 400);
     return () => {
       window.removeEventListener('storage', handleStorage);
-      clearInterval(interval);
     };
   }, [currentUser]);
 
@@ -266,7 +311,24 @@ export default function App() {
   });
 
   const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
+  const [showGamePortal, setShowGamePortal] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('register_individual');
+
+  // Global active modal tracking (hides bottom nav & music bar with smooth exit animation when any modal opens)
+  const [isModalActive, setIsModalActive] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleModalChange = (e: any) => {
+      if (e.detail && typeof e.detail.active === 'boolean') {
+        setIsModalActive(e.detail.active);
+      }
+    };
+
+    window.addEventListener('warroom_modal_active_change' as any, handleModalChange);
+    return () => {
+      window.removeEventListener('warroom_modal_active_change' as any, handleModalChange);
+    };
+  }, []);
 
   const handleDirectLogin = () => {
     let activeUser = currentUser;
@@ -278,17 +340,9 @@ export default function App() {
     }
 
     if (activeUser) {
-      if (activeUser.role === 'admin') {
-        setIsAdminMode(true);
-        setActiveTab('Admin');
-        localStorage.setItem('warroom_active_tab', 'Admin');
-      } else {
-        setIsAdminMode(false);
-        setActiveTab('Journey');
-        localStorage.setItem('warroom_active_tab', 'Journey');
-      }
+      setShowGamePortal(true);
       setShowAuthScreen(false);
-      triggerAlert(`ورود مستقیم با نشست فعال: ${activeUser.first_name} ${activeUser.last_name}`);
+      triggerAlert(`ورود به درگاه انتخاب بازی: ${activeUser.first_name} ${activeUser.last_name}`);
       return;
     }
     setAuthMode('login');
@@ -476,17 +530,35 @@ export default function App() {
       setCampaignTheme('boys');
       localStorage.setItem('hisstory_theme_mode', 'boys');
     }
-    if (user.role === 'admin') {
-      setIsAdminMode(true);
-      setActiveTab('Admin');
-      localStorage.setItem('warroom_active_tab', 'Admin');
-    } else {
-      setIsAdminMode(false);
-      setActiveTab('Journey');
-      localStorage.setItem('warroom_active_tab', 'Journey');
-      setShowOnboardingTutorial(true); // Launch Commander Guided Tutorial
+
+    // Direct user to Game Selection Portal immediately after Login / Registration
+    setShowGamePortal(true);
+    triggerAlert(`خوش آمدید رزمنده ${user.first_name} ${user.last_name} — لطفا سامانه بازی را انتخاب کنید.`);
+  };
+
+  const handleSelectWarRoom = () => {
+    setShowGamePortal(false);
+    let user = currentUser;
+    if (!user) {
+      try {
+        const savedUserData = localStorage.getItem('warroom_current_user_data');
+        if (savedUserData) user = JSON.parse(savedUserData);
+      } catch (e) {}
     }
-    triggerAlert(`خوش آمدید رزمنده ${user.first_name} ${user.last_name}`);
+
+    if (user) {
+      if (user.role === 'admin') {
+        setIsAdminMode(true);
+        setActiveTab('Admin');
+        localStorage.setItem('warroom_active_tab', 'Admin');
+      } else {
+        setIsAdminMode(false);
+        setActiveTab('Journey');
+        localStorage.setItem('warroom_active_tab', 'Journey');
+        setShowOnboardingTutorial(true); // Launch Commander Guided Tutorial
+      }
+      triggerAlert(`ورود موفقیت‌آمیز به اتاق جنگ`);
+    }
   };
 
   const handleOpenAuth = (mode: 'login' | 'register_individual' | 'register_group') => {
@@ -499,18 +571,9 @@ export default function App() {
     }
 
     if (activeUser) {
-      // User is already logged in! Never show auth or registration screen. Directly go to panel.
-      if (activeUser.role === 'admin') {
-        setIsAdminMode(true);
-        setActiveTab('Admin');
-        localStorage.setItem('warroom_active_tab', 'Admin');
-      } else {
-        setIsAdminMode(false);
-        setActiveTab('Journey');
-        localStorage.setItem('warroom_active_tab', 'Journey');
-      }
+      // User is already logged in! Show Game Selection Portal so they can select War Room card to enter panel.
+      setShowGamePortal(true);
       setShowAuthScreen(false);
-      triggerAlert(`نشست فعال شناسایی شد: ورود مستقیم به پنل ${activeUser.first_name} ${activeUser.last_name}`);
       return;
     }
 
@@ -736,6 +799,7 @@ export default function App() {
               onLogout={handleLogout}
               onOpenSquadModal={() => setShowSquadModal(true)}
               onOpenNotifications={() => setShowNotificationCenter(true)}
+              onOpenGamePortal={() => setShowGamePortal(true)}
               unreadNotificationsCount={unreadNotificationsCount}
               isAdminView={isAdminMode}
               setIsAdminView={setIsAdminMode}
@@ -748,142 +812,142 @@ export default function App() {
                 ? 'max-w-full px-0 py-0 flex flex-col h-[calc(100vh-64px)] overflow-hidden'
                 : 'max-w-7xl px-4 md:px-8 pt-5 pb-28 md:pb-8'
             }`}>
-              
-              {isAdminMode ? (
-                <AdminPanel 
-                  currentUser={currentUser!}
-                  users={users}
-                  setUsers={setUsers}
-                  groups={groups}
-                  missions={missions}
-                  setMissions={setMissions}
-                  submissions={submissions}
-                  setSubmissions={setSubmissions}
-                  trainings={trainings}
-                  setTrainings={setTrainings}
-                  medals={medals}
-                  setMedals={setMedals}
-                  userMedals={userMedals}
-                  setUserMedals={setUserMedals}
-                  tickets={tickets}
-                  setTickets={setTickets}
-                  replies={replies}
-                  setReplies={setReplies}
-                  announcements={announcements}
-                  setAnnouncements={setAnnouncements}
-                  news={news}
-                  setNews={setNews}
-                  notifications={notifications}
-                  setNotifications={setNotifications}
-                  onBroadcastNotification={(notif) => {
-                    setLiveToastNotification(notif);
-                  }}
-                  triggerAlert={triggerAlert}
-                  siteSettings={siteSettings}
-                  setSiteSettings={setSiteSettings}
-                  homeAnnouncements={homeAnnouncements}
-                  setHomeAnnouncements={setHomeAnnouncements}
-                  homeStats={homeStats}
-                  setHomeStats={setHomeStats}
-                  faqs={faqs}
-                  setFaqs={setFaqs}
-                  onNavigate={(tab) => handleTabChange(tab)}
-                />
-              ) : (
-                <>
-                  {(activeTab === 'Journey' || activeTab === 'Profile') && (
-                    <JourneyView 
-                      currentUser={currentUser}
-                      groups={groups}
-                      medals={medals}
-                      userMedals={userMedals}
-                      initialOpenProfile={activeTab === 'Profile'}
-                      onEnterDashboard={(stageId) => {
-                        handleTabChange('Dashboard');
-                      }}
-                      onNavigateTab={(tab) => {
-                        handleTabChange(tab);
-                      }}
-                      triggerAlert={triggerAlert}
-                      onOpenProfile={() => setShowProfileModal(true)}
-                      onOpenNotifications={() => setShowNotificationCenter(true)}
-                      onUpdateAvatar={(newUrl) => {
-                        if (currentUser) {
-                          const updated = { ...currentUser, avatar_url: newUrl };
-                          setCurrentUser(updated);
-                          setUsers(users.map(u => u.id === updated.id ? updated : u));
-                        }
-                      }}
-                    />
-                  )}
+              <Suspense fallback={<ViewFallback />}>
+                {isAdminMode ? (
+                  <AdminPanel 
+                    currentUser={currentUser!}
+                    users={users}
+                    setUsers={setUsers}
+                    groups={groups}
+                    missions={missions}
+                    setMissions={setMissions}
+                    submissions={submissions}
+                    setSubmissions={setSubmissions}
+                    trainings={trainings}
+                    setTrainings={setTrainings}
+                    medals={medals}
+                    setMedals={setMedals}
+                    userMedals={userMedals}
+                    setUserMedals={setUserMedals}
+                    tickets={tickets}
+                    setTickets={setTickets}
+                    replies={replies}
+                    setReplies={setReplies}
+                    announcements={announcements}
+                    setAnnouncements={setAnnouncements}
+                    news={news}
+                    setNews={setNews}
+                    notifications={notifications}
+                    setNotifications={setNotifications}
+                    onBroadcastNotification={(notif) => {
+                      setLiveToastNotification(notif);
+                    }}
+                    triggerAlert={triggerAlert}
+                    siteSettings={siteSettings}
+                    setSiteSettings={setSiteSettings}
+                    homeAnnouncements={homeAnnouncements}
+                    setHomeAnnouncements={setHomeAnnouncements}
+                    homeStats={homeStats}
+                    setHomeStats={setHomeStats}
+                    faqs={faqs}
+                    setFaqs={setFaqs}
+                    onNavigate={(tab) => handleTabChange(tab)}
+                  />
+                ) : (
+                  <>
+                    {(activeTab === 'Journey' || activeTab === 'Profile') && (
+                      <JourneyView 
+                        currentUser={currentUser}
+                        groups={groups}
+                        medals={medals}
+                        userMedals={userMedals}
+                        initialOpenProfile={activeTab === 'Profile'}
+                        onEnterDashboard={(stageId) => {
+                          handleTabChange('Dashboard');
+                        }}
+                        onNavigateTab={(tab) => {
+                          handleTabChange(tab);
+                        }}
+                        triggerAlert={triggerAlert}
+                        onOpenProfile={() => setShowProfileModal(true)}
+                        onOpenNotifications={() => setShowNotificationCenter(true)}
+                        onUpdateAvatar={(newUrl) => {
+                          if (currentUser) {
+                            const updated = { ...currentUser, avatar_url: newUrl };
+                            setCurrentUser(updated);
+                            setUsers(users.map(u => u.id === updated.id ? updated : u));
+                          }
+                        }}
+                      />
+                    )}
 
-                  {(activeTab === 'Rewards' || activeTab === 'Prizes' || activeTab === 'RewardsLeaderboard' || activeTab === 'Leaderboard') && (
-                    <PrizesPointsView 
-                      currentUser={currentUser}
-                      users={users}
-                      groups={groups}
-                      medals={medals}
-                      userMedals={userMedals}
-                      initialSubTab={activeTab === 'Leaderboard' || activeTab === 'RewardsLeaderboard' ? 'leaderboard' : 'prizes'}
-                      triggerAlert={triggerAlert}
-                      onNavigate={(tab) => handleTabChange(tab)}
-                    />
-                  )}
+                    {(activeTab === 'Rewards' || activeTab === 'Prizes' || activeTab === 'RewardsLeaderboard' || activeTab === 'Leaderboard') && (
+                      <PrizesPointsView 
+                        currentUser={currentUser}
+                        users={users}
+                        groups={groups}
+                        medals={medals}
+                        userMedals={userMedals}
+                        initialSubTab={activeTab === 'Leaderboard' || activeTab === 'RewardsLeaderboard' ? 'leaderboard' : 'prizes'}
+                        triggerAlert={triggerAlert}
+                        onNavigate={(tab) => handleTabChange(tab)}
+                      />
+                    )}
 
-                  {activeTab === 'Vitrin' && (
-                    <VitrinView 
-                      currentUser={currentUser}
-                      triggerAlert={triggerAlert}
-                      onNavigate={(tab) => handleTabChange(tab)}
-                    />
-                  )}
+                    {activeTab === 'Vitrin' && (
+                      <VitrinView 
+                        currentUser={currentUser}
+                        triggerAlert={triggerAlert}
+                        onNavigate={(tab) => handleTabChange(tab)}
+                      />
+                    )}
 
-                  {activeTab === 'Dashboard' && (
-                    <DashboardView 
-                      currentUser={currentUser!}
-                      users={users}
-                      groups={groups}
-                      missions={missions}
-                      submissions={submissions}
-                      announcements={announcements}
-                      news={news}
-                      onNavigate={(tab) => handleTabChange(tab)}
-                      onOpenSquadModal={() => setShowSquadModal(true)}
-                    />
-                  )}
+                    {activeTab === 'Dashboard' && (
+                      <DashboardView 
+                        currentUser={currentUser!}
+                        users={users}
+                        groups={groups}
+                        missions={missions}
+                        submissions={submissions}
+                        announcements={announcements}
+                        news={news}
+                        onNavigate={(tab) => handleTabChange(tab)}
+                        onOpenSquadModal={() => setShowSquadModal(true)}
+                      />
+                    )}
 
-                  {activeTab === 'Missions' && (
-                    <MissionsView 
-                      currentUser={currentUser!}
-                      missions={missions}
-                      submissions={submissions}
-                      setSubmissions={setSubmissions}
-                      triggerAlert={triggerAlert}
-                      onNavigate={(tab) => handleTabChange(tab)}
-                    />
-                  )}
+                    {activeTab === 'Missions' && (
+                      <MissionsView 
+                        currentUser={currentUser!}
+                        missions={missions}
+                        submissions={submissions}
+                        setSubmissions={setSubmissions}
+                        triggerAlert={triggerAlert}
+                        onNavigate={(tab) => handleTabChange(tab)}
+                      />
+                    )}
 
-                  {activeTab === 'Trainings' && (
-                    <TrainingsView 
-                      currentUser={currentUser!}
-                      trainings={trainings}
-                      onNavigate={(tab) => handleTabChange(tab)}
-                    />
-                  )}
+                    {activeTab === 'Trainings' && (
+                      <TrainingsView 
+                        currentUser={currentUser!}
+                        trainings={trainings}
+                        onNavigate={(tab) => handleTabChange(tab)}
+                      />
+                    )}
 
-                  {activeTab === 'Profile' && (
-                    <ProfileView 
-                      currentUser={currentUser!}
-                      groups={groups}
-                      medals={medals}
-                      userMedals={userMedals}
-                      onNavigate={(tab) => handleTabChange(tab)}
-                      triggerAlert={triggerAlert}
-                    />
-                  )}
-                </>
-              )}
-
+                    {activeTab === 'Profile' && (
+                      <ProfileView 
+                        currentUser={currentUser!}
+                        groups={groups}
+                        medals={medals}
+                        userMedals={userMedals}
+                        onNavigate={(tab) => handleTabChange(tab)}
+                        triggerAlert={triggerAlert}
+                      />
+                    )}
+                  </>
+                )}
+              </Suspense>
             </main>
 
             {/* Squad Management Modal for Commanders */}
@@ -930,19 +994,30 @@ export default function App() {
       </AnimatePresence>
 
       {/* Global Floating Android Mobile Bottom Navigation (Visible in all sections: User views & Admin) */}
-      {!showAuthScreen && currentUser && (
-        <BottomNavigation 
-          activeTab={isAdminMode ? 'Admin' : activeTab}
-          setActiveTab={(tab) => {
-            setIsAdminMode(false);
-            handleTabChange(tab);
-          }}
-          currentUser={currentUser}
-          isAdminMode={isAdminMode}
-          setIsAdminMode={setIsAdminMode}
-          campaignTheme={campaignTheme}
-        />
-      )}
+      <AnimatePresence>
+        {!(isModalActive || showNotificationCenter || showGamePortal || showSquadModal || showProfileModal || showOnboardingTutorial) && !showAuthScreen && currentUser && (
+          <motion.div
+            key="android-bottom-nav-container"
+            initial={{ y: 90, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 90, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 350, damping: 28 }}
+            className="fixed bottom-0 inset-x-0 z-40 pointer-events-auto"
+          >
+            <BottomNavigation 
+              activeTab={isAdminMode ? 'Admin' : activeTab}
+              setActiveTab={(tab) => {
+                setIsAdminMode(false);
+                handleTabChange(tab);
+              }}
+              currentUser={currentUser}
+              isAdminMode={isAdminMode}
+              setIsAdminMode={setIsAdminMode}
+              campaignTheme={campaignTheme}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Global Real-Time Live Notification Floating Toast */}
       <LiveNotificationToast 
@@ -966,25 +1041,49 @@ export default function App() {
       />
 
       {/* Global Comprehensive Notification Center Modal */}
-      {showNotificationCenter && (
-        <NotificationCenterModal 
-          isOpen={showNotificationCenter}
-          onClose={() => setShowNotificationCenter(false)}
-          notifications={notifications}
-          setNotifications={setNotifications}
+      <Suspense fallback={null}>
+        {showNotificationCenter && (
+          <NotificationCenterModal 
+            isOpen={showNotificationCenter}
+            onClose={() => setShowNotificationCenter(false)}
+            notifications={notifications}
+            setNotifications={setNotifications}
+            currentUser={currentUser}
+            onNavigate={(tab) => {
+              setShowNotificationCenter(false);
+              handleTabChange(tab);
+            }}
+          />
+        )}
+
+        {/* Game / Campaign Selection Portal Modal */}
+        <GameSelectionPortalModal 
+          isOpen={showGamePortal}
+          onClose={() => setShowGamePortal(false)}
           currentUser={currentUser}
-          onNavigate={(tab) => {
-            setShowNotificationCenter(false);
-            handleTabChange(tab);
-          }}
+          onSelectWarRoom={handleSelectWarRoom}
+          campaignTheme={campaignTheme}
         />
-      )}
+      </Suspense>
 
       {/* Global Fixed Persistent Music Player Bar (Visible across all tabs and views) */}
-      <PersistentMusicBar 
-        hasBottomNav={Boolean(!showAuthScreen && currentUser)} 
-        isGirls={isGirlsTheme}
-      />
+      <AnimatePresence>
+        {!(isModalActive || showNotificationCenter || showGamePortal || showSquadModal || showProfileModal || showOnboardingTutorial) && (
+          <motion.div
+            key="persistent-music-bar-container"
+            initial={{ y: 90, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 90, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 350, damping: 28 }}
+            className="fixed bottom-0 left-0 z-40 pointer-events-auto"
+          >
+            <PersistentMusicBar 
+              hasBottomNav={Boolean(!showAuthScreen && currentUser)} 
+              isGirls={isGirlsTheme}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

@@ -16,12 +16,12 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(onComplete, 300);
+          setTimeout(onComplete, 200);
           return 100;
         }
         return prev + 10;
       });
-    }, 90);
+    }, 100);
 
     return () => clearInterval(interval);
   }, [onComplete]);

@@ -45,6 +45,16 @@ export default function SavedVitrinReelsModal({
 
   const isGirls = currentUser?.gender === 'دختر';
 
+  // Notify global app layout to hide bottom navigation menu while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [isOpen]);
+
   // Load saved posts whenever modal opens or saved IDs change
   useEffect(() => {
     if (isOpen) {

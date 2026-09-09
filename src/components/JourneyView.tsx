@@ -125,17 +125,36 @@ export default function JourneyView({
     return localStorage.getItem(`warroom_daily_challenge_${todayKey}`) === 'true';
   });
 
+  // Integrated Profile state
+  const [showProfileDrawer, setShowProfileDrawer] = useState(initialOpenProfile);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [profileSubTab, setProfileSubTab] = useState<'dossier' | 'medals' | 'avatar' | 'saved'>('dossier');
+  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState(currentUser?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80');
+
   const isGirls = currentUser?.gender === 'دختر' || localStorage.getItem('hisstory_theme_mode') === 'girls';
 
   // Map Scroll and Navigation Refs
   const mapScrollContainerRef = useRef<HTMLDivElement>(null);
   const activeStageRef = useRef<HTMLDivElement>(null);
 
-  // Integrated Profile state
-  const [showProfileDrawer, setShowProfileDrawer] = useState(initialOpenProfile);
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [profileSubTab, setProfileSubTab] = useState<'dossier' | 'medals' | 'avatar' | 'saved'>('dossier');
-  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState(currentUser?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80');
+  // Notify global app layout whenever any modal inside JourneyView is open
+  useEffect(() => {
+    const isAnyModalOpen = Boolean(
+      selectedStage || 
+      showGuideModal || 
+      showJournalModal || 
+      showSavedReelsModal || 
+      showDailyChallengeModal || 
+      showProfileDrawer
+    );
+
+    if (isAnyModalOpen) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [selectedStage, showGuideModal, showJournalModal, showSavedReelsModal, showDailyChallengeModal, showProfileDrawer]);
 
   useEffect(() => {
     const ids = getSavedPostIds(currentUser?.id);
