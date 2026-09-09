@@ -80,7 +80,7 @@ export default function AdventureHeroSection({
         </div>
 
         <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white drop-shadow-lg pt-1">
-          {isGirls ? 'بخش دختران سرافراز اتاق جنگ' : 'بخش پسران سلحشور اتاق جنگ'}
+          اتاق جنگ
         </h2>
 
         <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto leading-relaxed px-3">
@@ -149,7 +149,7 @@ export default function AdventureHeroSection({
               ) : (
                 <>
                   <UserPlus size={20} className="group-hover:rotate-12 transition-transform" />
-                  <span>{isGirls ? 'ورود و ثبت‌نام دختران' : 'ورود و ثبت‌نام پسران'}</span>
+                  <span>ورود و ثبت‌نام</span>
                 </>
               )}
               <ArrowLeft size={18} className="group-hover:translate-x-[-4px] transition-transform" />

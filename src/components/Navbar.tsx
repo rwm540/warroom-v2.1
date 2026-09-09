@@ -204,40 +204,10 @@ export default function Navbar({
             {/* User Controls / Status */}
             {currentUser && (
               <>
-                {/* Leader Squad Management (Desktop trigger) */}
-                {currentUser.role === 'leader' && (
-                  <button
-                    onClick={onOpenSquadModal}
-                    className="hidden md:flex items-center gap-1 bg-red-900/40 hover:bg-red-900/70 border border-red-700/60 text-red-200 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-[0_0_10px_rgba(220,38,38,0.2)]"
-                  >
-                    <Users size={14} />
-                    <span>مدیریت جوخه</span>
-                  </button>
-                )}
-
-                {/* Admin Panel Switcher (Visible on both mobile & desktop) */}
-                {currentUser.role === 'admin' && (
-                  <button
-                    onClick={() => {
-                      const target = !isAdminView;
-                      setIsAdminView(target);
-                      setCurrentTab(target ? 'Admin' : 'Journey');
-                    }}
-                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition border ${
-                      isAdminView 
-                        ? 'bg-amber-500 text-black border-amber-400 font-black shadow-[0_0_12px_rgba(245,158,11,0.5)]' 
-                        : 'bg-amber-950/40 text-amber-300 border-amber-800/60 hover:bg-amber-900/50'
-                    }`}
-                  >
-                    <SlidersHorizontal size={13} />
-                    <span>{isAdminView ? 'خروج از ادمین' : 'پنل ادمین'}</span>
-                  </button>
-                )}
-
                 {/* Logout Button */}
                 <button
                   onClick={onLogout}
-                  className="p-1.5 bg-slate-900 hover:bg-red-950/80 border border-slate-800 hover:border-red-800 text-slate-400 hover:text-red-300 rounded-lg transition"
+                  className="p-1.5 bg-slate-900 hover:bg-red-950/80 border border-slate-800 hover:border-red-800 text-slate-400 hover:text-red-300 rounded-lg transition cursor-pointer"
                   title="خروج از سامانه"
                 >
                   <LogOut size={16} />

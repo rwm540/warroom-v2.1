@@ -327,10 +327,10 @@ export default function AuthView({
 
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center p-2.5 sm:p-4 transition-colors duration-700 dir-rtl font-sans relative overflow-x-hidden ${
-      isGirls ? 'girls-atmosphere-bg text-pink-50' : 'bg-[#030713] text-slate-100'
+      isGirls ? 'girls-atmosphere-bg text-pink-50' : 'boys-atmosphere-bg text-slate-100'
     }`}>
 
-      {/* Atmospheric Neon Background Lighting (Obsidian top, Neon Magenta bottom-left, Royal Violet bottom-right) */}
+      {/* Atmospheric Background Lighting (Obsidian top, Crimson-red bottom-left, Electric Cobalt-blue bottom-right with crisp grid) */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         {isGirls ? (
           <>
@@ -340,8 +340,11 @@ export default function AuthView({
           </>
         ) : (
           <>
-            <div className="absolute top-0 right-1/2 translate-x-1/2 w-[600px] h-[400px] blur-[150px] rounded-full bg-cyan-500/20 transition-all duration-700" />
-            <div className="absolute bottom-0 right-10 w-[500px] h-[350px] blur-[140px] rounded-full bg-blue-600/15 transition-all duration-700" />
+            <div className="absolute top-0 inset-x-0 h-[45vh] bg-gradient-to-b from-[#000104] via-[#010309]/85 to-transparent" />
+            <div className="absolute -bottom-20 -left-20 w-[550px] sm:w-[700px] h-[550px] sm:h-[700px] blur-[130px] rounded-full bg-gradient-to-tr from-[#991b1b] via-[#dc2626] to-[#e11d48] opacity-70 transition-all duration-700" />
+            <div className="absolute -bottom-20 -right-20 w-[600px] sm:w-[750px] h-[600px] sm:h-[750px] blur-[140px] rounded-full bg-gradient-to-tl from-[#1e40af] via-[#2563eb] to-[#3b82f6] opacity-75 transition-all duration-700" />
+            <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 w-[550px] h-[350px] blur-[150px] rounded-full bg-[#581c87]/35" />
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:28px_28px] opacity-75" />
           </>
         )}
       </div>
@@ -355,7 +358,7 @@ export default function AuthView({
             className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-md cursor-pointer ${
               isGirls
                 ? 'bg-[#180126]/80 hover:bg-[#25033c]/90 text-pink-200 border-fuchsia-500/50 hover:border-fuchsia-400 shadow-[0_0_15px_rgba(255,19,137,0.25)]'
-                : 'bg-slate-900/80 hover:bg-cyan-950/90 text-cyan-200 border-cyan-500/50 hover:border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+                : 'bg-[#0a1226]/80 hover:bg-[#121e3d]/90 text-blue-200 border-blue-500/50 hover:border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.25)]'
             }`}
             title="بازگشت به صفحه اصلی سایت"
           >
@@ -364,8 +367,8 @@ export default function AuthView({
           </button>
         )}
 
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mr-auto">
-          <Shield size={14} className={isGirls ? 'text-fuchsia-400' : 'text-cyan-400'} />
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-mono mr-auto">
+          <Shield size={14} className={isGirls ? 'text-fuchsia-400' : 'text-blue-400'} />
           <span>{isGirls ? 'بخش دختران' : 'بخش پسران'}</span>
         </div>
       </div>
@@ -374,7 +377,7 @@ export default function AuthView({
       <div className={`w-full max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 backdrop-blur-2xl relative z-10 border transition-all duration-300 shadow-2xl my-auto ${
         isGirls
           ? 'girls-card-surface border-fuchsia-500/40 shadow-[0_0_60px_rgba(255,19,137,0.3)]'
-          : 'bg-[#060e20]/95 border-cyan-400/40 shadow-[0_0_50px_rgba(6,182,212,0.3)]'
+          : 'boys-card-surface border-blue-500/40 shadow-[0_0_60px_rgba(37,99,235,0.3)]'
       }`}>
 
         {/* 1. Luminous Neon Logo Header (Clean - No unnecessary text) */}

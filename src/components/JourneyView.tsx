@@ -125,6 +125,8 @@ export default function JourneyView({
     return localStorage.getItem(`warroom_daily_challenge_${todayKey}`) === 'true';
   });
 
+  const isGirls = currentUser?.gender === 'دختر' || localStorage.getItem('hisstory_theme_mode') === 'girls';
+
   // Map Scroll and Navigation Refs
   const mapScrollContainerRef = useRef<HTMLDivElement>(null);
   const activeStageRef = useRef<HTMLDivElement>(null);
@@ -348,14 +350,30 @@ export default function JourneyView({
   };
 
   return (
-    <div className="w-full h-full flex flex-col justify-between bg-[#070b13] text-slate-100 p-1 sm:p-2 relative overflow-y-auto lg:overflow-hidden dir-rtl font-sans selection:bg-amber-500 selection:text-black">
+    <div className={`w-full h-full flex flex-col p-1 sm:p-2 relative overflow-hidden dir-rtl font-sans selection:bg-amber-500 selection:text-black transition-colors duration-700 ${
+      isGirls ? 'girls-atmosphere-bg text-pink-50' : 'boys-atmosphere-bg text-slate-100'
+    }`}>
       
-      {/* Subtle Background Lighting and Textures */}
-      <div className="absolute top-0 right-1/2 translate-x-1/2 w-full max-w-2xl h-[450px] bg-emerald-950/20 blur-[180px] rounded-full pointer-events-none" />
-      <div className="absolute top-1/3 left-0 w-80 h-80 bg-amber-950/20 blur-[160px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-1/4 right-0 w-80 h-80 bg-emerald-950/15 blur-[160px] rounded-full pointer-events-none" />
+      {/* Background Ambient Aura & Tactical Grid */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        {isGirls ? (
+          <>
+            <div className="absolute top-0 inset-x-0 h-[35vh] bg-gradient-to-b from-[#020005] via-[#090112]/70 to-transparent" />
+            <div className="absolute -bottom-24 -left-20 w-[500px] h-[500px] blur-[140px] rounded-full bg-[#ff1389]/30" />
+            <div className="absolute -bottom-24 -right-20 w-[550px] h-[550px] blur-[150px] rounded-full bg-[#7c3aed]/35" />
+          </>
+        ) : (
+          <>
+            <div className="absolute top-0 inset-x-0 h-[45vh] bg-gradient-to-b from-[#000104] via-[#010309]/85 to-transparent" />
+            <div className="absolute -bottom-20 -left-20 w-[550px] sm:w-[700px] h-[550px] sm:h-[700px] blur-[130px] rounded-full bg-gradient-to-tr from-[#991b1b] via-[#dc2626] to-[#e11d48] opacity-70" />
+            <div className="absolute -bottom-20 -right-20 w-[600px] sm:w-[750px] h-[600px] sm:h-[750px] blur-[140px] rounded-full bg-gradient-to-tl from-[#1e40af] via-[#2563eb] to-[#3b82f6] opacity-75" />
+            <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 w-[550px] h-[350px] blur-[150px] rounded-full bg-[#581c87]/35" />
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:28px_28px] opacity-75" />
+          </>
+        )}
+      </div>
 
-      <div className="max-w-5xl mx-auto w-full h-full flex flex-col justify-between relative z-10 lg:overflow-hidden gap-1.5 sm:gap-2">
+      <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col justify-between relative z-10 min-h-0 gap-1.5 sm:gap-2">
 
         {/* ========================================================================= */}
         {/* 1. TOP HEADER                                                             */}
@@ -387,13 +405,23 @@ export default function JourneyView({
               )}
             </button>
 
+            {/* Military Commander / Tactical Announcements (Responsive by Gender) */}
             <button
-              onClick={onOpenNotifications || (() => triggerAlert('صندوق اعلانات باز شد.'))}
-              className="relative p-2 rounded-full bg-[#111927] border border-slate-700/60 text-slate-200 hover:text-amber-400 hover:border-amber-500/50 transition shadow-sm"
-              title="اعلان‌ها"
+              onClick={onOpenNotifications || (() => triggerAlert('مرکز پیام‌ها و دستورات فرماندهی باز شد.'))}
+              className="relative p-0.5 rounded-full bg-[#111927] border border-amber-500/50 hover:border-amber-400 text-slate-200 transition shadow-sm group overflow-hidden"
+              title={isGirls ? 'فرمانده بانوان - پیام‌ها و دستورات تاکتیکی' : 'فرمانده عملیات - پیام‌ها و دستورات تاکتیکی'}
             >
-              <Bell size={17} />
-              <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#070b13] animate-pulse" />
+              <div className="w-7 h-7 rounded-full overflow-hidden ring-1 ring-amber-500/60 bg-slate-900">
+                <img 
+                  src={isGirls 
+                    ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80' 
+                    : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'} 
+                  alt="فرمانده نظامی" 
+                  className="w-full h-full object-cover group-hover:scale-110 transition"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-rose-500 ring-1 ring-[#070b13] animate-pulse" />
             </button>
           </div>
 
@@ -525,37 +553,14 @@ export default function JourneyView({
         </section>
 
         {/* ========================================================================= */}
-        {/* 2.5 DAILY CHALLENGE QUICK BANNER (چالش روزانه در کنار مسیر)               */}
+        {/* 3. MAIN INTERACTIVE SERPENTINE JOURNEY MAP (Centered, Clean & Smooth Faded Scroll) */}
         {/* ========================================================================= */}
         <div 
-          onClick={() => setShowDailyChallengeModal(true)}
-          className="w-full max-w-md mx-auto my-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-[#0b1328]/95 to-amber-500/10 border border-amber-500/40 hover:border-amber-400 cursor-pointer transition shadow-[0_0_15px_rgba(245,158,11,0.15)] flex items-center justify-between group select-none"
+          ref={mapScrollContainerRef}
+          className="relative flex-1 min-h-0 w-full max-w-lg mx-auto flex flex-col items-center justify-start py-2 overflow-y-auto no-scrollbar faded-scroll-mask overscroll-contain pb-28 sm:pb-32 lg:pb-6"
         >
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isDailyChallengeDone ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
-              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isDailyChallengeDone ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-            </span>
-            <span className="text-xs font-black text-amber-300 flex items-center gap-1">
-              <Flame size={14} className={isDailyChallengeDone ? 'text-emerald-400' : 'text-amber-400 animate-pulse'} />
-              {isDailyChallengeDone ? 'چالش روزانه امروز تکمیل شد' : 'چالش روزانه فعال است'}
-            </span>
-            <span className="text-[10px] text-amber-200/90 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40 font-mono">
-              {isDailyChallengeDone ? 'تکمیل شد ✅' : '+۱۵۰ امتیاز'}
-            </span>
-          </div>
-          <div className="flex items-center gap-1 text-[11px] font-bold text-amber-300 group-hover:text-amber-200">
-            <span>{isDailyChallengeDone ? 'مشاهده معما' : 'ورود به چالش'}</span>
-            <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* 3. MAIN INTERACTIVE SERPENTINE JOURNEY MAP (Centered, Clean & Balanced)   */}
-        {/* ========================================================================= */}
-        <div className="relative flex-1 min-h-0 w-full max-w-lg mx-auto flex justify-center items-center py-1 overflow-y-auto lg:overflow-hidden no-scrollbar">
           
-          <div className="relative w-full h-full max-w-md mx-auto flex justify-center items-center py-1 min-h-[460px] lg:min-h-0">
+          <div className="relative w-full max-w-md mx-auto flex justify-center items-center py-2 min-h-[580px] sm:min-h-[540px] lg:min-h-[490px]">
             
             {/* SVG Winding Road Path with Textured Glowing Curves */}
             <svg 
@@ -669,6 +674,7 @@ export default function JourneyView({
                 return (
                   <React.Fragment key={stage.id}>
                     <motion.div
+                      ref={isInProgress ? activeStageRef : undefined}
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: idx * 0.04 }}

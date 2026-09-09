@@ -47,13 +47,13 @@ body, html {
 .boys-atmosphere-bg {
   background-color: #010206;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.075) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.075) 1px, transparent 1px),
-    radial-gradient(ellipse 75% 65% at 0% 100%, rgba(225, 29, 72, 0.65) 0%, rgba(185, 28, 28, 0.32) 30%, transparent 65%),
-    radial-gradient(ellipse 80% 70% at 100% 100%, rgba(37, 99, 235, 0.7) 0%, rgba(29, 78, 216, 0.35) 35%, transparent 70%),
-    radial-gradient(ellipse 90% 45% at 50% 90%, rgba(88, 28, 135, 0.45) 0%, transparent 55%),
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    radial-gradient(ellipse 70% 60% at 0% 100%, rgba(220, 38, 38, 0.75) 0%, rgba(185, 28, 28, 0.38) 30%, transparent 65%),
+    radial-gradient(ellipse 75% 65% at 100% 100%, rgba(37, 99, 235, 0.8) 0%, rgba(29, 78, 216, 0.42) 35%, transparent 70%),
+    radial-gradient(ellipse 85% 45% at 50% 95%, rgba(109, 40, 217, 0.45) 0%, transparent 60%),
     radial-gradient(circle at 50% 0%, rgba(1, 2, 6, 0.98) 0%, transparent 70%);
-  background-size: 32px 32px, 32px 32px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-size: 28px 28px, 28px 28px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
   background-attachment: fixed;
 }
 
@@ -433,6 +433,12 @@ body, html {
 .no-scrollbar {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
+}
+
+/* Smooth Scroll Fade Mask */
+.faded-scroll-mask {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
 }
 
 
