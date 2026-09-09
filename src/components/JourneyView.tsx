@@ -397,8 +397,7 @@ export default function JourneyView({
   return (
     <div 
       ref={journeyContainerRef}
-      onMouseDown={handleJourneyMouseDown}
-      className={`w-full h-full overflow-x-auto overflow-y-auto touch-pan-x touch-pan-y cursor-grab active:cursor-grabbing relative select-none flex flex-col p-1 sm:p-2 dir-rtl font-sans selection:bg-amber-500 selection:text-black transition-colors duration-700 ${
+      className={`w-full h-full overflow-x-hidden overflow-y-auto touch-pan-y relative flex flex-col p-1 sm:p-2 dir-rtl font-sans selection:bg-amber-500 selection:text-black transition-colors duration-700 ${
         isGirls ? 'girls-atmosphere-bg text-pink-50' : 'boys-atmosphere-bg text-slate-100'
       }`}
     >
@@ -422,7 +421,7 @@ export default function JourneyView({
         )}
       </div>
 
-      <div className="min-w-[950px] min-h-[1300px] w-full flex flex-col gap-3 pb-36 md:pb-16 px-3 relative z-10">
+      <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 pb-36 md:pb-16 px-1.5 sm:px-3 relative z-10">
 
         {/* ========================================================================= */}
         {/* 1. STICKY TOP HUD BAR: Smooth Left & Right Scrollable Menus + 4 Stats Cards */}
