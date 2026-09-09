@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   SlidersHorizontal, 
   Users, 
@@ -198,6 +198,13 @@ export default function AdminPanel({
       });
     }
   };
+
+  // Scroll to top when admin sub-tab changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const mainEl = document.querySelector('main');
+    if (mainEl) mainEl.scrollTop = 0;
+  }, [activeAdminTab]);
   const [generalImage, setGeneralImage] = useState(siteSettings?.heroImage || '');
   const [generalBtnText, setGeneralBtnText] = useState(siteSettings?.heroButtonText || '');
   const [generalPhone, setGeneralPhone] = useState(siteSettings?.contactPhone || '');

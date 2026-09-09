@@ -300,7 +300,17 @@ export default function App() {
     setIsAdminMode(tab === 'Admin');
     setActiveTab(tab);
     localStorage.setItem('warroom_active_tab', tab);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const mainEl = document.querySelector('main');
+    if (mainEl) mainEl.scrollTop = 0;
   };
+
+  // Scroll to top on active tab or admin mode change
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const mainEl = document.querySelector('main');
+    if (mainEl) mainEl.scrollTop = 0;
+  }, [activeTab, isAdminMode]);
   const [showSquadModal, setShowSquadModal] = useState<boolean>(false);
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
   const [showOnboardingTutorial, setShowOnboardingTutorial] = useState<boolean>(false);

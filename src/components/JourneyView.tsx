@@ -378,6 +378,13 @@ export default function JourneyView({
     };
   }, []);
 
+  useEffect(() => {
+    if (journeyContainerRef.current) {
+      journeyContainerRef.current.scrollTop = 0;
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   const handleJourneyMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     const target = e.target as HTMLElement;
