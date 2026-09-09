@@ -17,7 +17,6 @@ body, html {
   font-family: "Vazirmatn", system-ui, -apple-system, sans-serif !important;
   background-color: #030610;
   color: #f1f5f9;
-  overflow-x: hidden;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -25,9 +24,13 @@ body, html {
 }
 
 #root {
-  overflow-x: hidden;
   width: 100%;
   min-height: 100vh;
+}
+
+/* Native-feel momentum scrolling on mobile platforms */
+.overflow-auto, .overflow-y-auto, .overflow-x-auto, [class*="overflow-"] {
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Custom Tactical Cyber Grid and Radial Glow Backgrounds */

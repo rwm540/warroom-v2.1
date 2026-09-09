@@ -716,7 +716,7 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className={`min-h-screen flex flex-col relative z-10 ${activeTab === 'Journey' ? 'lg:h-screen lg:max-h-screen lg:overflow-hidden' : ''}`}
+            className="min-h-screen flex flex-col relative z-10"
           >
             {/* Top Navigation Bar */}
             <Navbar 
@@ -735,8 +735,8 @@ export default function App() {
             {/* Main Content Body */}
             <main className={`flex-1 w-full mx-auto ${
               activeTab === 'Journey'
-                ? 'max-w-7xl px-2 sm:px-4 py-1 flex flex-col min-h-0 h-full lg:h-[calc(100vh-86px)] lg:max-h-[calc(100vh-86px)] lg:overflow-hidden'
-                : 'max-w-7xl px-4 md:px-8 pt-5 pb-24 md:pb-8'
+                ? 'max-w-full px-0 py-0 flex flex-col h-[calc(100vh-64px)] overflow-hidden'
+                : 'max-w-7xl px-4 md:px-8 pt-5 pb-28 md:pb-8'
             }`}>
               
               {isAdminMode ? (

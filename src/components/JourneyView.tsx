@@ -349,10 +349,59 @@ export default function JourneyView({
     }
   };
 
+  // Full Multi-Directional Pan / Drag-to-Scroll with Window Listeners
+  const journeyContainerRef = useRef<HTMLDivElement>(null);
+  const isDraggingJourneyRef = useRef(false);
+  const dragStartJourneyPos = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+
+  useEffect(() => {
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      if (!isDraggingJourneyRef.current) return;
+      const el = journeyContainerRef.current;
+      if (!el) return;
+      e.preventDefault();
+      const dx = e.clientX - dragStartJourneyPos.current.x;
+      const dy = e.clientY - dragStartJourneyPos.current.y;
+      el.scrollLeft = dragStartJourneyPos.current.scrollLeft - dx;
+      el.scrollTop = dragStartJourneyPos.current.scrollTop - dy;
+    };
+
+    const handleWindowMouseUp = () => {
+      isDraggingJourneyRef.current = false;
+    };
+
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    window.addEventListener('mouseup', handleWindowMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+    };
+  }, []);
+
+  const handleJourneyMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, textarea, select, [role="button"], .cursor-pointer')) return;
+
+    const el = journeyContainerRef.current;
+    if (!el) return;
+    isDraggingJourneyRef.current = true;
+    dragStartJourneyPos.current = {
+      x: e.clientX,
+      y: e.clientY,
+      scrollLeft: el.scrollLeft,
+      scrollTop: el.scrollTop
+    };
+  };
+
   return (
-    <div className={`w-full h-full flex flex-col p-1 sm:p-2 relative overflow-hidden dir-rtl font-sans selection:bg-amber-500 selection:text-black transition-colors duration-700 ${
-      isGirls ? 'girls-atmosphere-bg text-pink-50' : 'boys-atmosphere-bg text-slate-100'
-    }`}>
+    <div 
+      ref={journeyContainerRef}
+      onMouseDown={handleJourneyMouseDown}
+      className={`w-full h-full overflow-x-auto overflow-y-auto touch-pan-x touch-pan-y cursor-grab active:cursor-grabbing relative select-none flex flex-col p-1 sm:p-2 dir-rtl font-sans selection:bg-amber-500 selection:text-black transition-colors duration-700 ${
+        isGirls ? 'girls-atmosphere-bg text-pink-50' : 'boys-atmosphere-bg text-slate-100'
+      }`}
+    >
       
       {/* Background Ambient Aura & Tactical Grid */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -373,191 +422,234 @@ export default function JourneyView({
         )}
       </div>
 
-      <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col justify-between relative z-10 min-h-0 gap-1.5 sm:gap-2">
+      <div className="min-w-[950px] min-h-[1300px] w-full flex flex-col gap-3 pb-36 md:pb-16 px-3 relative z-10">
 
         {/* ========================================================================= */}
-        {/* 1. TOP HEADER                                                             */}
+        {/* 1. STICKY TOP HUD BAR: Smooth Left & Right Scrollable Menus + 4 Stats Cards */}
         {/* ========================================================================= */}
-        <header className="flex items-center justify-between px-2 pt-0.5 pb-0.5 shrink-0">
-          {/* Left Actions: Guide button + Notification Bell + Saved Vitrin Videos button */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowGuideModal(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/40 text-cyan-300 hover:text-white hover:border-cyan-400 text-xs font-bold transition shadow-sm group cursor-pointer"
-              title="مشاهده راهنمای نقشه و دستورات تاکتیکی فرمانده"
-            >
-              <Compass size={14} className="text-cyan-400 group-hover:rotate-45 transition shrink-0" />
-              <span className="hidden sm:inline">راهنمای مسیر و فرمانده</span>
-              <span className="sm:hidden">راهنما</span>
-            </button>
+        <div className={`sticky top-0 z-30 w-full pt-1.5 pb-2 px-2 rounded-2xl backdrop-blur-xl border shadow-xl flex flex-col gap-2 transition-all duration-300 ${
+          isGirls 
+            ? 'bg-[#150220]/90 border-fuchsia-500/30 shadow-[0_10px_30px_rgba(0,0,0,0.8),0_0_20px_rgba(255,19,137,0.2)]'
+            : 'bg-[#060c20]/90 border-blue-500/30 shadow-[0_10px_30px_rgba(0,0,0,0.8),0_0_20px_rgba(37,99,235,0.2)]'
+        }`}>
+          
+          {/* Top Header Actions Row (Full Right-to-Left & Left-to-Right Horizontal Scrolling) */}
+          <header className="w-full flex items-center justify-between gap-3 px-1 shrink-0 overflow-x-auto no-scrollbar py-0.5 touch-pan-x">
+            {/* Right/Start Actions: Guide button + Saved Vitrin Videos + Tactical Commander */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap shrink-0">
+              <button
+                onClick={() => setShowGuideModal(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/40 text-cyan-300 hover:text-white hover:border-cyan-400 text-xs font-bold transition shadow-sm group cursor-pointer shrink-0"
+                title="مشاهده راهنمای نقشه و دستورات تاکتیکی فرمانده"
+              >
+                <Compass size={14} className="text-cyan-400 group-hover:rotate-45 transition shrink-0" />
+                <span className="text-[11px] sm:text-xs whitespace-nowrap">راهنمای مسیر و فرمانده</span>
+              </button>
 
-            <button
-              onClick={() => setShowSavedReelsModal(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-rose-500/20 border border-amber-500/40 text-amber-300 hover:text-white hover:border-amber-400 text-xs font-bold transition shadow-sm group"
-              title="مشاهده ویدیوها و آثار ذخیره‌شده ویترین (فید ریلز)"
-            >
-              <Bookmark size={14} className="fill-amber-400 text-amber-400 group-hover:scale-110 transition shrink-0" />
-              <span className="hidden sm:inline">ذخیره‌های ویترین</span>
-              {savedPostsCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-black bg-amber-400 text-black">
-                  {formatToPersianDigits(savedPostsCount)}
-                </span>
-              )}
-            </button>
+              <button
+                onClick={() => setShowSavedReelsModal(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-rose-500/20 border border-amber-500/40 text-amber-300 hover:text-white hover:border-amber-400 text-xs font-bold transition shadow-sm group cursor-pointer shrink-0"
+                title="مشاهده ویدیوها و آثار ذخیره‌شده ویترین (فید ریلز)"
+              >
+                <Bookmark size={14} className="fill-amber-400 text-amber-400 group-hover:scale-110 transition shrink-0" />
+                <span className="text-[11px] sm:text-xs whitespace-nowrap">ذخیره‌های ویترین</span>
+                {savedPostsCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-black bg-amber-400 text-black">
+                    {formatToPersianDigits(savedPostsCount)}
+                  </span>
+                )}
+              </button>
 
-            {/* Military Commander / Tactical Announcements (Responsive by Gender) */}
-            <button
-              onClick={onOpenNotifications || (() => triggerAlert('مرکز پیام‌ها و دستورات فرماندهی باز شد.'))}
-              className="relative p-0.5 rounded-full bg-[#111927] border border-amber-500/50 hover:border-amber-400 text-slate-200 transition shadow-sm group overflow-hidden"
-              title={isGirls ? 'فرمانده بانوان - پیام‌ها و دستورات تاکتیکی' : 'فرمانده عملیات - پیام‌ها و دستورات تاکتیکی'}
-            >
-              <div className="w-7 h-7 rounded-full overflow-hidden ring-1 ring-amber-500/60 bg-slate-900">
-                <img 
-                  src={isGirls 
-                    ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80' 
-                    : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'} 
-                  alt="فرمانده نظامی" 
-                  className="w-full h-full object-cover group-hover:scale-110 transition"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-rose-500 ring-1 ring-[#070b13] animate-pulse" />
-            </button>
-          </div>
-
-          {/* User Welcome, Avatar & Integrated Profile Trigger */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => {
-                setProfileSubTab('dossier');
-                setShowProfileDrawer(true);
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gradient-to-r from-amber-500/20 to-cyan-500/20 border border-amber-500/40 text-amber-300 hover:text-white hover:border-amber-400 text-xs font-bold transition shadow-sm group"
-              title="مشاهده شناسنامه، پروفایل و نشان‌های رزمنده"
-            >
-              <Award size={14} className="text-amber-400 group-hover:scale-110 transition shrink-0" />
-              <span className="hidden xs:inline">پروفایل و نشان‌ها</span>
-            </button>
-
-            <div className="text-left hidden sm:block">
-              <h2 className="text-xs sm:text-sm font-black text-white leading-tight flex items-center justify-end gap-1.5">
-                <span>سلام</span>
-                <span className="text-amber-300">
-                  {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'علی رضایی'}
-                </span>
-              </h2>
-              <p className="text-[10px] text-slate-400 flex items-center justify-end gap-1 mt-0.5">
-                <Sparkles size={10} className="text-amber-400" />
-                <span>خوش آمدی به مسیر عشاق الحسین</span>
-              </p>
+              {/* Military Commander / Tactical Announcements (Responsive by Gender) */}
+              <button
+                onClick={onOpenNotifications || (() => triggerAlert('مرکز پیام‌ها و دستورات فرماندهی باز شد.'))}
+                className="relative p-0.5 rounded-full bg-[#111927] border border-amber-500/50 hover:border-amber-400 text-slate-200 transition shadow-sm group overflow-hidden cursor-pointer shrink-0"
+                title={isGirls ? 'فرمانده بانوان - پیام‌ها و دستورات تاکتیکی' : 'فرمانده عملیات - پیام‌ها و دستورات تاکتیکی'}
+              >
+                <div className="w-7 h-7 rounded-full overflow-hidden ring-1 ring-amber-500/60 bg-slate-900">
+                  <img 
+                    src={isGirls 
+                      ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80' 
+                      : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'} 
+                    alt="فرمانده نظامی" 
+                    className="w-full h-full object-cover group-hover:scale-110 transition"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-rose-500 ring-1 ring-[#070b13] animate-pulse" />
+              </button>
             </div>
 
-            {/* Circular Avatar */}
+            {/* Left/End Actions: User Welcome, Profile & Badges Trigger */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-nowrap shrink-0">
+              <button
+                onClick={() => {
+                  setProfileSubTab('dossier');
+                  setShowProfileDrawer(true);
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gradient-to-r from-amber-500/20 to-cyan-500/20 border border-amber-500/40 text-amber-300 hover:text-white hover:border-amber-400 text-xs font-bold transition shadow-sm group cursor-pointer shrink-0"
+                title="مشاهده شناسنامه، پروفایل و نشان‌های رزمنده"
+              >
+                <Award size={14} className="text-amber-400 group-hover:scale-110 transition shrink-0" />
+                <span className="text-[11px] sm:text-xs whitespace-nowrap">پروفایل و نشان‌ها</span>
+              </button>
+
+              <div className="text-left shrink-0">
+                <h2 className="text-xs sm:text-sm font-black text-white leading-tight flex items-center justify-end gap-1.5 whitespace-nowrap">
+                  <span>سلام</span>
+                  <span className="text-amber-300">
+                    {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'علی رضایی'}
+                  </span>
+                </h2>
+                <p className="text-[10px] text-slate-400 flex items-center justify-end gap-1 mt-0.5 whitespace-nowrap">
+                  <Sparkles size={10} className="text-amber-400" />
+                  <span>مسیر عشاق الحسین</span>
+                </p>
+              </div>
+
+              {/* Circular Avatar */}
+              <div 
+                onClick={() => {
+                  setProfileSubTab('dossier');
+                  setShowProfileDrawer(true);
+                }}
+                className="relative cursor-pointer group shrink-0"
+                title="مشاهده شناسنامه، پروفایل و انتخاب آواتار"
+              >
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full ring-2 ring-emerald-500/80 p-0.5 bg-slate-900 overflow-hidden shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+                  {currentUser?.avatar_url || selectedAvatarUrl ? (
+                    <img src={currentUser?.avatar_url || selectedAvatarUrl} alt="آواتار" className="w-full h-full object-cover rounded-full group-hover:scale-110 transition" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-[#132035] flex items-center justify-center text-emerald-400 font-black">
+                      <UserIcon size={16} />
+                    </div>
+                  )}
+                </div>
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#070b13]" />
+              </div>
+            </div>
+          </header>
+
+          {/* Stats Bar (4 Columns: سطح شما, امتیاز کل, نشان‌ها, درصد مسیر) */}
+          <section className="shrink-0 grid grid-cols-4 gap-1.5 sm:gap-2 bg-[#0d1524]/90 border border-slate-800/80 rounded-xl p-1.5 sm:p-2 backdrop-blur-md shadow-md">
+            
+            {/* 1. سطح شما */}
+            <div className="flex flex-col items-center justify-center text-center p-1 rounded-lg bg-[#090e1a]/60 border border-slate-800/40">
+              <span className="text-[10px] text-slate-400 font-medium mb-0.5">سطح شما</span>
+              <div className="flex items-center gap-1">
+                <span className="text-slate-500 text-[10px] font-mono">🔰</span>
+                <strong className="text-xs sm:text-sm md:text-base font-black text-white font-mono">
+                  {formatToPersianDigits(currentUser?.level || 3)}
+                </strong>
+              </div>
+            </div>
+
+            {/* 2. امتیاز کل */}
+            <div className="flex flex-col items-center justify-center text-center p-1 rounded-lg bg-[#090e1a]/60 border border-slate-800/40">
+              <span className="text-[10px] text-slate-400 font-medium mb-0.5">امتیاز کل</span>
+              <div className="flex items-center gap-1 text-amber-400">
+                <Star size={13} className="fill-amber-400 shrink-0" />
+                <strong className="text-xs sm:text-sm md:text-base font-black font-mono">
+                  {formatToPersianDigits(currentUser?.points || 2480)}
+                </strong>
+              </div>
+            </div>
+
+            {/* 3. نشان‌ها */}
             <div 
               onClick={() => {
-                setProfileSubTab('dossier');
+                setProfileSubTab('medals');
                 setShowProfileDrawer(true);
               }}
-              className="relative cursor-pointer group"
-              title="مشاهده شناسنامه، پروفایل و انتخاب آواتار"
+              className="flex flex-col items-center justify-center text-center p-1 rounded-lg bg-[#090e1a]/60 border border-slate-800/40 cursor-pointer hover:border-cyan-500/50 transition group"
+              title="مشاهده نشان‌ها و مدال‌ها در پروفایل"
             >
-              <div className="w-10 h-10 rounded-full ring-2 ring-emerald-500/80 p-0.5 bg-slate-900 overflow-hidden shadow-[0_0_12px_rgba(16,185,129,0.3)]">
-                {currentUser?.avatar_url || selectedAvatarUrl ? (
-                  <img src={currentUser?.avatar_url || selectedAvatarUrl} alt="آواتار" className="w-full h-full object-cover rounded-full group-hover:scale-110 transition" />
-                ) : (
-                  <div className="w-full h-full rounded-full bg-[#132035] flex items-center justify-center text-emerald-400 font-black">
-                    <UserIcon size={18} />
-                  </div>
-                )}
+              <span className="text-[10px] text-slate-400 font-medium mb-0.5 group-hover:text-cyan-300 transition">نشان‌ها</span>
+              <div className="flex items-center gap-1 text-cyan-400">
+                <Trophy size={13} className="shrink-0 group-hover:scale-110 transition" />
+                <strong className="text-xs sm:text-sm md:text-base font-black font-mono">
+                  {formatToPersianDigits(earnedUserMedals.length || 4)}
+                </strong>
               </div>
-              <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#070b13]" />
             </div>
-          </div>
-        </header>
+
+            {/* 4. درصد مسیر */}
+            <div className="flex flex-col items-center justify-center text-center p-1 rounded-lg bg-[#090e1a]/60 border border-slate-800/40">
+              <span className="text-[10px] text-slate-400 font-medium mb-0.5">درصد مسیر</span>
+              <div className="flex items-center gap-1 text-emerald-400">
+                <div className="relative w-4 h-4 flex items-center justify-center">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      className="text-slate-800"
+                      strokeWidth="4"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className="text-emerald-500"
+                      strokeDasharray="64, 100"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                </div>
+                <strong className="text-xs sm:text-sm font-black font-mono">
+                  {formatToPersianDigits(64)}٪
+                </strong>
+              </div>
+            </div>
+
+          </section>
+        </div>
 
         {/* ========================================================================= */}
-        {/* 2. STATS BAR (4 Columns: سطح شما, امتیاز کل, نشان‌ها, درصد مسیر)        */}
+        {/* 2.5 QUICK DAILY CHALLENGE BANNER / MENU (بنر دسترسی سریع چالش روزانه)     */}
         {/* ========================================================================= */}
-        <section className="shrink-0 grid grid-cols-4 gap-1.5 sm:gap-2 bg-[#0d1524]/90 border border-slate-800/80 rounded-xl p-1.5 sm:p-2 backdrop-blur-md shadow-md">
-          
-          {/* 1. سطح شما */}
-          <div className="flex flex-col items-center justify-center text-center p-1 rounded-lg bg-[#090e1a]/60 border border-slate-800/40">
-            <span className="text-[10px] text-slate-400 font-medium mb-0.5">سطح شما</span>
-            <div className="flex items-center gap-1">
-              <span className="text-slate-500 text-[10px] font-mono">🔰</span>
-              <strong className="text-xs sm:text-sm md:text-base font-black text-white font-mono">
-                {formatToPersianDigits(currentUser?.level || 3)}
-              </strong>
-            </div>
-          </div>
-
-          {/* 2. امتیاز کل */}
-          <div className="flex flex-col items-center justify-center text-center p-1 rounded-lg bg-[#090e1a]/60 border border-slate-800/40">
-            <span className="text-[10px] text-slate-400 font-medium mb-0.5">امتیاز کل</span>
-            <div className="flex items-center gap-1 text-amber-400">
-              <Star size={13} className="fill-amber-400 shrink-0" />
-              <strong className="text-xs sm:text-sm md:text-base font-black font-mono">
-                {formatToPersianDigits(currentUser?.points || 2480)}
-              </strong>
-            </div>
-          </div>
-
-          {/* 3. نشان‌ها */}
-          <div 
-            onClick={() => {
-              setProfileSubTab('medals');
-              setShowProfileDrawer(true);
-            }}
-            className="flex flex-col items-center justify-center text-center p-1 rounded-lg bg-[#090e1a]/60 border border-slate-800/40 cursor-pointer hover:border-cyan-500/50 transition group"
-            title="مشاهده نشان‌ها و مدال‌ها در پروفایل"
+        <div className="w-full max-w-lg mx-auto px-1 shrink-0">
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowDailyChallengeModal(true)}
+            className="w-full p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-amber-950/90 via-[#180e03]/95 to-rose-950/80 border border-amber-500/60 hover:border-amber-400 shadow-[0_4px_25px_rgba(245,158,11,0.3)] flex items-center justify-between gap-2.5 cursor-pointer transition-all group"
+            title="ورود به چالش روزانه و دریافت ۱۵۰ امتیاز"
           >
-            <span className="text-[10px] text-slate-400 font-medium mb-0.5 group-hover:text-cyan-300 transition">نشان‌ها</span>
-            <div className="flex items-center gap-1 text-cyan-400">
-              <Trophy size={13} className="shrink-0 group-hover:scale-110 transition" />
-              <strong className="text-xs sm:text-sm md:text-base font-black font-mono">
-                {formatToPersianDigits(earnedUserMedals.length || 4)}
-              </strong>
-            </div>
-          </div>
-
-          {/* 4. درصد مسیر */}
-          <div className="flex flex-col items-center justify-center text-center p-1 rounded-lg bg-[#090e1a]/60 border border-slate-800/40">
-            <span className="text-[10px] text-slate-400 font-medium mb-0.5">درصد مسیر</span>
-            <div className="flex items-center gap-1 text-emerald-400">
-              <div className="relative w-4 h-4 flex items-center justify-center">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-slate-800"
-                    strokeWidth="4"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className="text-emerald-500"
-                    strokeDasharray="64, 100"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-500/25 border border-amber-400/80 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.5)] group-hover:scale-105 transition">
+                <Flame size={22} className="text-amber-400 animate-bounce" />
               </div>
-              <strong className="text-xs sm:text-sm font-black font-mono">
-                {formatToPersianDigits(64)}٪
-              </strong>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h3 className="text-xs sm:text-sm font-black text-amber-300 truncate">
+                    چالش روزانه اتاق جنگ
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white animate-pulse shrink-0 shadow-sm">
+                    امروز فعال
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-amber-100/80 font-medium truncate mt-0.5">
+                  ماموریت روزانه استراتژیک • پاداش ۱۵۰ امتیاز فوری
+                </p>
+              </div>
             </div>
-          </div>
 
-        </section>
+            <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-rose-500 text-slate-950 font-black text-xs shrink-0 shadow-lg group-hover:shadow-[0_0_18px_rgba(245,158,11,0.7)] transition">
+              <span>ورود به چالش</span>
+              <Sparkles size={13} />
+            </div>
+          </motion.div>
+        </div>
 
         {/* ========================================================================= */}
-        {/* 3. MAIN INTERACTIVE SERPENTINE JOURNEY MAP (Centered, Clean & Smooth Faded Scroll) */}
+        {/* 3. MAIN INTERACTIVE SERPENTINE JOURNEY MAP (Centered, Single-Layer Smooth Scroll) */}
         {/* ========================================================================= */}
         <div 
           ref={mapScrollContainerRef}
-          className="relative flex-1 min-h-0 w-full max-w-lg mx-auto flex flex-col items-center justify-start py-2 overflow-y-auto no-scrollbar faded-scroll-mask overscroll-contain pb-28 sm:pb-32 lg:pb-6"
+          className="relative w-full max-w-lg mx-auto flex flex-col items-center justify-start py-2"
         >
           
           <div className="relative w-full max-w-md mx-auto flex justify-center items-center py-2 min-h-[580px] sm:min-h-[540px] lg:min-h-[490px]">
@@ -998,10 +1090,12 @@ export default function JourneyView({
             </motion.div>
           </div>
         )}
+      </AnimatePresence>
 
         {/* ========================================================================= */}
         {/* INTEGRATED PROFILE & DOSSIER MODAL (پروفایل و نشان‌های رزمنده)             */}
         {/* ========================================================================= */}
+      <AnimatePresence>
         {showProfileDrawer && (
           <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
             <motion.div

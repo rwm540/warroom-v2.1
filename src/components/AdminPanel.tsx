@@ -40,7 +40,9 @@ import {
   LayoutDashboard,
   Activity,
   Star,
-  Eye
+  Eye,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { publishSubmissionToVitrin, removeSubmissionFromVitrin } from '../data/vitrinData';
 import AdminSoundtrackManager from './AdminSoundtrackManager';
@@ -162,6 +164,40 @@ export default function AdminPanel({
   const [generalTitle, setGeneralTitle] = useState(siteSettings?.heroTitle || '');
   const [generalProgress, setGeneralProgress] = useState(siteSettings?.heroProgress || '');
   const [generalCountdown, setGeneralCountdown] = useState(siteSettings?.heroCountdown || '');
+
+  const tabsContainerRef = React.useRef<HTMLDivElement>(null);
+  const isDraggingTabs = React.useRef(false);
+  const startX = React.useRef(0);
+  const scrollLeftStart = React.useRef(0);
+
+  const handleTabsMouseDown = (e: React.MouseEvent) => {
+    if (!tabsContainerRef.current) return;
+    isDraggingTabs.current = true;
+    startX.current = e.pageX - tabsContainerRef.current.offsetLeft;
+    scrollLeftStart.current = tabsContainerRef.current.scrollLeft;
+  };
+
+  const handleTabsMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingTabs.current || !tabsContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - tabsContainerRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    tabsContainerRef.current.scrollLeft = scrollLeftStart.current - walk;
+  };
+
+  const handleTabsMouseUpOrLeave = () => {
+    isDraggingTabs.current = false;
+  };
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabsContainerRef.current) {
+      const scrollAmount = 260;
+      tabsContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
   const [generalImage, setGeneralImage] = useState(siteSettings?.heroImage || '');
   const [generalBtnText, setGeneralBtnText] = useState(siteSettings?.heroButtonText || '');
   const [generalPhone, setGeneralPhone] = useState(siteSettings?.contactPhone || '');
@@ -581,8 +617,24 @@ export default function AdminPanel({
         </div>
       </div>
 
-      {/* Admin Nav Tabs */}
-      <div className="w-full overflow-x-auto no-scrollbar pb-2 border-b border-slate-800 flex items-center gap-1.5 text-xs font-bold">
+      {/* Admin Nav Tabs with Scroll Controls */}
+      <div className="relative flex items-center gap-2 border-b border-slate-800 pb-2">
+        <button
+          onClick={() => scrollTabs('right')}
+          className="hidden sm:flex items-center justify-center w-8 h-9 rounded-xl bg-slate-900/90 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition shrink-0 z-10 shadow-md cursor-pointer"
+          title="پیمایش به راست"
+        >
+          <ChevronRight size={18} />
+        </button>
+
+        <div 
+          ref={tabsContainerRef}
+          onMouseDown={handleTabsMouseDown}
+          onMouseMove={handleTabsMouseMove}
+          onMouseUp={handleTabsMouseUpOrLeave}
+          onMouseLeave={handleTabsMouseUpOrLeave}
+          className="w-full overflow-x-auto no-scrollbar flex items-center gap-1.5 text-xs font-bold scroll-smooth cursor-grab active:cursor-grabbing select-none"
+        >
         
         <button
           onClick={() => setActiveAdminTab('overview')}
@@ -710,6 +762,15 @@ export default function AdminPanel({
         </button>
 
       </div>
+
+      <button
+        onClick={() => scrollTabs('left')}
+        className="hidden sm:flex items-center justify-center w-8 h-9 rounded-xl bg-slate-900/90 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition shrink-0 z-10 shadow-md cursor-pointer"
+        title="پیمایش به چپ"
+      >
+        <ChevronLeft size={18} />
+      </button>
+    </div>
 
       {/* 0. OPERATIONS DASHBOARD & MONITORING TAB */}
       {activeAdminTab === 'overview' && (
