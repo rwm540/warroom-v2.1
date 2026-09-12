@@ -656,12 +656,7 @@ export default function JourneyView({
           
           <div className="relative w-full max-w-md mx-auto flex justify-center items-center py-2 min-h-[580px] sm:min-h-[540px] lg:min-h-[490px]">
 
-            {/* بورد تاکتیکی نقشه — تصویر میدان نبرد، واضح و بدون لایه تیره */}
-            <div
-              className="absolute inset-0 rounded-3xl bg-cover bg-center pointer-events-none opacity-100 border border-amber-500/50 shadow-[0_0_40px_rgba(0,0,0,0.35)]"
-              style={{ backgroundImage: `url(${tacticalMapBg})` }}
-            />
-            <div className="absolute inset-0 rounded-3xl pointer-events-none ring-2 ring-inset ring-amber-400/40" />
+            {/* پنل/بورد پشت مسیر حذف شد — مسیر مراحل مستقیماً روی پس‌زمینه نقشه تاکتیکی اصلی (همان بکراند قبلی) قرار دارد */}
 
             {/* SVG Winding Road Path with Textured Glowing Curves */}
             <svg 
