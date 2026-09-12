@@ -17,7 +17,8 @@ import {
   Flame,
   ShieldCheck
 } from 'lucide-react';
-import { User } from '../types';
+import { User, GamePortal } from '../types';
+import { getGamePortals } from '../data/portalData';
 import warroomLogoJpg from '../assets/images/warroom_logo_1787906676836.jpg';
 
 interface GameSelectionPortalModalProps {
@@ -26,6 +27,7 @@ interface GameSelectionPortalModalProps {
   currentUser: User | null;
   onSelectWarRoom: () => void;
   campaignTheme?: 'girls' | 'boys';
+  portals?: GamePortal[];
 }
 
 export default function GameSelectionPortalModal({
@@ -33,50 +35,32 @@ export default function GameSelectionPortalModal({
   onClose,
   currentUser,
   onSelectWarRoom,
-  campaignTheme = 'boys'
+  campaignTheme = 'boys',
+  portals: customPortals
 }: GameSelectionPortalModalProps) {
+  React.useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const isGirls = campaignTheme === 'girls' || currentUser?.gender === 'دختر';
+  const portalsList = customPortals || getGamePortals();
 
-  const games = [
-    {
-      id: 'warroom',
-      title: 'اتاق جنگ',
-      subtitle: 'سامانه اصلی رقابت و ارزیابی استراتژیک',
-      description: 'حل مأموریت‌های هوشمند، رقابت در جدول برترین‌های کشور، دریافت کریستال‌ها و هدایای ویژه ۵۰ میلیارد ریالی.',
-      status: 'active',
-      badgeText: 'فعال • در حال برگزاری',
-      badgeColor: isGirls ? 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/50' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50',
-      icon: Gamepad2,
-      tag: 'بازی اصلی رویداد',
-      featured: true
-    },
-    {
-      id: 'galaxy',
-      title: 'عملیات کهکشان',
-      subtitle: 'نبرد فضایی و تسخیر سیارات دانش‌آموزی',
-      description: 'شبیه‌ساز فرماندهی ناوگان فضایی و مدیریت منابع انرژی در قلمروهای دوردست.',
-      status: 'coming_soon',
-      badgeText: 'به‌زودی • فصل ۲',
-      badgeColor: 'bg-amber-500/15 text-amber-300 border-amber-500/40',
-      icon: Rocket,
-      tag: 'به‌زودی',
-      featured: false
-    },
-    {
-      id: 'cyber',
-      title: 'نبرد سایبری',
-      subtitle: 'چالش رمزنگاری و نفوذ هوشمند',
-      description: 'مسابقه دفاع سایبری، کشف کدهای نفوذ و تحلیل امنیتی داده‌های استراتژیک.',
-      status: 'coming_soon',
-      badgeText: 'به‌زودی • فصل ۳',
-      badgeColor: 'bg-purple-500/15 text-purple-300 border-purple-500/40',
-      icon: ShieldCheck,
-      tag: 'به‌زودی',
-      featured: false
+  const handleLaunchGame = (game: GamePortal) => {
+    if (game.status !== 'active') return;
+    if (game.link && game.link.startsWith('http')) {
+      window.open(game.link, '_blank');
+      onClose();
+    } else {
+      onSelectWarRoom();
     }
-  ];
+  };
 
   return (
     <AnimatePresence>
@@ -148,9 +132,12 @@ export default function GameSelectionPortalModal({
 
           {/* Games Selection Grid */}
           <div className="py-6 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 relative z-10">
-            {games.map((game) => {
-              const Icon = game.icon;
+            {portalsList.map((game) => {
+              const Icon = game.id === 'galaxy' ? Rocket : game.id === 'cyber' ? ShieldCheck : Gamepad2;
               const isActive = game.status === 'active';
+              const badgeClass = game.badgeColor || (isActive 
+                ? (isGirls ? 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/50' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50')
+                : 'bg-amber-500/15 text-amber-300 border-amber-500/40');
 
               return (
                 <div
@@ -162,11 +149,7 @@ export default function GameSelectionPortalModal({
                         : 'bg-gradient-to-b from-[#0e1e42]/90 via-[#071128]/95 to-[#020512] border-blue-400 shadow-[0_0_35px_rgba(37,99,235,0.4)] hover:border-blue-300 hover:shadow-[0_0_45px_rgba(37,99,235,0.6)] cursor-pointer'
                       : 'bg-[#080d1e]/50 border-slate-800/80 opacity-75 grayscale-[0.3]'
                   }`}
-                  onClick={() => {
-                    if (isActive) {
-                      onSelectWarRoom();
-                    }
-                  }}
+                  onClick={() => handleLaunchGame(game)}
                 >
                   {/* Active Game Highlighting Border Glow */}
                   {isActive && (
@@ -189,7 +172,7 @@ export default function GameSelectionPortalModal({
                         <Icon size={24} />
                       </div>
 
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${game.badgeColor}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${badgeClass}`}>
                         {game.badgeText}
                       </span>
                     </div>
@@ -222,7 +205,7 @@ export default function GameSelectionPortalModal({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onSelectWarRoom();
+                          handleLaunchGame(game);
                         }}
                         className={`w-full py-3 px-4 rounded-2xl font-black text-xs sm:text-sm text-white border shadow-xl flex items-center justify-center gap-2 transition transform group-hover:scale-[1.02] active:scale-[0.98] ${
                           isGirls

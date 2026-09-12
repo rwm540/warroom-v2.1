@@ -60,6 +60,15 @@ export default function SupportView({
 
   // Ticket creation modal / toggle
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (showNewModal) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [showNewModal]);
   const [newSubject, setNewSubject] = useState<string>('');
   const [newType, setNewType] = useState<TicketType>('technical');
   const [newMessage, setNewMessage] = useState<string>('');

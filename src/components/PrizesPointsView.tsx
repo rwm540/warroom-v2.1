@@ -46,6 +46,15 @@ export default function PrizesPointsView({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPrize, setSelectedPrize] = useState<PrizeItem | null>(null);
 
+  React.useEffect(() => {
+    if (selectedPrize) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [selectedPrize]);
+
   const isGirls = currentUser?.gender === 'دختر' || localStorage.getItem('hisstory_theme_mode') === 'girls';
   const userPoints = currentUser ? 1850 : 500; // Mock current points
 

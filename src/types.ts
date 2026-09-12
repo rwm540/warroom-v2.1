@@ -92,6 +92,20 @@ export interface Training {
   created_at: string;
 }
 
+export interface GamePortal {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  status: 'active' | 'coming_soon' | 'disabled';
+  badgeText: string;
+  badgeColor?: string;
+  link?: string;
+  targetAudience?: 'all' | 'girls' | 'boys';
+  tag?: string;
+  featured?: boolean;
+}
+
 export interface Medal {
   id: string;
   name: string;
@@ -222,6 +236,73 @@ export interface AudioSettings {
   autoPlayEnabled: boolean;
   defaultVolume: number;
   activeTrackId: string;
+}
+
+export interface HomeButtonConfig {
+  id: string;
+  text: string;
+  actionTab: string;
+  iconName: string;
+  shape: 'rounded-xl' | 'rounded-2xl' | 'rounded-full' | 'rounded-3xl' | 'rounded-lg';
+  size: 'sm' | 'md' | 'lg' | 'full';
+  color: 'cyan' | 'red' | 'amber' | 'emerald' | 'purple' | 'slate';
+  order: number;
+  isActive: boolean;
+}
+
+export type HomePageBlockType = 
+  | 'hero' 
+  | 'video_player' 
+  | 'action_buttons' 
+  | 'stats_strip' 
+  | 'prizes_awards' 
+  | 'announcements' 
+  | 'about_section' 
+  | 'faqs' 
+  | 'social_messengers' 
+  | 'custom_banner';
+
+export interface HomePageBlock {
+  id: string;
+  type: HomePageBlockType;
+  title: string;
+  subtitle?: string;
+  isVisible: boolean;
+  order: number;
+  content?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  buttonText?: string;
+  buttonTab?: string;
+  badgeText?: string;
+  bgColor?: string;
+  customData?: Record<string, any>;
+}
+
+export interface SiteSettings {
+  siteName?: string;
+  siteTagline?: string;
+  badgeText?: string;
+  heroTitle?: string;
+  heroProgress?: string;
+  heroCountdown?: string;
+  heroImage?: string;
+  heroVideoUrl?: string;
+  girlsBannerImage?: string;
+  boysBannerImage?: string;
+  heroButtonText?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  telegram?: string;
+  baleLink?: string;
+  eitaaLink?: string;
+  address?: string;
+  aboutText?: string;
+  prizeTitle?: string;
+  prizeDescription?: string;
+  prizeImage?: string;
+  homeButtons?: HomeButtonConfig[];
+  homeBlocks?: HomePageBlock[];
 }
 
 

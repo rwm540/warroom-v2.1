@@ -59,6 +59,15 @@ export default function TicketsView({
   const [statusFilter, setStatusFilter] = useState<'all' | TicketStatus>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (showNewModal) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [showNewModal]);
   
   // New ticket form
   const [newSubject, setNewSubject] = useState<string>('');

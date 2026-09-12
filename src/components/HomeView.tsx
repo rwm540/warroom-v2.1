@@ -85,6 +85,15 @@ export default function HomeView({
   // Modal states
   const [showGuideModal, setShowGuideModal] = useState(false);
 
+  useEffect(() => {
+    if (showGuideModal) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [showGuideModal]);
+
   // Keep state updated if props change
   useEffect(() => {
     if (homeAnnouncements) {
@@ -141,11 +150,13 @@ export default function HomeView({
           {/* Main Landing Content */}
           <div className="p-3 sm:p-5 md:p-6 space-y-6 sm:space-y-8">
             
-            {/* Adventure Hero Section (بنر اختصاصی ثبت‌نام با تفکیک دختر و پسر) */}
+            {/* 1. Adventure Hero Section (بنر اختصاصی ثبت‌نام با تفکیک دختر و پسر) */}
             <section aria-label="بخش معرفی مسابقه و بنر ثبت‌نام">
               <AdventureHeroSection 
                 themeMode={themeMode}
                 currentUser={currentUser}
+                siteSettings={siteSettings}
+                onNavigate={(tab) => setActiveTab(tab)}
                 onOpenRegister={() => onOpenAuth('register_individual')}
                 onGoToDashboard={() => {
                   if (currentUser?.role === 'admin') {
@@ -160,7 +171,7 @@ export default function HomeView({
               />
             </section>
 
-            {/* 4. Dedicated Banner for Prizes & Awards (جایزه‌ها) */}
+            {/* 2. Dedicated Banner for Prizes & Awards (جوایز و هدایا) */}
             <section aria-label="جوایز و هدایای مسابقه">
               <PrizesAwardsBanner 
                 themeMode={themeMode}
@@ -168,7 +179,7 @@ export default function HomeView({
               />
             </section>
 
-            {/* 6. Social Media Widgets: Local Messengers (Bale & Eitaa) + Stages & Guide */}
+            {/* 4. Social Media Widgets: Local Messengers (Bale & Eitaa) + Stages & Guide */}
             <section aria-label="شبکه‌های اجتماعی و پیام‌رسان‌های بله و ایتا">
               <SocialMessengersWidgets 
                 themeMode={themeMode}
@@ -178,12 +189,12 @@ export default function HomeView({
               />
             </section>
 
-            {/* 7. About Us Section (درباره ما) */}
+            {/* 5. About Us Section (درباره ما) */}
             <section aria-label="درباره ما">
               <AboutSection onOpenMore={() => setActiveTab('About')} />
             </section>
 
-            {/* 8. Footer at the Very Bottom */}
+            {/* 6. Footer at the Very Bottom */}
             <Footer 
               onNavigate={(tab) => setActiveTab(tab)}
               onOpenAbout={() => setActiveTab('About')}

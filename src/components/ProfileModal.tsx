@@ -42,6 +42,15 @@ export default function ProfileModal({
 
   useEffect(() => {
     if (isOpen) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
       const ids = getSavedPostIds(currentUser?.id);
       setSavedCount(ids.length);
     }

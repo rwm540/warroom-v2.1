@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   Heart, 
@@ -28,6 +28,15 @@ export default function StudentShowcaseSection({ onOpenAuth }: StudentShowcaseSe
   const [selectedGender, setSelectedGender] = useState<'all' | Gender>('all');
   const [activeItem, setActiveItem] = useState<StudentShowcase | null>(null);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (activeItem) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [activeItem]);
 
   const categories = [
     'all',

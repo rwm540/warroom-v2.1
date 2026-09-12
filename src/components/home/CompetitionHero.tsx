@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { 
   Swords, 
@@ -29,6 +29,15 @@ export default function CompetitionHero({
 }: CompetitionHeroProps) {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showPosterModal, setShowPosterModal] = useState(false);
+
+  useEffect(() => {
+    if (showVideoModal || showPosterModal) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [showVideoModal, showPosterModal]);
 
   return (
     <div className="relative mx-4 my-4 p-5 md:p-6 rounded-3xl cyber-card-3d dir-rtl space-y-4 shadow-[0_0_40px_rgba(0,0,0,0.8)] border border-cyan-500/30" id="competition-hero">

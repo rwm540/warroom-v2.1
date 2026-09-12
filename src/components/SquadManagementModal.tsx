@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   UserPlus, 
@@ -38,6 +38,13 @@ export default function SquadManagementModal({
   // Find group
   const userGroup = groups.find(g => g.id === currentUser.group_id);
   const squadMembers = users.filter(u => u.group_id === currentUser.group_id);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+    };
+  }, []);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);

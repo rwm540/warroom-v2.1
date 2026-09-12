@@ -38,6 +38,8 @@ import {
   initialHomeAnnouncements, 
   homeStatsData, 
   faqsData, 
+  defaultHomeButtons,
+  defaultHomeBlocks,
   HomeAnnouncement, 
   HomeStats, 
   FaqItem 
@@ -52,65 +54,32 @@ import LoadingScreen from './components/LoadingScreen';
 import BackgroundMusic from './components/BackgroundMusic';
 import PersistentMusicBar from './components/PersistentMusicBar';
 
-// Lazy Loaded Views & Heavy Modals for Fast Initial Loading
-const DashboardView = lazy(() => import('./components/DashboardView'));
-const JourneyView = lazy(() => import('./components/JourneyView'));
-const MissionsView = lazy(() => import('./components/MissionsView'));
-const TrainingsView = lazy(() => import('./components/TrainingsView'));
-const SupportView = lazy(() => import('./components/SupportView'));
-const ContactView = lazy(() => import('./components/ContactView'));
-const AboutView = lazy(() => import('./components/AboutView'));
-const ProfileView = lazy(() => import('./components/ProfileView'));
+// Core Views - Imported directly for zero-latency, instant tab switching
+import DashboardView from './components/DashboardView';
+import JourneyView from './components/JourneyView';
+import MissionsView from './components/MissionsView';
+import TrainingsView from './components/TrainingsView';
+import SupportView from './components/SupportView';
+import ContactView from './components/ContactView';
+import AboutView from './components/AboutView';
+import ProfileView from './components/ProfileView';
+import PrizesPointsView from './components/PrizesPointsView';
+import VitrinView from './components/VitrinView';
+import SquadManagementModal from './components/SquadManagementModal';
+import ProfileModal from './components/ProfileModal';
+import GameSelectionPortalModal from './components/GameSelectionPortalModal';
+import NotificationCenterModal from './components/NotificationCenterModal';
+import LiveNotificationToast from './components/LiveNotificationToast';
+import OnboardingCommanderTutorial from './components/OnboardingCommanderTutorial';
+
+// Only AdminPanel kept lazy as an internal administrative tool
 const AdminPanel = lazy(() => import('./components/AdminPanel'));
-const SquadManagementModal = lazy(() => import('./components/SquadManagementModal'));
-const PrizesPointsView = lazy(() => import('./components/PrizesPointsView'));
-const VitrinView = lazy(() => import('./components/VitrinView'));
-const OnboardingCommanderTutorial = lazy(() => import('./components/OnboardingCommanderTutorial'));
-const ProfileModal = lazy(() => import('./components/ProfileModal'));
-const GameSelectionPortalModal = lazy(() => import('./components/GameSelectionPortalModal'));
-const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal'));
-const LiveNotificationToast = lazy(() => import('./components/LiveNotificationToast'));
 
 const ViewFallback = () => (
-  <div className="w-full min-h-[360px] py-12 flex flex-col items-center justify-center p-6 text-center text-slate-300 font-sans dir-rtl select-none">
-    {/* Tactical Radar Scope Frame */}
-    <div className="relative flex items-center justify-center mb-5">
-      <div className="w-44 h-44 sm:w-52 sm:h-52 rounded-full border border-emerald-500/40 relative flex items-center justify-center shadow-[0_0_35px_rgba(16,185,129,0.22)] bg-[#030e06]/85 backdrop-blur-md overflow-hidden">
-        
-        {/* Concentric Range Rings */}
-        <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-full border border-emerald-500/30 absolute" />
-        <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full border border-emerald-500/20 absolute" />
-
-        {/* Crosshair Axes */}
-        <div className="w-full h-[1px] bg-emerald-500/35 absolute" />
-        <div className="h-full w-[1px] bg-emerald-500/35 absolute" />
-
-        {/* Rotating Radar Sweeper */}
-        <div className="w-full h-full rounded-full absolute pointer-events-none overflow-hidden animate-[radar-spin_2.4s_linear_infinite]">
-          <div className="absolute top-0 right-1/2 translate-x-1/2 w-[2px] h-1/2 bg-gradient-to-t from-emerald-500 via-emerald-400 to-emerald-200 shadow-[0_0_10px_#34d399]" />
-        </div>
-
-        {/* Pulsing Target Blip */}
-        <div className="absolute top-[28%] right-[32%] flex items-center justify-center">
-          <span className="w-3 h-3 rounded-full bg-emerald-400/50 animate-ping absolute" />
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 shadow-[0_0_8px_#10b981]" />
-        </div>
-
-        {/* Center Icon */}
-        <div className="relative z-10 p-3 rounded-2xl bg-[#020c05] border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.4)]">
-          <Radio size={22} className="text-emerald-400 animate-pulse" />
-        </div>
-      </div>
-    </div>
-
-    {/* Text Description */}
-    <div className="space-y-1.5 max-w-xs">
-      <h3 className="text-sm sm:text-base font-black text-white tracking-wide flex items-center justify-center gap-2 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">
-        <span>اسکن رادار و بارگذاری اطلاعات استراتژیک...</span>
-      </h3>
-      <p className="text-[11px] font-mono text-emerald-400/80">
-        در حال برقراری ارتباط با اتاق جنگ
-      </p>
+  <div className="w-full min-h-[160px] py-6 flex items-center justify-center text-center text-slate-400 font-sans dir-rtl">
+    <div className="flex items-center gap-2 text-xs text-emerald-400">
+      <Radio size={16} className="animate-pulse text-emerald-400" />
+      <span>در حال آماده‌سازی...</span>
     </div>
   </div>
 );
@@ -183,17 +152,34 @@ export default function App() {
   // Dynamic CMS States
   const [siteSettings, setSiteSettings] = useState(() => {
     const saved = localStorage.getItem('warroom_site_settings');
-    return saved ? JSON.parse(saved) : {
-      heroTitle: 'ماموریت اصلی: تسخیر کهکشان',
-      heroProgress: '۷۲٪',
-      heroCountdown: '۰۲:۱۴:۳۹:۱۵',
-      heroImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
-      heroButtonText: 'مشاهده ماموریت',
-      contactPhone: '۰۲۱-۸۸۹۹۷۷۶۶',
-      contactEmail: 'info@warroom.ir',
-      telegram: 'WarRoom_Support',
-      address: 'تهران، بزرگراه شهید همت، ستاد مرکزی قرارگاه فضای مجازی',
-      aboutText: 'پلتفرم اتاق جنگ یک سامانه تعاملی، رقابتی و آموزشی است که با هدف پرورش تفکر استراتژیک، افزایش توان تحلیل مسئله و تقویت روحیه کار تیمی در میان نوجوانان و جوانان طراحی شده است. در این سامانه، کاربران در قالب جوخه‌های عملیاتی وارد سناریوهای واقعی و شبیه‌سازی‌شده می‌شوند.'
+    const parsed = saved ? JSON.parse(saved) : {};
+    return {
+      siteName: parsed.siteName || 'اتاق جنگ',
+      siteTagline: parsed.siteTagline || 'سامانه جامع مسابقات، مأموریت‌ها و ارزیابی هوشمند',
+      badgeText: parsed.badgeText || 'پرونده ماجراجویی هفت‌خوان',
+      heroTitle: parsed.heroTitle || 'مأموریت اصلی: مسابقه بزرگ اتاق جنگ',
+      heroProgress: parsed.heroProgress || '۷۲٪',
+      heroCountdown: parsed.heroCountdown || '۰۲:۱۴:۳۹:۱۵',
+      heroImage: parsed.heroImage || '',
+      heroVideoUrl: parsed.heroVideoUrl || '',
+      girlsBannerImage: parsed.girlsBannerImage || '',
+      boysBannerImage: parsed.boysBannerImage || '',
+      heroButtonText: parsed.heroButtonText || 'ورود و ثبت‌نام',
+      contactPhone: parsed.contactPhone || '۰۲۱-۸۸۹۹۷۷۶۶',
+      contactEmail: parsed.contactEmail || 'info@warroom.ir',
+      telegram: parsed.telegram || 'WarRoom_Support',
+      baleLink: parsed.baleLink || 'https://bale.ai/warroom',
+      eitaaLink: parsed.eitaaLink || 'https://eitaa.com/warroom',
+      address: parsed.address || 'تهران، بزرگراه شهید همت، ستاد مرکزی قرارگاه فضای مجازی',
+      aboutText: parsed.aboutText || 'پلتفرم اتاق جنگ یک سامانه تعاملی، رقابتی و آموزشی است که با هدف پرورش تفکر استراتژیک، افزایش توان تحلیل مسئله و تقویت روحیه کار تیمی در میان نوجوانان و جوانان طراحی شده است.',
+      prizeTitle: parsed.prizeTitle || 'جایزه‌ها و هدایای مسابقه بزرگ',
+      prizeDescription: parsed.prizeDescription || 'کریستال جمع کن و جایزه‌های نفیس اعم از کنسول بازی، تبلت و گوشی برنده شو!',
+      homeButtons: (parsed.homeButtons && Array.isArray(parsed.homeButtons) && parsed.homeButtons.length > 0) 
+        ? parsed.homeButtons 
+        : defaultHomeButtons,
+      homeBlocks: (parsed.homeBlocks && Array.isArray(parsed.homeBlocks) && parsed.homeBlocks.length > 0)
+        ? parsed.homeBlocks
+        : defaultHomeBlocks
     };
   });
 
@@ -315,12 +301,16 @@ export default function App() {
   const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('register_individual');
 
   // Global active modal tracking (hides bottom nav & music bar with smooth exit animation when any modal opens)
-  const [isModalActive, setIsModalActive] = useState<boolean>(false);
+  const [modalActiveCount, setModalActiveCount] = useState<number>(0);
 
   useEffect(() => {
     const handleModalChange = (e: any) => {
       if (e.detail && typeof e.detail.active === 'boolean') {
-        setIsModalActive(e.detail.active);
+        if (e.detail.active) {
+          setModalActiveCount(prev => prev + 1);
+        } else {
+          setModalActiveCount(prev => Math.max(0, prev - 1));
+        }
       }
     };
 
@@ -329,6 +319,8 @@ export default function App() {
       window.removeEventListener('warroom_modal_active_change' as any, handleModalChange);
     };
   }, []);
+
+  const isModalActive = modalActiveCount > 0;
 
   const handleDirectLogin = () => {
     let activeUser = currentUser;
@@ -340,9 +332,18 @@ export default function App() {
     }
 
     if (activeUser) {
-      setShowGamePortal(true);
-      setShowAuthScreen(false);
-      triggerAlert(`ورود به درگاه انتخاب بازی: ${activeUser.first_name} ${activeUser.last_name}`);
+      if (activeUser.role === 'admin') {
+        setIsAdminMode(true);
+        setActiveTab('Admin');
+        setShowGamePortal(false);
+        setShowAuthScreen(false);
+        localStorage.setItem('warroom_active_tab', 'Admin');
+        triggerAlert(`ورود مستقیم به پنل مدیریت: ${activeUser.first_name} ${activeUser.last_name}`);
+      } else {
+        setShowGamePortal(true);
+        setShowAuthScreen(false);
+        triggerAlert(`ورود به درگاه انتخاب بازی: ${activeUser.first_name} ${activeUser.last_name}`);
+      }
       return;
     }
     setAuthMode('login');
@@ -351,6 +352,7 @@ export default function App() {
 
   const handleTabChange = (tab: string) => {
     setShowAuthScreen(false);
+    setShowGamePortal(false);
     setIsAdminMode(tab === 'Admin');
     setActiveTab(tab);
     localStorage.setItem('warroom_active_tab', tab);
@@ -358,7 +360,7 @@ export default function App() {
   const [showSquadModal, setShowSquadModal] = useState<boolean>(false);
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
   const [showOnboardingTutorial, setShowOnboardingTutorial] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [alertNotification, setAlertNotification] = useState<string | null>(null);
 
   // Sync to LocalStorage
@@ -521,9 +523,16 @@ export default function App() {
       localStorage.setItem('hisstory_theme_mode', 'boys');
     }
 
-    // Direct user to Game Selection Portal immediately after Login / Registration
-    setShowGamePortal(true);
-    triggerAlert(`خوش آمدید رزمنده ${user.first_name} ${user.last_name} — لطفا سامانه بازی را انتخاب کنید.`);
+    if (user.role === 'admin') {
+      setIsAdminMode(true);
+      setActiveTab('Admin');
+      setShowGamePortal(false);
+      localStorage.setItem('warroom_active_tab', 'Admin');
+      triggerAlert(`خوش آمدید مدیر کل ${user.first_name} ${user.last_name} — وارد پنل مدیریت شدید.`);
+    } else {
+      setShowGamePortal(true);
+      triggerAlert(`خوش آمدید رزمنده ${user.first_name} ${user.last_name} — لطفا سامانه بازی را انتخاب کنید.`);
+    }
   };
 
   const handleSelectWarRoom = () => {
@@ -561,7 +570,14 @@ export default function App() {
     }
 
     if (activeUser) {
-      // User is already logged in! Show Game Selection Portal so they can select War Room card to enter panel.
+      if (activeUser.role === 'admin') {
+        setIsAdminMode(true);
+        setActiveTab('Admin');
+        setShowGamePortal(false);
+        setShowAuthScreen(false);
+        localStorage.setItem('warroom_active_tab', 'Admin');
+        return;
+      }
       setShowGamePortal(true);
       setShowAuthScreen(false);
       return;
@@ -683,7 +699,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {showAuthScreen ? (
           /* Authentication / Registration Page for War Room */
           <motion.div
@@ -691,7 +707,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.15 }}
           >
             <AuthView 
               users={users}
@@ -715,7 +731,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.15 }}
           >
             <HomeView 
               currentUser={currentUser}
@@ -743,10 +759,10 @@ export default function App() {
           /* Standalone Animated Contact Us Page (Public & Independent) */
           <motion.div
             key="contactPage"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             className="min-h-screen bg-[#05091a] text-slate-100 py-6 px-3 sm:px-6 dir-rtl"
           >
             <ContactView 
@@ -759,10 +775,10 @@ export default function App() {
           /* Standalone Animated About Us Page */
           <motion.div
             key="aboutPage"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             className="min-h-screen bg-[#05091a] text-slate-100 py-6 px-3 sm:px-6 dir-rtl"
           >
             <AboutView 
@@ -778,7 +794,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.15 }}
             className="min-h-screen flex flex-col relative z-10"
           >
             {/* Top Navigation Bar */}

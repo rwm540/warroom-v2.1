@@ -78,3 +78,137 @@ export const faqsData: FaqItem[] = [
     answer: 'در صورت بروز هرگونه مشکل فنی، سوال آموزشی یا حقوقی، می‌توانید از بخش «پشتیبانی» تیکت جدید ارسال نموده و پاسخ کارشناسان را پیگیری کنید.'
   }
 ];
+
+export const defaultHomeButtons = [
+  {
+    id: 'btn-1',
+    text: 'ورود و ثبت‌نام در مسابقه',
+    actionTab: 'register',
+    iconName: 'UserPlus',
+    shape: 'rounded-2xl' as const,
+    size: 'lg' as const,
+    color: 'red' as const,
+    order: 1,
+    isActive: true
+  },
+  {
+    id: 'btn-2',
+    text: 'مشاهده مأموریت‌های عملیاتی',
+    actionTab: 'Missions',
+    iconName: 'Shield',
+    shape: 'rounded-2xl' as const,
+    size: 'md' as const,
+    color: 'cyan' as const,
+    order: 2,
+    isActive: true
+  },
+  {
+    id: 'btn-3',
+    text: 'جدول برترین‌ها و جوایز',
+    actionTab: 'RewardsLeaderboard',
+    iconName: 'Trophy',
+    shape: 'rounded-2xl' as const,
+    size: 'md' as const,
+    color: 'amber' as const,
+    order: 3,
+    isActive: true
+  },
+  {
+    id: 'btn-4',
+    text: 'آکادمی دوره‌های آموزشی',
+    actionTab: 'Trainings',
+    iconName: 'BookOpen',
+    shape: 'rounded-2xl' as const,
+    size: 'md' as const,
+    color: 'purple' as const,
+    order: 4,
+    isActive: true
+  },
+  {
+    id: 'btn-5',
+    text: 'ارتباط و تیکت پشتیبانی',
+    actionTab: 'SupportTicket',
+    iconName: 'MessageSquare',
+    shape: 'rounded-2xl' as const,
+    size: 'sm' as const,
+    color: 'emerald' as const,
+    order: 5,
+    isActive: true
+  }
+];
+
+export const defaultHomeBlocks = [
+  {
+    id: 'blk-hero',
+    type: 'hero' as const,
+    title: 'بخش اصلی هیرو و بنر ثبت‌نام',
+    subtitle: 'شامل لوگو، مدال افتخار، عنوان مأموریت و بنر ثبت‌نام دختران/پسران',
+    isVisible: true,
+    order: 1
+  },
+  {
+    id: 'blk-buttons',
+    type: 'action_buttons' as const,
+    title: 'نوار دکمه‌ها و دسترسی‌های سریع',
+    subtitle: 'کلیدهای تعاملی هدایت به بخش‌های ثبت‌نام، مأموریت‌ها، جوایز و پشتیبانی',
+    isVisible: true,
+    order: 2
+  },
+  {
+    id: 'blk-video',
+    type: 'video_player' as const,
+    title: 'ویدئوی اختصاصی معرفی قرارگاه',
+    subtitle: 'نمایش تیزر رسمی یا گزارش ویدیویی مسابقات در صفحه اول',
+    isVisible: true,
+    order: 3
+  },
+  {
+    id: 'blk-stats',
+    type: 'stats_strip' as const,
+    title: 'آمار و دستاوردهای زنده قرارگاه',
+    subtitle: 'تعداد رزمندگان، مأموریت‌های فتح‌شده و کریستال‌های اعطا شده',
+    isVisible: true,
+    order: 4
+  },
+  {
+    id: 'blk-prizes',
+    type: 'prizes_awards' as const,
+    title: 'بخش جوایز و کریستال‌های افتخار',
+    subtitle: 'معرفی جوایز نفیس شامل کنسول بازی، تبلت و هدایای ویژه',
+    isVisible: true,
+    order: 5
+  },
+  {
+    id: 'blk-announcements',
+    type: 'announcements' as const,
+    title: 'اطلاعیه‌ها و اخبار مهم قرارگاه',
+    subtitle: 'آخرین اخبار، تغییرات قوانین و پیام‌های ستاد فرماندهی',
+    isVisible: true,
+    order: 6
+  },
+  {
+    id: 'blk-about',
+    type: 'about_section' as const,
+    title: 'درباره ما و اهداف قرارگاه',
+    subtitle: 'معرفی ماموریت‌ها، سند اهداف و آدرس ستاد مرکزی',
+    isVisible: true,
+    order: 7
+  },
+  {
+    id: 'blk-faqs',
+    type: 'faqs' as const,
+    title: 'سوالات متداول رزمندگان (FAQ)',
+    subtitle: 'پاسخ به ابهامات رایج ثبت‌نام، ارسال آثار و دریافت جوایز',
+    isVisible: true,
+    order: 8
+  },
+  {
+    id: 'blk-social',
+    type: 'social_messengers' as const,
+    title: 'کانال‌ها و راه ارتباطی شبکه اجتماعی',
+    subtitle: 'لینک بله، ایتا، تلگرام و خطوط پشتیبانی تلفنی قرارگاه',
+    isVisible: true,
+    order: 9
+  }
+];
+

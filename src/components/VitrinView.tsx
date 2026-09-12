@@ -138,6 +138,15 @@ export default function VitrinView({
   const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (selectedPost) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [selectedPost]);
+
   // Double Click / Double Tap to Like implementation
   const [lastTap, setLastTap] = useState<{ [key: string]: number }>({});
 

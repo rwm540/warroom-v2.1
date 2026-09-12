@@ -59,6 +59,15 @@ export default function ProfileView({
   const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
   const [showReelsModal, setShowReelsModal] = useState(false);
 
+  useEffect(() => {
+    if (showReelsModal || selectedPost) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [showReelsModal, selectedPost]);
+
   // Sync saved posts on mount and when sub-tab is opened
   useEffect(() => {
     if (currentUser?.id) {

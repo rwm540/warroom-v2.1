@@ -29,6 +29,13 @@ export default function OnboardingCommanderTutorial({
 }: OnboardingCommanderTutorialProps) {
   const [currentStep, setCurrentStep] = useState(0);
 
+  React.useEffect(() => {
+    window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+    };
+  }, []);
+
   const isGirls = currentUser?.gender === 'دختر' || localStorage.getItem('hisstory_theme_mode') === 'girls';
 
   // Two Commander Character Avatars

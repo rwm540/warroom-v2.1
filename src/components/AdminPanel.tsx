@@ -42,11 +42,37 @@ import {
   Star,
   Eye,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Gamepad2,
+  Rocket,
+  Lock,
+  Link as LinkIcon,
+  Copy,
+  UserPlus,
+  Phone,
+  MapPin,
+  Calendar,
+  Building,
+  Hash,
+  UserCheck,
+  Shield,
+  Video,
+  Upload,
+  ArrowUp,
+  ArrowDown,
+  Image,
+  Trophy,
+  Gem,
+  Play,
+  Layout,
+  X
 } from 'lucide-react';
+import { defaultHomeButtons } from '../data/home';
 import { publishSubmissionToVitrin, removeSubmissionFromVitrin } from '../data/vitrinData';
+import { getGamePortals, saveGamePortals } from '../data/portalData';
 import AdminSoundtrackManager from './AdminSoundtrackManager';
 import DashboardView from './DashboardView';
+import ElementorVisualEditorModal from './ElementorVisualEditorModal';
 import { 
   User, 
   Group, 
@@ -64,7 +90,13 @@ import {
   SubmissionStatus,
   AppNotification,
   NotificationType,
-  NotificationTarget
+  NotificationTarget,
+  GamePortal,
+  RoleType,
+  Gender,
+  EducationLevel,
+  TargetRole,
+  HomeButtonConfig
 } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
 import { playNotificationSound } from '../utils/audioAlert';
@@ -145,8 +177,354 @@ export default function AdminPanel({
   onNavigate
 }: AdminPanelProps) {
   const [activeAdminTab, setActiveAdminTab] = useState<
-    'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news' | 'site_editor' | 'notifications' | 'soundtracks'
+    'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news' | 'site_editor' | 'notifications' | 'soundtracks' | 'portals'
   >('submissions');
+
+  // GAME PORTALS MANAGEMENT STATE
+  const [portals, setPortals] = useState<GamePortal[]>(() => getGamePortals());
+  const [showPortalModal, setShowPortalModal] = useState<boolean>(false);
+  const [editingPortal, setEditingPortal] = useState<GamePortal | null>(null);
+  const [portalForm, setPortalForm] = useState<{
+    title: string;
+    subtitle: string;
+    description: string;
+    link: string;
+    status: 'active' | 'coming_soon' | 'disabled';
+    badgeText: string;
+    targetAudience: 'all' | 'girls' | 'boys';
+    tag: string;
+  }>({
+    title: '',
+    subtitle: '',
+    description: '',
+    link: '',
+    status: 'active',
+    badgeText: 'فعال • در حال برگزاری',
+    targetAudience: 'all',
+    tag: 'درگاه جدید'
+  });
+
+  const handleOpenCreatePortal = () => {
+    setEditingPortal(null);
+    setPortalForm({
+      title: '',
+      subtitle: '',
+      description: '',
+      link: 'https://',
+      status: 'active',
+      badgeText: 'فعال • در حال برگزاری',
+      targetAudience: 'all',
+      tag: 'سامانه بازی'
+    });
+    setShowPortalModal(true);
+  };
+
+  const handleOpenEditPortal = (portal: GamePortal) => {
+    setEditingPortal(portal);
+    setPortalForm({
+      title: portal.title,
+      subtitle: portal.subtitle || '',
+      description: portal.description || '',
+      link: portal.link || '',
+      status: portal.status,
+      badgeText: portal.badgeText || '',
+      targetAudience: portal.targetAudience || 'all',
+      tag: portal.tag || ''
+    });
+    setShowPortalModal(true);
+  };
+
+  const handleSavePortalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!portalForm.title.trim()) {
+      triggerAlert('خطا: عنوان درگاه نمی‌تواند خالی باشد.');
+      return;
+    }
+
+    let updatedList: GamePortal[];
+    if (editingPortal) {
+      updatedList = portals.map(p => p.id === editingPortal.id ? {
+        ...p,
+        title: portalForm.title.trim(),
+        subtitle: portalForm.subtitle.trim(),
+        description: portalForm.description.trim(),
+        link: portalForm.link.trim(),
+        status: portalForm.status,
+        badgeText: portalForm.badgeText.trim() || (portalForm.status === 'active' ? 'فعال • در حال برگزاری' : 'به‌زودی'),
+        targetAudience: portalForm.targetAudience,
+        tag: portalForm.tag.trim()
+      } : p);
+      triggerAlert(`درگاه «${portalForm.title}» با موفقیت بروزرسانی شد.`);
+    } else {
+      const newPortalObj: GamePortal = {
+        id: `portal_${Date.now()}`,
+        title: portalForm.title.trim(),
+        subtitle: portalForm.subtitle.trim(),
+        description: portalForm.description.trim(),
+        link: portalForm.link.trim(),
+        status: portalForm.status,
+        badgeText: portalForm.badgeText.trim() || (portalForm.status === 'active' ? 'فعال • در حال برگزاری' : 'به‌زودی'),
+        targetAudience: portalForm.targetAudience,
+        tag: portalForm.tag.trim() || 'سامانه جدید',
+        featured: false
+      };
+      updatedList = [...portals, newPortalObj];
+      triggerAlert(`درگاه جدید «${portalForm.title}» ایجاد و اضافه شد.`);
+    }
+
+    setPortals(updatedList);
+    saveGamePortals(updatedList);
+    setShowPortalModal(false);
+  };
+
+  const handleDeletePortal = (id: string, title: string) => {
+    if (window.confirm(`آیا از حذف درگاه «${title}» اطمینان دارید؟`)) {
+      const updatedList = portals.filter(p => p.id !== id);
+      setPortals(updatedList);
+      saveGamePortals(updatedList);
+      triggerAlert(`درگاه «${title}» حذف شد.`);
+    }
+  };
+
+  const handleTogglePortalStatus = (id: string) => {
+    const updatedList = portals.map(p => {
+      if (p.id === id) {
+        const nextStatus: 'active' | 'coming_soon' = p.status === 'active' ? 'coming_soon' : 'active';
+        return {
+          ...p,
+          status: nextStatus,
+          badgeText: nextStatus === 'active' ? 'فعال • در حال برگزاری' : 'به‌زودی • فصل جدید'
+        };
+      }
+      return p;
+    });
+    setPortals(updatedList);
+    saveGamePortals(updatedList);
+    triggerAlert('وضعیت فعال‌سازی درگاه تغییر یافت.');
+  };
+
+  // USER CRUD & DETAIL MODAL STATES
+  const [showUserModal, setShowUserModal] = useState<boolean>(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [viewingUserDetail, setViewingUserDetail] = useState<User | null>(null);
+
+  const [userForm, setUserForm] = useState<{
+    first_name: string;
+    last_name: string;
+    national_code: string;
+    phone: string;
+    password: string;
+    role: RoleType;
+    gender: Gender;
+    education_level: EducationLevel;
+    grade: string;
+    province: string;
+    city: string;
+    birth_date: string;
+    school_name: string;
+    personal_code: string;
+    postal_code: string;
+    address: string;
+    points: number;
+    level: number;
+  }>({
+    first_name: '',
+    last_name: '',
+    national_code: '',
+    phone: '',
+    password: '123',
+    role: 'user',
+    gender: 'پسر',
+    education_level: 'متوسطه اول',
+    grade: 'هشتم',
+    province: 'تهران',
+    city: 'تهران',
+    birth_date: '1388/01/01',
+    school_name: '',
+    personal_code: '',
+    postal_code: '',
+    address: '',
+    points: 100,
+    level: 1
+  });
+
+  const handleOpenAddUser = () => {
+    setEditingUser(null);
+    const randomCode = Math.floor(100000000 + Math.random() * 900000000).toString();
+    setUserForm({
+      first_name: '',
+      last_name: '',
+      national_code: '',
+      phone: '09',
+      password: '123',
+      role: 'user',
+      gender: 'پسر',
+      education_level: 'متوسطه اول',
+      grade: 'هشتم',
+      province: 'تهران',
+      city: 'تهران',
+      birth_date: '1388/01/01',
+      school_name: 'مدرسه نمونه دولتی',
+      personal_code: randomCode,
+      postal_code: '',
+      address: '',
+      points: 100,
+      level: 1
+    });
+    setShowUserModal(true);
+  };
+
+  const handleOpenEditUser = (user: User) => {
+    setEditingUser(user);
+    setUserForm({
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      national_code: user.national_code || '',
+      phone: user.phone || '',
+      password: user.password || '123',
+      role: user.role || 'user',
+      gender: user.gender || 'پسر',
+      education_level: user.education_level || 'متوسطه اول',
+      grade: user.grade || 'هشتم',
+      province: user.province || 'تهران',
+      city: user.city || 'تهران',
+      birth_date: user.birth_date || '1388/01/01',
+      school_name: user.school_name || '',
+      personal_code: user.personal_code || '',
+      postal_code: user.postal_code || '',
+      address: user.address || '',
+      points: user.points || 0,
+      level: user.level || 1
+    });
+    setShowUserModal(true);
+  };
+
+  const handleSaveUserSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userForm.first_name.trim() || !userForm.last_name.trim()) {
+      triggerAlert('خطا: نام و نام خانوادگی کاربر الزامی است.');
+      return;
+    }
+
+    let updatedList: User[];
+    if (editingUser) {
+      updatedList = users.map(u => u.id === editingUser.id ? {
+        ...u,
+        first_name: userForm.first_name.trim(),
+        last_name: userForm.last_name.trim(),
+        national_code: userForm.national_code.trim(),
+        phone: userForm.phone.trim(),
+        password: userForm.password,
+        role: userForm.role,
+        gender: userForm.gender,
+        education_level: userForm.education_level,
+        grade: userForm.grade.trim(),
+        province: userForm.province.trim(),
+        city: userForm.city.trim(),
+        birth_date: userForm.birth_date.trim(),
+        school_name: userForm.school_name.trim(),
+        personal_code: userForm.personal_code.trim() || u.personal_code,
+        postal_code: userForm.postal_code.trim(),
+        address: userForm.address.trim(),
+        points: Number(userForm.points) || 0,
+        level: Number(userForm.level) || 1
+      } : u);
+      triggerAlert(`اطلاعات کاربر «${userForm.first_name} ${userForm.last_name}» با موفقیت بروزرسانی شد.`);
+    } else {
+      const newUserObj: User = {
+        id: `usr_${Date.now()}`,
+        first_name: userForm.first_name.trim(),
+        last_name: userForm.last_name.trim(),
+        national_code: userForm.national_code.trim(),
+        phone: userForm.phone.trim(),
+        password: userForm.password || '123',
+        role: userForm.role,
+        gender: userForm.gender,
+        education_level: userForm.education_level,
+        grade: userForm.grade.trim() || 'هشتم',
+        province: userForm.province.trim() || 'تهران',
+        city: userForm.city.trim() || 'تهران',
+        birth_date: userForm.birth_date.trim() || '1388/01/01',
+        school_name: userForm.school_name.trim() || 'دبیرستان',
+        personal_code: userForm.personal_code.trim() || Math.floor(100000000 + Math.random() * 900000000).toString(),
+        postal_code: userForm.postal_code.trim(),
+        address: userForm.address.trim(),
+        points: Number(userForm.points) || 100,
+        level: Number(userForm.level) || 1
+      };
+      updatedList = [...users, newUserObj];
+      triggerAlert(`کاربر جدید «${userForm.first_name} ${userForm.last_name}» با کد اختصاصی ${newUserObj.personal_code} ایجاد گردید.`);
+    }
+
+    setUsers(updatedList);
+    try {
+      localStorage.setItem('warroom_users', JSON.stringify(updatedList));
+    } catch (err) {
+      console.error(err);
+    }
+    setShowUserModal(false);
+  };
+
+  const handleDeleteUser = (user: User) => {
+    if (window.confirm(`آیا از حذف کامل کاربر/رزمنده «${user.first_name} ${user.last_name}» با کد اختصاصی ${user.personal_code} اطمینان دارید؟`)) {
+      const updatedList = users.filter(u => u.id !== user.id);
+      setUsers(updatedList);
+      try {
+        localStorage.setItem('warroom_users', JSON.stringify(updatedList));
+      } catch (err) {
+        console.error(err);
+      }
+      triggerAlert(`کاربر «${user.first_name} ${user.last_name}» با موفقیت حذف گردید.`);
+    }
+  };
+
+  // MISSION CRUD & EDIT STATES
+  const [showMissionModal, setShowMissionModal] = useState(false);
+  const [editingMission, setEditingMission] = useState<Mission | null>(null);
+  const [missionForm, setMissionForm] = useState({
+    title: '',
+    description: '',
+    banner_path: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
+    video_url: '',
+    max_score: 100,
+    is_optional: false,
+    is_active: true
+  });
+
+  // TRAINING CRUD & EDIT STATES
+  const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [editingTraining, setEditingTraining] = useState<Training | null>(null);
+  const [trainingForm, setTrainingForm] = useState<{
+    title: string;
+    description: string;
+    video_url: string;
+    media_path: string;
+    media_type: 'video' | 'audio' | 'image' | 'document' | 'iframe';
+    target_role: TargetRole;
+    category: string;
+    is_active: boolean;
+  }>({
+    title: '',
+    description: '',
+    video_url: '',
+    media_path: '',
+    media_type: 'video',
+    target_role: 'all',
+    category: 'پدافند و امنیت',
+    is_active: true
+  });
+
+  // Global active modal tracking for AdminPanel (hides mobile bottom nav & music bar when any modal opens)
+  const isAnyAdminModalActive = Boolean(showPortalModal || showUserModal || viewingUserDetail || showMissionModal || showTrainingModal);
+
+  useEffect(() => {
+    if (isAnyAdminModalActive) {
+      window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
+      return () => {
+        window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: false } }));
+      };
+    }
+  }, [isAnyAdminModalActive]);
 
   // LOCAL NOTIFICATION FORM STATES
   const [notifTitle, setNotifTitle] = useState('');
@@ -161,10 +539,6 @@ export default function AdminPanel({
   const [previewTestSent, setPreviewTestSent] = useState(false);
 
   // LOCAL CMS FORM STATES
-  const [generalTitle, setGeneralTitle] = useState(siteSettings?.heroTitle || '');
-  const [generalProgress, setGeneralProgress] = useState(siteSettings?.heroProgress || '');
-  const [generalCountdown, setGeneralCountdown] = useState(siteSettings?.heroCountdown || '');
-
   const tabsContainerRef = React.useRef<HTMLDivElement>(null);
   const isDraggingTabs = React.useRef(false);
   const startX = React.useRef(0);
@@ -205,13 +579,33 @@ export default function AdminPanel({
     const mainEl = document.querySelector('main');
     if (mainEl) mainEl.scrollTop = 0;
   }, [activeAdminTab]);
+  const [cmsSiteName, setCmsSiteName] = useState(siteSettings?.siteName || 'اتاق جنگ');
+  const [cmsSiteTagline, setCmsSiteTagline] = useState(siteSettings?.siteTagline || 'سامانه جامع مسابقات، مأموریت‌ها و ارزیابی هوشمند');
+  const [cmsBadgeText, setCmsBadgeText] = useState(siteSettings?.badgeText || 'پرونده ماجراجویی هفت‌خوان');
+  const [generalTitle, setGeneralTitle] = useState(siteSettings?.heroTitle || 'مأموریت اصلی: مسابقه بزرگ اتاق جنگ');
+  const [generalProgress, setGeneralProgress] = useState(siteSettings?.heroProgress || '۷۲٪');
+  const [generalCountdown, setGeneralCountdown] = useState(siteSettings?.heroCountdown || '۰۲:۱۴:۳۹:۱۵');
   const [generalImage, setGeneralImage] = useState(siteSettings?.heroImage || '');
-  const [generalBtnText, setGeneralBtnText] = useState(siteSettings?.heroButtonText || '');
-  const [generalPhone, setGeneralPhone] = useState(siteSettings?.contactPhone || '');
-  const [generalEmail, setGeneralEmail] = useState(siteSettings?.contactEmail || '');
-  const [generalTelegram, setGeneralTelegram] = useState(siteSettings?.telegram || '');
+  const [heroVideoUrl, setHeroVideoUrl] = useState(siteSettings?.heroVideoUrl || '');
+  const [girlsBannerImage, setGirlsBannerImage] = useState(siteSettings?.girlsBannerImage || '');
+  const [boysBannerImage, setBoysBannerImage] = useState(siteSettings?.boysBannerImage || '');
+  const [generalBtnText, setGeneralBtnText] = useState(siteSettings?.heroButtonText || 'ورود و ثبت‌نام');
+  const [generalPhone, setGeneralPhone] = useState(siteSettings?.contactPhone || '۰۲۱-۸۸۹۹۷۷۶۶');
+  const [generalEmail, setGeneralEmail] = useState(siteSettings?.contactEmail || 'info@warroom.ir');
+  const [generalTelegram, setGeneralTelegram] = useState(siteSettings?.telegram || 'WarRoom_Support');
+  const [baleLink, setBaleLink] = useState(siteSettings?.baleLink || 'https://bale.ai/warroom');
+  const [eitaaLink, setEitaaLink] = useState(siteSettings?.eitaaLink || 'https://eitaa.com/warroom');
   const [generalAddress, setGeneralAddress] = useState(siteSettings?.address || '');
   const [generalAboutText, setGeneralAboutText] = useState(siteSettings?.aboutText || '');
+  const [prizeTitle, setPrizeTitle] = useState(siteSettings?.prizeTitle || 'جایزه‌ها و هدایای مسابقه بزرگ');
+  const [prizeDescription, setPrizeDescription] = useState(siteSettings?.prizeDescription || 'کریستال جمع کن و جایزه‌های نفیس برنده شو!');
+  const [homeButtons, setHomeButtons] = useState<HomeButtonConfig[]>(siteSettings?.homeButtons || defaultHomeButtons);
+  const [isElementorOpen, setIsElementorOpen] = useState(false);
+
+  // Training Form Video Upload States
+  const [trainingVideoMode, setTrainingVideoMode] = useState<'url' | 'upload'>('url');
+  const [trainingUploadedFileName, setTrainingUploadedFileName] = useState<string>('');
+  const [trainingUploadedFileSize, setTrainingUploadedFileSize] = useState<string>('');
 
   // Local FAQ form state
   const [faqQ, setFaqQ] = useState('');
@@ -251,17 +645,6 @@ export default function AdminPanel({
   const [replyTicketId, setReplyTicketId] = useState<string | null>(null);
   const [adminReplyText, setAdminReplyText] = useState('');
   const [adminReplyMarkStatus, setAdminReplyMarkStatus] = useState<'answered' | 'in_progress'>('answered');
-
-  // NEW MISSION MODAL FORM
-  const [showNewMissionModal, setShowNewMissionModal] = useState(false);
-  const [newMission, setNewMission] = useState({
-    title: '',
-    description: '',
-    banner_path: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
-    video_url: '',
-    max_score: 100,
-    is_optional: false
-  });
 
   // NEW MEDAL MODAL FORM
   const [showNewMedalModal, setShowNewMedalModal] = useState(false);
@@ -440,35 +823,168 @@ export default function AdminPanel({
     }
   };
 
-  // CREATE NEW MISSION
-  const handleCreateMission = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMission.title || !newMission.description) return;
-
-    const missionObj: Mission = {
-      id: `m-${Date.now()}`,
-      title: newMission.title,
-      description: newMission.description,
-      banner_path: newMission.banner_path,
-      video_url: newMission.video_url || undefined,
-      media_type: newMission.video_url ? 'video' : 'image',
-      max_score: newMission.max_score,
-      is_active: true,
-      is_optional: newMission.is_optional,
-      created_at: '۱۴۰۳/۰۲/۲۲'
-    };
-
-    setMissions(prev => [missionObj, ...prev]);
-    setShowNewMissionModal(false);
-    setNewMission({
+  // MISSION CRUD HANDLERS
+  const handleOpenAddMission = () => {
+    setEditingMission(null);
+    setMissionForm({
       title: '',
       description: '',
       banner_path: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
       video_url: '',
       max_score: 100,
-      is_optional: false
+      is_optional: false,
+      is_active: true
     });
-    triggerAlert(`مأموریت جدید "${missionObj.title}" با موفقیت تعریف گردید.`);
+    setShowMissionModal(true);
+  };
+
+  const handleOpenEditMission = (m: Mission) => {
+    setEditingMission(m);
+    setMissionForm({
+      title: m.title || '',
+      description: m.description || '',
+      banner_path: m.banner_path || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
+      video_url: m.video_url || '',
+      max_score: m.max_score || 100,
+      is_optional: Boolean(m.is_optional),
+      is_active: m.is_active !== undefined ? m.is_active : true
+    });
+    setShowMissionModal(true);
+  };
+
+  const handleSaveMissionSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!missionForm.title.trim() || !missionForm.description.trim()) {
+      triggerAlert('خطا: عنوان و شرح مأموریت نمی‌تواند خالی باشد.');
+      return;
+    }
+
+    if (editingMission) {
+      setMissions(prev => prev.map(m => m.id === editingMission.id ? {
+        ...m,
+        title: missionForm.title.trim(),
+        description: missionForm.description.trim(),
+        banner_path: missionForm.banner_path.trim() || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
+        video_url: missionForm.video_url.trim() || undefined,
+        media_type: missionForm.video_url.trim() ? 'video' : 'image',
+        max_score: Number(missionForm.max_score) || 100,
+        is_optional: missionForm.is_optional,
+        is_active: missionForm.is_active
+      } : m));
+      triggerAlert(`مأموریت «${missionForm.title}» با موفقیت بروزرسانی شد.`);
+    } else {
+      const missionObj: Mission = {
+        id: `m-${Date.now()}`,
+        title: missionForm.title.trim(),
+        description: missionForm.description.trim(),
+        banner_path: missionForm.banner_path.trim() || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
+        video_url: missionForm.video_url.trim() || undefined,
+        media_type: missionForm.video_url.trim() ? 'video' : 'image',
+        max_score: Number(missionForm.max_score) || 100,
+        is_active: missionForm.is_active,
+        is_optional: missionForm.is_optional,
+        created_at: '۱۴۰۳/۰۲/۲۲'
+      };
+      setMissions(prev => [missionObj, ...prev]);
+      triggerAlert(`مأموریت جدید «${missionObj.title}» ایجاد شد.`);
+    }
+
+    setShowMissionModal(false);
+  };
+
+  const handleDeleteMission = (m: Mission) => {
+    if (window.confirm(`آیا از حذف مأموریت «${m.title}» اطمینان دارید؟`)) {
+      setMissions(prev => prev.filter(x => x.id !== m.id));
+      triggerAlert(`مأموریت «${m.title}» با موفقیت حذف گردید.`);
+    }
+  };
+
+  const handleToggleMissionActive = (m: Mission) => {
+    setMissions(prev => prev.map(x => x.id === m.id ? { ...x, is_active: !x.is_active } : x));
+    triggerAlert(`وضعیت مأموریت «${m.title}» به ${!m.is_active ? 'فعال' : 'غیرفعال'} تغییر یافت.`);
+  };
+
+  // TRAINING CRUD HANDLERS
+  const handleOpenAddTraining = () => {
+    setEditingTraining(null);
+    setTrainingForm({
+      title: '',
+      description: '',
+      video_url: '',
+      media_path: '',
+      media_type: 'video',
+      target_role: 'all',
+      category: 'پدافند و امنیت',
+      is_active: true
+    });
+    setShowTrainingModal(true);
+  };
+
+  const handleOpenEditTraining = (t: Training) => {
+    setEditingTraining(t);
+    setTrainingForm({
+      title: t.title || '',
+      description: t.description || '',
+      video_url: t.video_url || '',
+      media_path: t.media_path || '',
+      media_type: t.media_type || 'video',
+      target_role: t.target_role || 'all',
+      category: t.category || 'پدافند و امنیت',
+      is_active: t.is_active !== undefined ? t.is_active : true
+    });
+    setShowTrainingModal(true);
+  };
+
+  const handleSaveTrainingSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!trainingForm.title.trim() || !trainingForm.description.trim()) {
+      triggerAlert('خطا: عنوان و شرح دوره آموزشی نمی‌تواند خالی باشد.');
+      return;
+    }
+
+    if (editingTraining) {
+      setTrainings(prev => prev.map(t => t.id === editingTraining.id ? {
+        ...t,
+        title: trainingForm.title.trim(),
+        description: trainingForm.description.trim(),
+        video_url: trainingForm.video_url.trim() || undefined,
+        media_path: trainingForm.media_path.trim() || undefined,
+        media_type: trainingForm.media_type,
+        target_role: trainingForm.target_role,
+        category: trainingForm.category.trim() || 'پدافند و امنیت',
+        is_active: trainingForm.is_active
+      } : t));
+      triggerAlert(`دوره آموزشی «${trainingForm.title}» با موفقیت بروزرسانی شد.`);
+    } else {
+      const newTrainingObj: Training = {
+        id: `tr-${Date.now()}`,
+        title: trainingForm.title.trim(),
+        description: trainingForm.description.trim(),
+        video_url: trainingForm.video_url.trim() || undefined,
+        media_path: trainingForm.media_path.trim() || undefined,
+        media_type: trainingForm.media_type,
+        target_role: trainingForm.target_role,
+        is_active: trainingForm.is_active,
+        category: trainingForm.category.trim() || 'پدافند و امنیت',
+        created_at: '۱۴۰۳/۰۲/۲۵'
+      };
+      setTrainings(prev => [newTrainingObj, ...prev]);
+      triggerAlert(`دوره آموزشی جدید «${newTrainingObj.title}» ایجاد شد.`);
+    }
+
+    setShowTrainingModal(false);
+  };
+
+  const handleDeleteTraining = (t: Training) => {
+    if (window.confirm(`آیا از حذف دوره آموزشی «${t.title}» اطمینان دارید؟`)) {
+      setTrainings(prev => prev.filter(x => x.id !== t.id));
+      triggerAlert(`دوره آموزشی «${t.title}» با موفقیت حذف گردید.`);
+    }
+  };
+
+  const handleToggleTrainingActive = (t: Training) => {
+    setTrainings(prev => prev.map(x => x.id === t.id ? { ...x, is_active: !x.is_active } : x));
+    triggerAlert(`وضعیت دوره «${t.title}» به ${!t.is_active ? 'فعال' : 'غیرفعال'} تغییر یافت.`);
   };
 
   // CREATE NEW MEDAL
@@ -607,17 +1123,6 @@ export default function AdminPanel({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {onNavigate && (
-            <button
-              onClick={() => onNavigate('Home')}
-              className="group flex items-center gap-2 bg-gradient-to-r from-slate-900 to-cyan-950 hover:from-cyan-950 hover:to-blue-950 text-cyan-200 hover:text-white border border-cyan-500/50 hover:border-cyan-400 px-3.5 py-2 rounded-xl text-xs font-black transition-all shadow-[0_0_15px_rgba(6,182,212,0.25)] cursor-pointer"
-              title="بازگشت به صفحه اصلی سایت"
-            >
-              <ArrowRight size={16} className="text-amber-400 group-hover:-translate-x-1 transition-transform" />
-              <span>بازگشت به صفحه اصلی سایت</span>
-            </button>
-          )}
-
           <div className="flex items-center gap-2 font-mono text-xs text-amber-300 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-amber-900/60">
             <span>داور فعال: {currentUser.first_name} {currentUser.last_name}</span>
           </div>
@@ -766,6 +1271,19 @@ export default function AdminPanel({
           <Bell size={15} className="animate-bounce text-red-400" />
           <span>ارسال نوتیفیکیشن زنده (Push & Alert)</span>
           <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+        </button>
+
+        <button
+          onClick={() => setActiveAdminTab('portals')}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border relative ${
+            activeAdminTab === 'portals' 
+              ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 text-slate-950 border-emerald-400 font-black shadow-[0_0_20px_rgba(16,185,129,0.5)]' 
+              : 'bg-[#080d21] text-emerald-300 border-emerald-500/40 hover:border-emerald-400 hover:text-white'
+          }`}
+          id="btn-tab-portals"
+        >
+          <Gamepad2 size={15} className="text-emerald-400" />
+          <span>مدیریت درگاه‌ها و لینک‌دهی ({portals.length})</span>
         </button>
 
       </div>
@@ -1004,24 +1522,35 @@ export default function AdminPanel({
 
       {/* 2. USERS & SQUADS MANAGEMENT TAB */}
       {activeAdminTab === 'users' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#080d21] p-3.5 rounded-xl border border-slate-800">
-            <div className="relative w-full sm:w-64">
-              <Search size={16} className="absolute right-3 top-2.5 text-slate-500" />
-              <input
-                type="text"
-                value={userSearchTerm}
-                onChange={(e) => setUserSearchTerm(e.target.value)}
-                placeholder="جستجوی نام، کد اختصاصی، کد ملی..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg pr-9 pl-3 py-1.5 text-xs text-white"
-              />
+        <div className="space-y-5 dir-rtl font-sans">
+          {/* Header Action Bar */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#080d21] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                <Users size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white">مدیریت رزمندگان و کاربر سیستم ({filteredUsers.length} از {users.length})</h3>
+                <p className="text-xs text-slate-400 mt-0.5">افزایش، ویرایش، حذف و مشاهده کامل شناسنامه رزمندگان و فرماندهان</p>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap text-xs">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="relative flex-1 sm:w-64">
+                <Search size={15} className="absolute right-3 top-3 text-slate-500" />
+                <input
+                  type="text"
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  placeholder="جستجوی نام، کد اختصاصی، کد ملی..."
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-2xl pr-9 pl-3 py-2 text-xs text-white"
+                />
+              </div>
+
               <select
                 value={userGenderFilter}
                 onChange={(e) => setUserGenderFilter(e.target.value)}
-                className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1.5 rounded-lg"
+                className="bg-slate-950 border border-slate-800 focus:border-amber-500 text-slate-300 px-3 py-2 rounded-2xl text-xs cursor-pointer"
               >
                 <option value="all">همه جنسیت‌ها</option>
                 <option value="پسر">پسر</option>
@@ -1031,139 +1560,771 @@ export default function AdminPanel({
               <select
                 value={userRoleFilter}
                 onChange={(e) => setUserRoleFilter(e.target.value)}
-                className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1.5 rounded-lg"
+                className="bg-slate-950 border border-slate-800 focus:border-amber-500 text-slate-300 px-3 py-2 rounded-2xl text-xs cursor-pointer"
               >
                 <option value="all">همه نقش‌ها</option>
-                <option value="leader">فرمانده</option>
                 <option value="user">رزمنده انفرادی</option>
+                <option value="leader">فرمانده جوخه</option>
                 <option value="member">عضو جوخه</option>
-                <option value="admin">ادمین</option>
+                <option value="admin">ادمین کل</option>
               </select>
+
+              <button
+                onClick={handleOpenAddUser}
+                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black rounded-2xl text-xs shadow-[0_0_20px_rgba(245,158,11,0.3)] transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+              >
+                <UserPlus size={16} />
+                <span>افزودن کاربر جدید</span>
+              </button>
             </div>
           </div>
 
-          <div className="space-y-2">
-            {filteredUsers.map(u => (
-              <div key={u.id} className="bg-[#080d21] border border-slate-800 p-3.5 rounded-xl flex items-center justify-between gap-3 text-xs">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-white">{u.first_name} {u.last_name}</span>
-                    <span className="bg-red-950 text-red-300 border border-red-800 text-[10px] font-mono px-2 rounded">
-                      کد اختصاصی: {u.personal_code}
-                    </span>
-                    <span className="bg-slate-900 text-slate-400 text-[10px] px-1.5 rounded">{u.role}</span>
+          {/* Users List Grid / Table */}
+          <div className="space-y-3">
+            {filteredUsers.length === 0 ? (
+              <div className="bg-[#080d21] border border-slate-800 rounded-3xl p-8 text-center text-slate-400 space-y-2">
+                <Users size={32} className="mx-auto text-slate-600 animate-bounce" />
+                <p className="text-xs font-bold">هیچ کاربری با این مشخصات یافت نشد.</p>
+              </div>
+            ) : (
+              filteredUsers.map(u => {
+                const isUserAdmin = u.role === 'admin';
+                const isLeader = u.role === 'leader';
+                const isMember = u.role === 'member';
+                const squadInfo = u.group_id ? groups.find(g => g.id === u.group_id) : null;
+
+                return (
+                  <div
+                    key={u.id}
+                    className="bg-[#080d21] border border-slate-800 hover:border-slate-700 p-4 sm:p-5 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-200"
+                  >
+                    {/* User Profile Overview */}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center flex-wrap gap-2">
+                        <span className="text-sm font-black text-white">{u.first_name} {u.last_name}</span>
+                        
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${
+                          isUserAdmin
+                            ? 'bg-rose-500/20 text-rose-300 border-rose-500/50'
+                            : isLeader
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                            : isMember
+                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
+                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                        }`}>
+                          {isUserAdmin ? 'ادمین کل' : isLeader ? 'فرمانده' : isMember ? 'عضو جوخه' : 'رزمنده انفرادی'}
+                        </span>
+
+                        <span className="bg-slate-900 text-slate-300 border border-slate-800 text-[10px] font-mono px-2 py-0.5 rounded-lg flex items-center gap-1">
+                          <Hash size={11} className="text-amber-400" />
+                          کد اختصاصی: <strong className="text-amber-300">{u.personal_code}</strong>
+                        </span>
+
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border ${
+                          u.gender === 'دختر'
+                            ? 'bg-pink-950/60 text-pink-300 border-pink-800'
+                            : 'bg-blue-950/60 text-blue-300 border-blue-800'
+                        }`}>
+                          {u.gender || 'پسر'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-1 gap-x-4 text-xs text-slate-400 font-sans">
+                        <div className="flex items-center gap-1.5">
+                          <Shield size={13} className="text-slate-500 shrink-0" />
+                          <span>کد ملی: <strong className="text-slate-200 font-mono">{u.national_code}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Phone size={13} className="text-slate-500 shrink-0" />
+                          <span>موبایل: <strong className="text-slate-200 font-mono">{u.phone}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Building size={13} className="text-slate-500 shrink-0" />
+                          <span>مدرسه: <strong className="text-slate-200">{u.school_name || 'نامشخص'}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin size={13} className="text-slate-500 shrink-0" />
+                          <span>موقعیت: <strong className="text-slate-200">استان {u.province}، {u.city}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <BookOpen size={13} className="text-slate-500 shrink-0" />
+                          <span>مقطع/پایه: <strong className="text-slate-200">{u.education_level} ({u.grade})</strong></span>
+                        </div>
+                        {squadInfo && (
+                          <div className="flex items-center gap-1.5">
+                            <Users size={13} className="text-cyan-400 shrink-0" />
+                            <span>جوخه: <strong className="text-cyan-300">{squadInfo.name}</strong></span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* User Actions */}
+                    <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800 shrink-0">
+                      <button
+                        onClick={() => setViewingUserDetail(u)}
+                        className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                        title="مشاهده تمام اطلاعات رزمنده"
+                      >
+                        <Eye size={14} />
+                        <span>مشاهده مشخصات</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenEditUser(u)}
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/40 text-amber-300 hover:text-white transition cursor-pointer"
+                        title="ویرایش کاربر"
+                      >
+                        <Edit3 size={15} />
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteUser(u)}
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-rose-950 border border-slate-800 hover:border-rose-500/50 text-slate-400 hover:text-rose-400 transition cursor-pointer"
+                        title="حذف کاربر"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    کد ملی: <span className="font-mono">{u.national_code}</span> | موبایل: <span className="font-mono">{u.phone}</span> | استان {u.province} ({u.school_name})
-                  </p>
+                );
+              })
+            )}
+          </div>
+
+          {/* VIEW USER FULL DETAIL MODAL */}
+          {viewingUserDetail && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 dir-rtl">
+              <div
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                onClick={() => setViewingUserDetail(null)}
+              />
+
+              <div className="relative w-full max-w-2xl bg-[#081026] border border-cyan-500/40 rounded-3xl p-5 sm:p-7 shadow-2xl z-10 space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                
+                {/* Modal Header */}
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-slate-950 font-black flex items-center justify-center text-lg shadow-lg">
+                      {viewingUserDetail.first_name?.[0] || 'ر'}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-white">
+                        شناسنامه کامل: {viewingUserDetail.first_name} {viewingUserDetail.last_name}
+                      </h3>
+                      <p className="text-xs text-amber-300 font-mono">
+                        کد اختصاصی رزمنده: {viewingUserDetail.personal_code}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setViewingUserDetail(null)}
+                    className="p-1.5 rounded-xl bg-slate-900 text-slate-400 hover:text-white border border-slate-800 cursor-pointer"
+                  >
+                    <XCircle size={20} />
+                  </button>
                 </div>
 
-                <div className="text-left font-mono text-[11px] text-slate-400">
-                  تولد: {u.birth_date}
+                {/* Info Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">نام و نام خانوادگی:</span>
+                    <p className="text-white font-black text-sm">{viewingUserDetail.first_name} {viewingUserDetail.last_name}</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">کد اختصاصی (ورود):</span>
+                    <p className="text-amber-300 font-mono font-black text-sm">{viewingUserDetail.personal_code}</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">کد ملی:</span>
+                    <p className="text-cyan-300 font-mono font-bold">{viewingUserDetail.national_code || 'ثبت نشده'}</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">شماره تلفن همراه:</span>
+                    <p className="text-emerald-300 font-mono font-bold">{viewingUserDetail.phone || 'ثبت نشده'}</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">کلمه عبور:</span>
+                    <p className="text-rose-300 font-mono font-bold">{viewingUserDetail.password || '123'}</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">نقش در سامانه:</span>
+                    <p className="text-amber-200 font-bold">
+                      {viewingUserDetail.role === 'admin' ? 'ادمین کل' : viewingUserDetail.role === 'leader' ? 'فرمانده جوخه' : viewingUserDetail.role === 'member' ? 'عضو جوخه' : 'رزمنده انفرادی'}
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">جنسیت:</span>
+                    <p className="text-slate-200 font-bold">{viewingUserDetail.gender || 'پسر'}</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">تاریخ تولد:</span>
+                    <p className="text-slate-200 font-mono">{viewingUserDetail.birth_date || 'نامشخص'}</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">مقطع و پایه تحصیلی:</span>
+                    <p className="text-slate-200 font-bold">{viewingUserDetail.education_level} ({viewingUserDetail.grade})</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">نام مدرسه / دبیرستان:</span>
+                    <p className="text-slate-200 font-bold">{viewingUserDetail.school_name || 'ثبت نشده'}</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">استان و شهر:</span>
+                    <p className="text-slate-200 font-bold">استان {viewingUserDetail.province} - {viewingUserDetail.city}</p>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] text-slate-400 font-bold block">امتیازات و سطح فعلی:</span>
+                    <p className="text-amber-400 font-bold">{viewingUserDetail.points || 0} امتیاز • سطح {viewingUserDetail.level || 1}</p>
+                  </div>
+
+                  {viewingUserDetail.postal_code && (
+                    <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
+                      <span className="text-[11px] text-slate-400 font-bold block">کد پستی:</span>
+                      <p className="text-slate-200 font-mono">{viewingUserDetail.postal_code}</p>
+                    </div>
+                  )}
+
+                  {viewingUserDetail.address && (
+                    <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1 sm:col-span-2">
+                      <span className="text-[11px] text-slate-400 font-bold block">آدرس منزل / محل سکونت:</span>
+                      <p className="text-slate-200 leading-relaxed">{viewingUserDetail.address}</p>
+                    </div>
+                  )}
+
                 </div>
+
+                {/* Footer Buttons */}
+                <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-3">
+                  <button
+                    onClick={() => {
+                      const u = viewingUserDetail;
+                      setViewingUserDetail(null);
+                      handleOpenEditUser(u);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Edit3 size={15} />
+                    <span>ویرایش اطلاعات رزمنده</span>
+                  </button>
+
+                  <button
+                    onClick={() => setViewingUserDetail(null)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs border border-slate-800 cursor-pointer"
+                  >
+                    بستن
+                  </button>
+                </div>
+
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* CREATE / EDIT USER MODAL */}
+          {showUserModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 dir-rtl">
+              <div
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                onClick={() => setShowUserModal(false)}
+              />
+
+              <div className="relative w-full max-w-2xl bg-[#081026] border border-amber-500/40 rounded-3xl p-5 sm:p-7 shadow-2xl z-10 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <UserPlus size={20} className="text-amber-400" />
+                    <h3 className="text-lg font-black text-white">
+                      {editingUser ? `ویرایش کاربر «${editingUser.first_name} ${editingUser.last_name}»` : 'ثبت رزمنده / کاربر جدید'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowUserModal(false)}
+                    className="p-1.5 rounded-xl bg-slate-900 text-slate-400 hover:text-white border border-slate-800 cursor-pointer"
+                  >
+                    <XCircle size={18} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveUserSubmit} className="space-y-4">
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">
+                        نام <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="مثلاً: محمد"
+                        value={userForm.first_name}
+                        onChange={(e) => setUserForm({ ...userForm, first_name: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-xs text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">
+                        نام خانوادگی <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="مثلاً: رضایی"
+                        value={userForm.last_name}
+                        onChange={(e) => setUserForm({ ...userForm, last_name: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">
+                        کد اختصاصی ورود (۹ رقمی) <span className="text-amber-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="۹ رقم عددی"
+                        value={userForm.personal_code}
+                        onChange={(e) => setUserForm({ ...userForm, personal_code: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-xs text-amber-300 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">
+                        کد ملی (۱۰ رقم)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="کد ملی"
+                        value={userForm.national_code}
+                        onChange={(e) => setUserForm({ ...userForm, national_code: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-xs text-cyan-300 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">
+                        شماره همراه (موبایل)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="09123456789"
+                        value={userForm.phone}
+                        onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-xs text-emerald-300 font-mono dir-ltr"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">کلمه عبور</label>
+                      <input
+                        type="text"
+                        value={userForm.password}
+                        onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs text-white font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">نقش سیستم</label>
+                      <select
+                        value={userForm.role}
+                        onChange={(e: any) => setUserForm({ ...userForm, role: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-white"
+                      >
+                        <option value="user">رزمنده انفرادی</option>
+                        <option value="leader">فرمانده جوخه</option>
+                        <option value="member">عضو جوخه</option>
+                        <option value="admin">ادمین کل</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">جنسیت</label>
+                      <select
+                        value={userForm.gender}
+                        onChange={(e: any) => setUserForm({ ...userForm, gender: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-white"
+                      >
+                        <option value="پسر">پسر</option>
+                        <option value="دختر">دختر</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">مقطع تحصیلی</label>
+                      <select
+                        value={userForm.education_level}
+                        onChange={(e: any) => setUserForm({ ...userForm, education_level: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-white"
+                      >
+                        <option value="ابتدایی">ابتدایی</option>
+                        <option value="متوسطه اول">متوسطه اول</option>
+                        <option value="متوسطه دوم">متوسطه دوم</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">پایه تحصیلی</label>
+                      <input
+                        type="text"
+                        placeholder="مثلاً: هشتم"
+                        value={userForm.grade}
+                        onChange={(e) => setUserForm({ ...userForm, grade: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">تاریخ تولد</label>
+                      <input
+                        type="text"
+                        placeholder="1388/01/01"
+                        value={userForm.birth_date}
+                        onChange={(e) => setUserForm({ ...userForm, birth_date: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs text-white font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">استان</label>
+                      <input
+                        type="text"
+                        placeholder="استان"
+                        value={userForm.province}
+                        onChange={(e) => setUserForm({ ...userForm, province: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">شهر</label>
+                      <input
+                        type="text"
+                        placeholder="شهر"
+                        value={userForm.city}
+                        onChange={(e) => setUserForm({ ...userForm, city: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">نام مدرسه</label>
+                      <input
+                        type="text"
+                        placeholder="نام مدرسه"
+                        value={userForm.school_name}
+                        onChange={(e) => setUserForm({ ...userForm, school_name: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">کد پستی</label>
+                      <input
+                        type="text"
+                        placeholder="کد پستی ۱۰ رقمی"
+                        value={userForm.postal_code}
+                        onChange={(e) => setUserForm({ ...userForm, postal_code: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs text-white font-mono"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1">امتیاز اولیه</label>
+                        <input
+                          type="number"
+                          value={userForm.points}
+                          onChange={(e) => setUserForm({ ...userForm, points: Number(e.target.value) })}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-amber-300 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1">سطح اولیه</label>
+                        <input
+                          type="number"
+                          value={userForm.level}
+                          onChange={(e) => setUserForm({ ...userForm, level: Number(e.target.value) })}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-amber-300 font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">آدرس کامل منزل</label>
+                    <textarea
+                      rows={2}
+                      placeholder="آدرس دقیق محل سکونت..."
+                      value={userForm.address}
+                      onChange={(e) => setUserForm({ ...userForm, address: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs text-white"
+                    />
+                  </div>
+
+                  <div className="pt-3 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowUserModal(false)}
+                      className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs border border-slate-800 cursor-pointer"
+                    >
+                      انصراف
+                    </button>
+
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-lg flex items-center gap-2 cursor-pointer"
+                    >
+                      <Check size={16} />
+                      <span>{editingUser ? 'ذخیره بروزرسانی' : 'افزودن کاربر'}</span>
+                    </button>
+                  </div>
+
+                </form>
+
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 
-      {/* 3. MISSIONS CRUD TAB */}
+      {/* 3. MISSIONS CRUD & EDIT TAB */}
       {activeAdminTab === 'missions' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-sm font-black text-white">مدیریت مأموریت‌های عملیاتی</h3>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <Target className="text-red-500" size={20} />
+              <h3 className="text-sm font-black text-white">مدیریت و ویرایش مأموریت‌های عملیاتی</h3>
+              <span className="bg-red-950/80 text-red-300 text-[11px] font-bold px-2 py-0.5 rounded-full border border-red-800">
+                {missions.length} مأموریت
+              </span>
+            </div>
             <button
-              onClick={() => setShowNewMissionModal(true)}
-              className="bg-red-700 hover:bg-red-600 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5"
+              onClick={handleOpenAddMission}
+              className="bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow-lg shadow-red-950/50 flex items-center gap-2 cursor-pointer"
             >
               <Plus size={16} />
               <span>ایجاد مأموریت جدید</span>
             </button>
           </div>
 
-          {showNewMissionModal && (
-            <form onSubmit={handleCreateMission} className="bg-slate-950 border border-red-900/80 p-4 rounded-xl space-y-3">
-              <h4 className="text-xs font-bold text-red-400">تعریف مأموریت جدید:</h4>
-
-              <input
-                type="text"
-                placeholder="عنوان مأموریت"
-                value={newMission.title}
-                onChange={(e) => setNewMission({ ...newMission, title: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white"
-                required
-              />
-
-              <textarea
-                rows={3}
-                placeholder="شرح کامل دستورالعمل مأموریت..."
-                value={newMission.description}
-                onChange={(e) => setNewMission({ ...newMission, description: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white"
-                required
-              />
-
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  placeholder="سقف امتیاز (مثال: 100)"
-                  value={newMission.max_score}
-                  onChange={(e) => setNewMission({ ...newMission, max_score: parseInt(e.target.value, 10) || 100 })}
-                  className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white"
-                />
-                <input
-                  type="text"
-                  placeholder="لینک ویدیو یا رسانه آموزشی (اختیاری)"
-                  value={newMission.video_url}
-                  onChange={(e) => setNewMission({ ...newMission, video_url: e.target.value })}
-                  className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowNewMissionModal(false)}
-                  className="w-1/3 bg-slate-800 text-slate-300 text-xs font-bold py-2 rounded-lg"
-                >
-                  انصراف
-                </button>
-                <button
-                  type="submit"
-                  className="w-2/3 bg-red-700 hover:bg-red-600 text-white font-bold text-xs py-2 rounded-lg transition"
-                >
-                  ذخیره و انتشار مأموریت
-                </button>
-              </div>
-            </form>
-          )}
-
-          <div className="space-y-3">
+          {/* Missions List */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {missions.map(m => (
-              <div key={m.id} className="bg-[#080d21] border border-slate-800 p-4 rounded-xl flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-black text-sm text-white">{m.title}</h4>
-                    <span className="bg-amber-950 text-amber-300 text-[10px] font-mono px-2 py-0.5 rounded border border-amber-800">
-                      سقف: {m.max_score}
-                    </span>
+              <div key={m.id} className="bg-[#080d21] border border-slate-800 hover:border-slate-700 p-4 rounded-2xl flex flex-col justify-between gap-3 transition-all group">
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`w-2.5 h-2.5 rounded-full ${m.is_active !== false ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-600'}`} />
+                      <h4 className="font-black text-sm text-white group-hover:text-red-400 transition-colors">{m.title}</h4>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="bg-amber-950 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-800/80">
+                        سقف: {m.max_score}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${m.is_optional ? 'bg-cyan-950 text-cyan-300 border-cyan-800' : 'bg-rose-950 text-rose-300 border-rose-800'}`}>
+                        {m.is_optional ? 'اختیاری' : 'مأموریت اصلی'}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1 line-clamp-1">{m.description}</p>
+
+                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{m.description}</p>
+
+                  {m.video_url && (
+                    <div className="text-[11px] text-cyan-400 font-mono truncate bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 flex items-center gap-1.5">
+                      <Video size={13} className="shrink-0 text-cyan-400" />
+                      <span className="truncate">{m.video_url}</span>
+                    </div>
+                  )}
                 </div>
 
-                <button
-                  onClick={() => {
-                    setMissions(prev => prev.filter(x => x.id !== m.id));
-                    triggerAlert(`مأموریت "${m.title}" حذف شد.`);
-                  }}
-                  className="p-2 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-lg border border-rose-800 transition"
-                  title="حذف مأموریت"
-                >
-                  <Trash2 size={16} />
-                </button>
+                {/* Card Action Buttons */}
+                <div className="flex items-center justify-between border-t border-slate-800/80 pt-3 mt-1">
+                  <button
+                    onClick={() => handleToggleMissionActive(m)}
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition flex items-center gap-1 ${
+                      m.is_active !== false
+                        ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800 hover:bg-emerald-900'
+                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    <Eye size={13} />
+                    <span>{m.is_active !== false ? 'فعال (منتشرشده)' : 'غیرفعال (پیش‌نویس)'}</span>
+                  </button>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleOpenEditMission(m)}
+                      className="px-3 py-1.5 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 font-bold text-xs rounded-lg border border-cyan-800/80 transition flex items-center gap-1 cursor-pointer"
+                      title="ویرایش مأموریت"
+                    >
+                      <Edit3 size={14} />
+                      <span>ویرایش</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMission(m)}
+                      className="p-1.5 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-lg border border-rose-800 transition cursor-pointer"
+                      title="حذف مأموریت"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
+
+          {/* MISSION EDIT/CREATE MODAL */}
+          {showMissionModal && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl">
+              <div className="bg-[#090d20] border border-red-900/80 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="flex items-center justify-between bg-slate-950 px-5 py-4 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <Target className="text-red-500" size={20} />
+                    <h3 className="font-black text-sm text-white">
+                      {editingMission ? `ویرایش مأموریت: ${editingMission.title}` : 'تعریف مأموریت جدید'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowMissionModal(false)}
+                    className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveMissionSubmit} className="p-5 space-y-4 overflow-y-auto">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 block">عنوان مأموریت:</label>
+                    <input
+                      type="text"
+                      placeholder="مثال: عملیات احراز هویت سایبری..."
+                      value={missionForm.title}
+                      onChange={(e) => setMissionForm({ ...missionForm, title: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-red-500 outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-300 block">سقف امتیاز:</label>
+                      <input
+                        type="number"
+                        placeholder="100"
+                        value={missionForm.max_score}
+                        onChange={(e) => setMissionForm({ ...missionForm, max_score: parseInt(e.target.value, 10) || 100 })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-red-500 outline-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-300 block">نوع مأموریت:</label>
+                      <select
+                        value={missionForm.is_optional ? 'optional' : 'mandatory'}
+                        onChange={(e) => setMissionForm({ ...missionForm, is_optional: e.target.value === 'optional' })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-red-500 outline-none"
+                      >
+                        <option value="mandatory">اصلی / اجباری</option>
+                        <option value="optional">اختیاری / امتیازی</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-300 block">وضعیت انتشار:</label>
+                      <select
+                        value={missionForm.is_active ? 'active' : 'inactive'}
+                        onChange={(e) => setMissionForm({ ...missionForm, is_active: e.target.value === 'active' })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-red-500 outline-none"
+                      >
+                        <option value="active">فعال و قابل مشاهده</option>
+                        <option value="inactive">غیرفعال (پیش‌نویس)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 block">شرح کامل دستورالعمل مأموریت:</label>
+                    <textarea
+                      rows={4}
+                      placeholder="توضیحات مفصل در خصوص اهداف، نحوه ارسال فایل و قوانین مأموریت..."
+                      value={missionForm.description}
+                      onChange={(e) => setMissionForm({ ...missionForm, description: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-red-500 outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-300 block">لینک پوستر / عکس بنر (اختیاری):</label>
+                      <input
+                        type="text"
+                        placeholder="https://..."
+                        value={missionForm.banner_path}
+                        onChange={(e) => setMissionForm({ ...missionForm, banner_path: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-red-500 outline-none dir-ltr"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-300 block">لینک ویدیو یا رسانه آموزشی (اختیاری):</label>
+                      <input
+                        type="text"
+                        placeholder="https://..."
+                        value={missionForm.video_url}
+                        onChange={(e) => setMissionForm({ ...missionForm, video_url: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-red-500 outline-none dir-ltr"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setShowMissionModal(false)}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition cursor-pointer"
+                    >
+                      انصراف
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600 text-white font-bold text-xs rounded-xl transition shadow-lg flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Check size={16} />
+                      <span>{editingMission ? 'ذخیره تغییرات مأموریت' : 'ایجاد و انتشار مأموریت'}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1718,56 +2879,670 @@ export default function AdminPanel({
         </div>
       )}
 
-      {/* 6. TRAININGS CRUD TAB */}
+      {/* 6. TRAININGS CRUD & EDIT TAB */}
       {activeAdminTab === 'trainings' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-sm font-black text-white">مدیریت آموزش‌های آکادمی</h3>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <BookOpen className="text-cyan-400" size={20} />
+              <h3 className="text-sm font-black text-white">مدیریت و ویرایش دوره‌های آموزشی آکادمی</h3>
+              <span className="bg-cyan-950/80 text-cyan-300 text-[11px] font-bold px-2 py-0.5 rounded-full border border-cyan-800">
+                {trainings.length} دوره آموزشی
+              </span>
+            </div>
+            <button
+              onClick={handleOpenAddTraining}
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow-lg shadow-cyan-950/50 flex items-center gap-2 cursor-pointer"
+            >
+              <Plus size={16} />
+              <span>افزودن دوره آموزشی جدید</span>
+            </button>
           </div>
 
-          <div className="space-y-2">
+          {/* Trainings List */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {trainings.map(t => (
-              <div key={t.id} className="bg-[#080d21] border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
-                <div>
-                  <h4 className="font-black text-white">{t.title}</h4>
-                  <p className="text-slate-400 mt-0.5">مخاطب: {t.target_role} | دسته‌بندی: {t.category}</p>
+              <div key={t.id} className="bg-[#080d21] border border-slate-800 hover:border-slate-700 p-4 rounded-2xl flex flex-col justify-between gap-3 transition-all group">
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`w-2.5 h-2.5 rounded-full ${t.is_active !== false ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-600'}`} />
+                      <h4 className="font-black text-sm text-white group-hover:text-cyan-400 transition-colors">{t.title}</h4>
+                    </div>
+                    <span className="bg-cyan-950 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded border border-cyan-800/80">
+                      {t.category || 'عمومی'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{t.description}</p>
+
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 pt-1">
+                    <span className="bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-slate-300 font-bold">
+                      مخاطب: {t.target_role === 'all' ? 'همه رزمندگان' : t.target_role}
+                    </span>
+                    <span className="bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-slate-300 font-bold">
+                      نوع رسانه: {t.media_type || 'ویدیو'}
+                    </span>
+                  </div>
+
+                  {(t.video_url || t.media_path) && (
+                    <div className="text-[11px] text-cyan-400 font-mono truncate bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 flex items-center gap-1.5 dir-ltr">
+                      <Video size={13} className="shrink-0 text-cyan-400" />
+                      <span className="truncate">{t.video_url || t.media_path}</span>
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={() => {
-                    setTrainings(prev => prev.filter(x => x.id !== t.id));
-                    triggerAlert(`دوره "${t.title}" حذف شد.`);
-                  }}
-                  className="p-1.5 bg-rose-950 text-rose-300 rounded-lg border border-rose-800"
-                >
-                  <Trash2 size={14} />
-                </button>
+
+                {/* Action buttons */}
+                <div className="flex items-center justify-between border-t border-slate-800/80 pt-3 mt-1">
+                  <button
+                    onClick={() => handleToggleTrainingActive(t)}
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition flex items-center gap-1 ${
+                      t.is_active !== false
+                        ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800 hover:bg-emerald-900'
+                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    <Eye size={13} />
+                    <span>{t.is_active !== false ? 'فعال (منتشرشده)' : 'غیرفعال (پیش‌نویس)'}</span>
+                  </button>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleOpenEditTraining(t)}
+                      className="px-3 py-1.5 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 font-bold text-xs rounded-lg border border-cyan-800/80 transition flex items-center gap-1 cursor-pointer"
+                      title="ویرایش آموزش"
+                    >
+                      <Edit3 size={14} />
+                      <span>ویرایش</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTraining(t)}
+                      className="p-1.5 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-lg border border-rose-800 transition cursor-pointer"
+                      title="حذف آموزش"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
+
+          {/* TRAINING EDIT/CREATE MODAL */}
+          {showTrainingModal && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl">
+              <div className="bg-[#090d20] border border-cyan-900/80 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="flex items-center justify-between bg-slate-950 px-5 py-4 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="text-cyan-400" size={20} />
+                    <h3 className="font-black text-sm text-white">
+                      {editingTraining ? `ویرایش آموزش: ${editingTraining.title}` : 'افزودن دوره آموزشی جدید'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowTrainingModal(false)}
+                    className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveTrainingSubmit} className="p-5 space-y-4 overflow-y-auto">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 block">عنوان آموزش:</label>
+                    <input
+                      type="text"
+                      placeholder="مثال: اصول پدافند غیرعامل و امنیت شبکه..."
+                      value={trainingForm.title}
+                      onChange={(e) => setTrainingForm({ ...trainingForm, title: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-300 block">دسته‌بندی:</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: پدافند و امنیت"
+                        value={trainingForm.category}
+                        onChange={(e) => setTrainingForm({ ...trainingForm, category: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 outline-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-300 block">مخاطب هدف:</label>
+                      <select
+                        value={trainingForm.target_role}
+                        onChange={(e) => setTrainingForm({ ...trainingForm, target_role: e.target.value as TargetRole })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 outline-none"
+                      >
+                        <option value="all">همه کاربران / عمومی</option>
+                        <option value="student">دانش‌آموزان</option>
+                        <option value="teacher">معلمان / اساتید</option>
+                        <option value="commander">فرماندهان</option>
+                        <option value="squad_leader">سرگروه‌ها</option>
+                        <option value="admin">مدیران سیستم</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-300 block">نوع رسانه:</label>
+                      <select
+                        value={trainingForm.media_type}
+                        onChange={(e) => setTrainingForm({ ...trainingForm, media_type: e.target.value as any })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 outline-none"
+                      >
+                        <option value="video">ویدیو (Video)</option>
+                        <option value="audio">صوت (Audio)</option>
+                        <option value="document">سند / PDF</option>
+                        <option value="image">تصویر</option>
+                        <option value="iframe">ایفرم (Iframe)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 block">شرح و محتوای دوره آموزشی:</label>
+                    <textarea
+                      rows={4}
+                      placeholder="سرفصل‌ها و توضیحات کامل دوره..."
+                      value={trainingForm.description}
+                      onChange={(e) => setTrainingForm({ ...trainingForm, description: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 outline-none"
+                      required
+                    />
+                  </div>
+
+                  {/* Enhanced Dual Media Input: Link or File Upload */}
+                  <div className="space-y-2 bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                      <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                        <Video size={16} className="text-cyan-400" />
+                        <span>منبع ویدیو و محتوای دوره آموزشی:</span>
+                      </label>
+                      <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => setTrainingVideoMode('url')}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                            trainingVideoMode === 'url' ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          لینک ویدیو (URL)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTrainingVideoMode('upload')}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                            trainingVideoMode === 'upload' ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          <Upload size={13} />
+                          <span>آپلود مستقیم ویدیو</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {trainingVideoMode === 'url' ? (
+                      <div className="space-y-1">
+                        <input
+                          type="text"
+                          placeholder="آدرس اینترنتی مستقیم فایل ویدیو (مثال: https://.../video.mp4)..."
+                          value={trainingForm.video_url}
+                          onChange={(e) => setTrainingForm({ ...trainingForm, video_url: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-cyan-500 outline-none dir-ltr"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 bg-slate-900/60 rounded-xl p-4 text-center cursor-pointer transition relative group">
+                          <input
+                            type="file"
+                            accept="video/*,audio/*,image/*,.pdf,.doc,.docx"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                                setTrainingUploadedFileName(file.name);
+                                setTrainingUploadedFileSize(`${sizeMb} مگابایت`);
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  const result = event.target?.result as string;
+                                  setTrainingForm({
+                                    ...trainingForm,
+                                    video_url: result,
+                                    media_path: file.name
+                                  });
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          />
+                          <Upload className="mx-auto text-cyan-400 mb-1 group-hover:scale-110 transition-transform" size={24} />
+                          <p className="text-xs font-bold text-slate-200">برای انتخاب ویدیو کلیک کنید یا فایل را بکشید و رها کنید</p>
+                          <p className="text-[10px] text-slate-400 mt-1">پشتیبانی کامل از تمامی فرمت‌های MP4, WEBM, MOV, MP3, PDF</p>
+                        </div>
+                        {trainingUploadedFileName && (
+                          <div className="flex items-center justify-between bg-cyan-950/40 border border-cyan-500/30 rounded-xl px-3 py-2 text-xs">
+                            <span className="text-cyan-300 font-bold truncate dir-ltr">{trainingUploadedFileName} ({trainingUploadedFileSize})</span>
+                            <span className="text-emerald-400 text-[10px] font-bold">آپلود و آماده‌سازی شد ✓</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Instant Video Player Preview */}
+                    {(trainingForm.video_url || trainingForm.media_path) && (
+                      <div className="space-y-1 pt-1">
+                        <span className="text-[10px] font-bold text-slate-400 block">پیش‌نمایش زنده ویدیو و فایل:</span>
+                        <div className="rounded-xl overflow-hidden bg-black border border-slate-800">
+                          <video 
+                            src={trainingForm.video_url || trainingForm.media_path} 
+                            controls 
+                            className="w-full h-40 object-cover" 
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300 block">وضعیت انتشار:</label>
+                    <select
+                      value={trainingForm.is_active ? 'active' : 'inactive'}
+                      onChange={(e) => setTrainingForm({ ...trainingForm, is_active: e.target.value === 'active' })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-500 outline-none"
+                    >
+                      <option value="active">فعال و در دسترس</option>
+                      <option value="inactive">غیرفعال (پیش‌نویس)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setShowTrainingModal(false)}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition cursor-pointer"
+                    >
+                      انصراف
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs rounded-xl transition shadow-lg flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Check size={16} />
+                      <span>{editingTraining ? 'ذخیره تغییرات دوره' : 'ایجاد و انتشار دوره'}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* 7. SITE CONTENT & PAGES CMS TAB */}
       {activeAdminTab === 'site_editor' && (
         <div className="space-y-6">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <SlidersHorizontal className="text-amber-400 animate-pulse" size={18} />
-            <h3 className="text-sm font-black text-white">پنل مدیریت محتوای داینامیک سایت و صفحات</h3>
+          
+          {/* Main CMS Header Banner */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-cyan-950/80 to-slate-900 border border-cyan-500/40 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/50 flex items-center justify-center text-cyan-300 shadow-inner shrink-0">
+                <SlidersHorizontal size={24} className="animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                  <span>مدیریت جامع و هوشمند صفحه اصلی سایت (Home Page Live CMS)</span>
+                </h3>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  تمامی بنرها، عناوین، لوگو، ویدئوها و کلیدهای تعاملی صفحه اول را ویرایش، جابه‌جا و منتشر کنید.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
+              <button
+                onClick={() => setIsElementorOpen(true)}
+                className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-xl transition flex items-center justify-center gap-2 cursor-pointer animate-pulse"
+                id="btn-open-elementor-studio"
+              >
+                <Layout size={18} />
+                <span>ورود به استودیوی ویرایش دیداری المنتور (Elementor Studio)</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setSiteSettings({
+                    siteName: cmsSiteName,
+                    siteTagline: cmsSiteTagline,
+                    badgeText: cmsBadgeText,
+                    heroTitle: generalTitle,
+                    heroProgress: generalProgress,
+                    heroCountdown: generalCountdown,
+                    heroImage: generalImage,
+                    heroVideoUrl: heroVideoUrl,
+                    girlsBannerImage: girlsBannerImage,
+                    boysBannerImage: boysBannerImage,
+                    heroButtonText: generalBtnText,
+                    contactPhone: generalPhone,
+                    contactEmail: generalEmail,
+                    telegram: generalTelegram,
+                    baleLink: baleLink,
+                    eitaaLink: eitaaLink,
+                    address: generalAddress,
+                    aboutText: generalAboutText,
+                    prizeTitle: prizeTitle,
+                    prizeDescription: prizeDescription,
+                    homeButtons: homeButtons
+                  });
+                  triggerAlert('تمامی تغییرات، کلیدهای تعاملی و محتوای صفحه اصلی با موفقیت ذخیره و منتشر شد!');
+                }}
+                className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                id="btn-save-master-cms"
+              >
+                <Check size={18} />
+                <span>ذخیره نهایی و انتشار</span>
+              </button>
+            </div>
           </div>
 
-          {/* Grid Layout for CMS Sections */}
+          {/* DYNAMIC INTERACTIVE BUTTONS BUILDER SECTION */}
+          <div className="bg-[#080d21] border border-cyan-500/30 p-5 rounded-2xl space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="text-cyan-400" size={20} />
+                <div>
+                  <h4 className="font-extrabold text-sm text-white">مدیریت، چیدمان و ساخت کلیدهای تعاملی صفحه اصلی</h4>
+                  <p className="text-[11px] text-slate-400">ترتیب کلیدها، عنوان، آیکون، شکل، رنگ و صفحه مقصد را مستقیماً تنظیم کنید</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const newBtn: HomeButtonConfig = {
+                    id: `btn-${Date.now()}`,
+                    text: 'دکمه جدید صفحه اصلی',
+                    actionTab: 'Missions',
+                    iconName: 'Shield',
+                    shape: 'rounded-2xl',
+                    size: 'md',
+                    color: 'cyan',
+                    order: homeButtons.length + 1,
+                    isActive: true
+                  };
+                  setHomeButtons([...homeButtons, newBtn]);
+                  triggerAlert('دکمه جدید اضافه شد. تنظیمات آن را ویرایش کنید.');
+                }}
+                className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl transition flex items-center gap-1 cursor-pointer shadow"
+              >
+                <Plus size={16} />
+                <span>افزودن دکمه جدید</span>
+              </button>
+            </div>
+
+            {/* List of Configured Buttons with Up/Down Actions & Live Preview */}
+            <div className="space-y-3">
+              {homeButtons.sort((a,b) => a.order - b.order).map((btn, index) => {
+                const isFirst = index === 0;
+                const isLast = index === homeButtons.length - 1;
+
+                return (
+                  <div key={btn.id} className="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 space-y-3 transition hover:border-cyan-500/40">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-900 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-cyan-950 border border-cyan-500/40 text-cyan-400 text-xs font-black flex items-center justify-center">
+                          #{index + 1}
+                        </span>
+                        <span className="font-black text-xs text-white">{btn.text || 'بدون عنوان'}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${btn.isActive ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-rose-950 text-rose-300 border border-rose-800'}`}>
+                          {btn.isActive ? 'فعال در صفحه' : 'مخفی شده'}
+                        </span>
+                      </div>
+
+                      {/* Move Up / Move Down & Delete Controls */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          disabled={isFirst}
+                          onClick={() => {
+                            if (isFirst) return;
+                            const updated = [...homeButtons];
+                            const temp = updated[index];
+                            updated[index] = updated[index - 1];
+                            updated[index - 1] = temp;
+                            updated.forEach((b, i) => b.order = i + 1);
+                            setHomeButtons(updated);
+                          }}
+                          className={`p-1.5 rounded-lg border transition ${isFirst ? 'opacity-30 cursor-not-allowed bg-slate-900 border-slate-800 text-slate-600' : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-cyan-400'}`}
+                          title="انتقال به بالا (ترتیب جابه‌جایی)"
+                        >
+                          <ArrowUp size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isLast}
+                          onClick={() => {
+                            if (isLast) return;
+                            const updated = [...homeButtons];
+                            const temp = updated[index];
+                            updated[index] = updated[index + 1];
+                            updated[index + 1] = temp;
+                            updated.forEach((b, i) => b.order = i + 1);
+                            setHomeButtons(updated);
+                          }}
+                          className={`p-1.5 rounded-lg border transition ${isLast ? 'opacity-30 cursor-not-allowed bg-slate-900 border-slate-800 text-slate-600' : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-cyan-400'}`}
+                          title="انتقال به پایین (ترتیب جابه‌جایی)"
+                        >
+                          <ArrowDown size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (homeButtons.length <= 1) {
+                              triggerAlert('حداقل وجود یک دکمه در صفحه اصلی الزامی است.');
+                              return;
+                            }
+                            const updated = homeButtons.filter(b => b.id !== btn.id);
+                            updated.forEach((b, i) => b.order = i + 1);
+                            setHomeButtons(updated);
+                          }}
+                          className="p-1.5 bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded-lg transition"
+                          title="حذف دکمه"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Button Properties Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-slate-400 block">متن دکمه:</label>
+                        <input
+                          type="text"
+                          value={btn.text}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setHomeButtons(prev => prev.map(b => b.id === btn.id ? { ...b, text: val } : b));
+                          }}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-cyan-500 outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-slate-400 block">صفحه مقصد کلیک:</label>
+                        <select
+                          value={btn.actionTab}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setHomeButtons(prev => prev.map(b => b.id === btn.id ? { ...b, actionTab: val } : b));
+                          }}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-cyan-500 outline-none"
+                        >
+                          <option value="register">ورود و ثبت‌نام در مسابقه</option>
+                          <option value="Dashboard">پنل کاربری رزمنده</option>
+                          <option value="Missions">لیست مأموریت‌های عملیاتی</option>
+                          <option value="RewardsLeaderboard">جدول برترین‌ها و جوایز</option>
+                          <option value="Trainings">آکادمی دوره‌های آموزشی</option>
+                          <option value="SupportTicket">ارتباط و تیکت پشتیبانی</option>
+                          <option value="Vitrin">ویترین عمومی آثار</option>
+                          <option value="About">درباره ما و اهداف قرارگاه</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-slate-400 block">رنگ و پوسته دکمه:</label>
+                        <select
+                          value={btn.color}
+                          onChange={(e) => {
+                            const val = e.target.value as any;
+                            setHomeButtons(prev => prev.map(b => b.id === btn.id ? { ...b, color: val } : b));
+                          }}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-cyan-500 outline-none"
+                        >
+                          <option value="red">قرمز ستادی (Red)</option>
+                          <option value="cyan">فیروزه‌ای سایبری (Cyan)</option>
+                          <option value="amber">طلایی افتخار (Amber)</option>
+                          <option value="emerald">زمردی پیشرفت (Emerald)</option>
+                          <option value="purple">بنفش تاکتیکی (Purple)</option>
+                          <option value="slate">دودی تاریک (Slate)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-slate-400 block">شکل و انحنای گوشه‌ها:</label>
+                        <select
+                          value={btn.shape}
+                          onChange={(e) => {
+                            const val = e.target.value as any;
+                            setHomeButtons(prev => prev.map(b => b.id === btn.id ? { ...b, shape: val } : b));
+                          }}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-cyan-500 outline-none"
+                        >
+                          <option value="rounded-2xl">کپسولی نرم (Rounded 2XL)</option>
+                          <option value="rounded-full">بیضی کامل (Pill Rounded Full)</option>
+                          <option value="rounded-lg">مستطیلی شیک (Rounded LG)</option>
+                          <option value="rounded-3xl">خمیده تاکتیکی (Rounded 3XL)</option>
+                          <option value="rounded-xl">گوشه‌های گرد (Rounded XL)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1 border-t border-slate-900">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-slate-400 block">اندازه دکمه:</label>
+                        <select
+                          value={btn.size}
+                          onChange={(e) => {
+                            const val = e.target.value as any;
+                            setHomeButtons(prev => prev.map(b => b.id === btn.id ? { ...b, size: val } : b));
+                          }}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-cyan-500 outline-none"
+                        >
+                          <option value="sm">کوچک (Small)</option>
+                          <option value="md">متوسط (Medium)</option>
+                          <option value="lg">بزرگ و برجسته (Large)</option>
+                          <option value="full">عرض کامل (Full Width)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-slate-400 block">آیکون دکمه:</label>
+                        <select
+                          value={btn.iconName}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setHomeButtons(prev => prev.map(b => b.id === btn.id ? { ...b, iconName: val } : b));
+                          }}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-cyan-500 outline-none"
+                        >
+                          <option value="UserPlus">UserPlus (ثبت‌نام)</option>
+                          <option value="Shield">Shield (مأموریت)</option>
+                          <option value="Trophy">Trophy (جوایز)</option>
+                          <option value="Gem">Gem (کریستال)</option>
+                          <option value="Sparkles">Sparkles (جلوه)</option>
+                          <option value="BookOpen">BookOpen (آموزش)</option>
+                          <option value="MessageSquare">MessageSquare (پشتیبانی)</option>
+                          <option value="Phone">Phone (تماس)</option>
+                          <option value="Zap">Zap (پیشتاز)</option>
+                          <option value="Play">Play (ویدیو)</option>
+                          <option value="Star">Star (ستاره)</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-4">
+                        <input
+                          type="checkbox"
+                          id={`chk-btn-active-${btn.id}`}
+                          checked={btn.isActive}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setHomeButtons(prev => prev.map(b => b.id === btn.id ? { ...b, isActive: val } : b));
+                          }}
+                          className="w-4 h-4 rounded text-cyan-500 focus:ring-cyan-500 bg-slate-900 border-slate-700"
+                        />
+                        <label htmlFor={`chk-btn-active-${btn.id}`} className="text-xs font-bold text-slate-200 cursor-pointer">
+                          نمایش و انتشار دکمه در صفحه اصلی
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Grid Layout for General Site Content & Banners */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
             
-            {/* Column 1: General Settings & About Page */}
-            <div className="bg-[#080d21] border border-slate-800 p-4 rounded-2xl space-y-4">
+            {/* Column 1: General Brand, Logo, Banners & Hero Video */}
+            <div className="bg-[#080d21] border border-slate-800 p-4 rounded-2xl space-y-4 shadow-xl">
               <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
                 <FileText className="text-cyan-400" size={16} />
-                <h4 className="font-extrabold text-slate-200">تنظیمات هیرو هوم‌پیج و اطلاعات تماس</h4>
+                <h4 className="font-extrabold text-slate-200">مدیریت لوگو، عنوان، بنرها و ویدئوی اصلی هیرو</h4>
               </div>
 
               <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">عنوان اصلی سامانه:</label>
+                    <input 
+                      type="text" 
+                      value={cmsSiteName} 
+                      onChange={(e) => setCmsSiteName(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold block">متن مدال بالای لوگو:</label>
+                    <input 
+                      type="text" 
+                      value={cmsBadgeText} 
+                      onChange={(e) => setCmsBadgeText(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">عنوان مأموریت اصلی (هیرو):</label>
+                  <label className="text-slate-400 font-bold block">توضیحات کوتاه هدر (زیرعنوان هیرو):</label>
+                  <input 
+                    type="text" 
+                    value={cmsSiteTagline} 
+                    onChange={(e) => setCmsSiteTagline(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold block">عنوان اصلی مأموریت (هیرو):</label>
                   <input 
                     type="text" 
                     value={generalTitle} 
@@ -1776,18 +3551,95 @@ export default function AdminPanel({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">درصد پیشرفت هیرو (مثلا ۷۲٪):</label>
+                {/* Main Logo Path / Upload */}
+                <div className="space-y-1 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                  <label className="text-slate-300 font-bold block flex items-center justify-between">
+                    <span>آدرس تصویر لوگوی اصلی سایت:</span>
+                    <label className="text-cyan-400 text-[10px] cursor-pointer hover:underline flex items-center gap-1">
+                      <Upload size={11} />
+                      <span>انتخاب فایل لوگو</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => setGeneralImage(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </label>
+                  <input 
+                    type="text" 
+                    value={generalImage} 
+                    placeholder="آدرس URL یا مسیر لوگو..."
+                    onChange={(e) => setGeneralImage(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white font-mono text-[10px] dir-ltr"
+                  />
+                </div>
+
+                {/* Hero Video URL / Upload */}
+                <div className="space-y-1 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                  <label className="text-slate-300 font-bold block flex items-center justify-between">
+                    <span>آدرس ویدئوی اصلی معرفی قرارگاه (هیرو):</span>
+                    <label className="text-cyan-400 text-[10px] cursor-pointer hover:underline flex items-center gap-1">
+                      <Upload size={11} />
+                      <span>انتخاب ویدیو</span>
+                      <input 
+                        type="file" 
+                        accept="video/*" 
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => setHeroVideoUrl(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </label>
+                  <input 
+                    type="text" 
+                    value={heroVideoUrl} 
+                    placeholder="آدرس URL ویدئو (مثال: https://.../intro.mp4)..."
+                    onChange={(e) => setHeroVideoUrl(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white font-mono text-[10px] dir-ltr"
+                  />
+                </div>
+
+                {/* Girls & Boys Banners */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-1 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                    <label className="text-slate-300 font-bold text-[11px] block">بنر ثبت‌نام دختران:</label>
                     <input 
                       type="text" 
-                      value={generalProgress} 
-                      onChange={(e) => setGeneralProgress(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                      value={girlsBannerImage} 
+                      placeholder="آدرس تصویر بنر دختران..."
+                      onChange={(e) => setGirlsBannerImage(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-white text-[10px] dir-ltr"
                     />
                   </div>
+                  <div className="space-y-1 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                    <label className="text-slate-300 font-bold text-[11px] block">بنر ثبت‌نام پسران:</label>
+                    <input 
+                      type="text" 
+                      value={boysBannerImage} 
+                      placeholder="آدرس تصویر بنر پسران..."
+                      onChange={(e) => setBoysBannerImage(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-white text-[10px] dir-ltr"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">متن دکمه هیرو:</label>
+                    <label className="text-slate-400 font-bold block">متن دکمه بنر ثبت‌نام:</label>
                     <input 
                       type="text" 
                       value={generalBtnText} 
@@ -1795,68 +3647,74 @@ export default function AdminPanel({
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">تایمر روزانه (DAYS : HRS : MINS : SECS):</label>
+                    <label className="text-slate-400 font-bold block">درصد پیشرفت هیرو:</label>
                     <input 
                       type="text" 
-                      value={generalCountdown} 
-                      onChange={(e) => setGeneralCountdown(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">تلفن پشتیبانی ستاد:</label>
-                    <input 
-                      type="text" 
-                      value={generalPhone} 
-                      onChange={(e) => setGeneralPhone(e.target.value)}
+                      value={generalProgress} 
+                      onChange={(e) => setGeneralProgress(e.target.value)}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                {/* Social Messengers & Contact */}
+                <div className="border-t border-slate-800 pt-3 space-y-3">
+                  <h5 className="font-extrabold text-slate-200 text-xs flex items-center gap-1">
+                    <Phone size={14} className="text-cyan-400" />
+                    <span>پیام‌رسان‌های ایرانی و اطلاعات تماس:</span>
+                  </h5>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-slate-400 font-bold block">لینک بله (Bale):</label>
+                      <input 
+                        type="text" 
+                        value={baleLink} 
+                        onChange={(e) => setBaleLink(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-white font-mono text-[11px] dir-ltr"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-slate-400 font-bold block">لینک ایتا (Eitaa):</label>
+                      <input 
+                        type="text" 
+                        value={eitaaLink} 
+                        onChange={(e) => setEitaaLink(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-white font-mono text-[11px] dir-ltr"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-slate-400 font-bold block">تلفن پشتیبانی:</label>
+                      <input 
+                        type="text" 
+                        value={generalPhone} 
+                        onChange={(e) => setGeneralPhone(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-white"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-slate-400 font-bold block">ایمیل رسمی:</label>
+                      <input 
+                        type="text" 
+                        value={generalEmail} 
+                        onChange={(e) => setGeneralEmail(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-white font-mono"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">آی‌دی تلگرام / پیام‌رسان‌ها:</label>
+                    <label className="text-slate-400 font-bold block">آدرس حضوری ستاد مرکزی:</label>
                     <input 
                       type="text" 
-                      value={generalTelegram} 
-                      onChange={(e) => setGeneralTelegram(e.target.value)}
+                      value={generalAddress} 
+                      onChange={(e) => setGeneralAddress(e.target.value)}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">ایمیل رسمی قرارگاه:</label>
-                    <input 
-                      type="text" 
-                      value={generalEmail} 
-                      onChange={(e) => setGeneralEmail(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">آدرس تصویر هیرو سایت:</label>
-                  <input 
-                    type="text" 
-                    value={generalImage} 
-                    onChange={(e) => setGeneralImage(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono text-[10px]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">آدرس حضوری ستاد مرکزی:</label>
-                  <input 
-                    type="text" 
-                    value={generalAddress} 
-                    onChange={(e) => setGeneralAddress(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
                 </div>
 
                 <div className="space-y-1">
@@ -1868,29 +3726,6 @@ export default function AdminPanel({
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white leading-relaxed"
                   />
                 </div>
-
-                <button
-                  onClick={() => {
-                    setSiteSettings({
-                      heroTitle: generalTitle,
-                      heroProgress: generalProgress,
-                      heroCountdown: generalCountdown,
-                      heroImage: generalImage,
-                      heroButtonText: generalBtnText,
-                      contactPhone: generalPhone,
-                      contactEmail: generalEmail,
-                      telegram: generalTelegram,
-                      address: generalAddress,
-                      aboutText: generalAboutText
-                    });
-                    triggerAlert('تنظیمات عمومی و اطلاعات صفحات با موفقیت ذخیره و همگام‌سازی شد.');
-                  }}
-                  className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"
-                  id="btn-save-general-settings"
-                >
-                  <Check size={16} />
-                  <span>ذخیره کلیه تغییرات و اطلاعات عمومی</span>
-                </button>
               </div>
             </div>
 
@@ -2548,6 +4383,361 @@ export default function AdminPanel({
       {activeAdminTab === 'soundtracks' && (
         <AdminSoundtrackManager triggerAlert={triggerAlert} />
       )}
+
+      {/* 12. GAME PORTALS & LINKING MANAGER TAB */}
+      {activeAdminTab === 'portals' && (
+        <div className="space-y-6 dir-rtl font-sans">
+          
+          {/* Header Banner */}
+          <div className="bg-gradient-to-r from-[#091e2b] via-[#05131d] to-[#01060c] border border-emerald-500/30 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div className="space-y-2 relative z-10 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+                <Gamepad2 size={15} className="animate-pulse text-emerald-400" />
+                <span>مدیریت سامانه‌ها و لینک‌دهی درگاه‌های بازی</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white">
+                تعریف، ویرایش و اتصال لینک درگاه‌های مسابقه
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                در این بخش می‌توانید درگاه‌های مختلف بازی و رویداد را تعریف، لینک‌های مستقیم یا بیرونی را تنظیم کرده و وضعیت فعال‌سازی یا به‌زودی هر سامانه را مدیریت نمایید.
+              </p>
+            </div>
+
+            <button
+              onClick={handleOpenCreatePortal}
+              className="px-5 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black rounded-2xl text-xs sm:text-sm shadow-[0_0_25px_rgba(16,185,129,0.5)] transition flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+            >
+              <Plus size={18} />
+              <span>افزودن درگاه جدید</span>
+            </button>
+          </div>
+
+          {/* Portals Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {portals.map((portal) => {
+              const isActive = portal.status === 'active';
+              return (
+                <div
+                  key={portal.id}
+                  className={`bg-[#080d21] border rounded-3xl p-5 flex flex-col justify-between space-y-4 transition-all duration-300 relative overflow-hidden ${
+                    isActive
+                      ? 'border-emerald-500/40 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
+                      : 'border-slate-800 opacity-85'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    {/* Top Header */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-10 h-10 rounded-2xl p-2 flex items-center justify-center border ${
+                          isActive
+                            ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400'
+                            : 'bg-slate-900 border-slate-800 text-slate-500'
+                        }`}>
+                          <Gamepad2 size={20} />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-black text-white">{portal.title}</h3>
+                          <p className="text-[11px] text-amber-300 font-medium">{portal.subtitle}</p>
+                        </div>
+                      </div>
+
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${
+                        isActive
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                          : portal.status === 'coming_soon'
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                          : 'bg-rose-500/20 text-rose-300 border-rose-500/50'
+                      }`}>
+                        {portal.badgeText || (isActive ? 'فعال' : 'به‌زودی')}
+                      </span>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-xs text-slate-300 leading-relaxed min-h-[40px]">
+                      {portal.description}
+                    </p>
+
+                    {/* Link Box */}
+                    <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800/80 space-y-1.5 dir-ltr">
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono dir-rtl">
+                        <span className="flex items-center gap-1 font-bold">
+                          <LinkIcon size={12} className="text-emerald-400" />
+                          لینک اختصاصی درگاه:
+                        </span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-amber-300">
+                          {portal.targetAudience === 'girls' ? 'دختران' : portal.targetAudience === 'boys' ? 'پسران' : 'عمومی'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 pt-0.5">
+                        <code className="text-xs font-mono text-cyan-300 truncate font-semibold">
+                          {portal.link || '/journey'}
+                        </code>
+                        <button
+                          onClick={() => {
+                            if (portal.link) {
+                              navigator.clipboard.writeText(portal.link);
+                              triggerAlert('لینک درگاه در حافظه کپی شد.');
+                            }
+                          }}
+                          className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition cursor-pointer"
+                          title="کپی لینک"
+                        >
+                          <Copy size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleTogglePortalStatus(portal.id)}
+                        className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1 cursor-pointer ${
+                          isActive
+                            ? 'bg-amber-950/60 text-amber-300 border-amber-500/40 hover:bg-amber-900'
+                            : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900'
+                        }`}
+                        title="تغییر سریع وضعیت"
+                      >
+                        <RefreshCw size={12} />
+                        <span>{isActive ? 'تغییر به به‌زودی' : 'فعال‌سازی'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenEditPortal(portal)}
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-300 hover:text-white transition cursor-pointer"
+                        title="ویرایش و لینک‌دهی"
+                      >
+                        <Edit3 size={15} />
+                      </button>
+
+                      <button
+                        onClick={() => handleDeletePortal(portal.id, portal.title)}
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-rose-950/80 border border-slate-700 hover:border-rose-500/50 text-slate-400 hover:text-rose-400 transition cursor-pointer"
+                        title="حذف درگاه"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+
+                    {portal.link && (
+                      <a
+                        href={portal.link}
+                        target={portal.link.startsWith('http') ? '_blank' : '_self'}
+                        rel="noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1 transition"
+                      >
+                        <span>تست</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                  </div>
+
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Create / Edit Portal Modal */}
+          {showPortalModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 dir-rtl">
+              <div
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                onClick={() => setShowPortalModal(false)}
+              />
+
+              <div className="relative w-full max-w-xl bg-[#081026] border border-emerald-500/40 rounded-3xl p-5 sm:p-7 shadow-2xl z-10 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Gamepad2 size={20} className="text-emerald-400" />
+                    <h3 className="text-lg font-black text-white">
+                      {editingPortal ? `ویرایش درگاه «${editingPortal.title}»` : 'ایجاد درگاه جدید بازی'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowPortalModal(false)}
+                    className="p-1.5 rounded-xl bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                  >
+                    <XCircle size={18} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSavePortalSubmit} className="space-y-4">
+                  
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      عنوان درگاه (سامانه) <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="مثلاً: عملیات کهکشان، نبرد سایبری، اتاق جنگ"
+                      value={portalForm.title}
+                      onChange={(e) => setPortalForm({ ...portalForm, title: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      زیرعنوان / تیتر کوتاه
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثلاً: شبیه‌ساز فرماندهی ناوگان فضایی"
+                      value={portalForm.subtitle}
+                      onChange={(e) => setPortalForm({ ...portalForm, subtitle: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      آدرس لینک مستقیم (URL / مسیر هدایت) <span className="text-emerald-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثلاً: https://galaxy.warroom.ir یا /journey"
+                      value={portalForm.link}
+                      onChange={(e) => setPortalForm({ ...portalForm, link: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-cyan-300 font-mono dir-ltr"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      اگر لینک با http شروع شود کاربر به سایت خارجی هدایت می‌شود، در غیر این‌صورت وارد بخش داخلی برنامه می‌گردد.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">وضعیت فعال‌سازی</label>
+                      <select
+                        value={portalForm.status}
+                        onChange={(e: any) => setPortalForm({ ...portalForm, status: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-white"
+                      >
+                        <option value="active">فعال • در حال برگزاری</option>
+                        <option value="coming_soon">به‌زودی • فصل جدید</option>
+                        <option value="disabled">غیرفعال</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">مخاطبان هدف</label>
+                      <select
+                        value={portalForm.targetAudience}
+                        onChange={(e: any) => setPortalForm({ ...portalForm, targetAudience: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-white"
+                      >
+                        <option value="all">عمومی (دختران و پسران)</option>
+                        <option value="girls">اختصاصی دختران</option>
+                        <option value="boys">اختصاصی پسران</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">متن نشان (Badge)</label>
+                      <input
+                        type="text"
+                        placeholder="مثلاً: فعال • فصل ۱"
+                        value={portalForm.badgeText}
+                        onChange={(e) => setPortalForm({ ...portalForm, badgeText: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">برچسب درگاه (Tag)</label>
+                      <input
+                        type="text"
+                        placeholder="مثلاً: مسابقه اصلی"
+                        value={portalForm.tag}
+                        onChange={(e) => setPortalForm({ ...portalForm, tag: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">توضیحات درگاه</label>
+                    <textarea
+                      rows={3}
+                      placeholder="توضیحات مختصر درگاه برای نمایش به کاربران..."
+                      value={portalForm.description}
+                      onChange={(e) => setPortalForm({ ...portalForm, description: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs text-white"
+                    />
+                  </div>
+
+                  <div className="pt-3 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowPortalModal(false)}
+                      className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs border border-slate-800"
+                    >
+                      انصراف
+                    </button>
+
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs shadow-lg flex items-center gap-2 cursor-pointer"
+                    >
+                      <Check size={16} />
+                      <span>{editingPortal ? 'ذخیره تغییرات' : 'ایجاد درگاه'}</span>
+                    </button>
+                  </div>
+
+                </form>
+
+              </div>
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* Elementor Full-Page Visual Builder Modal */}
+      <ElementorVisualEditorModal
+        isOpen={isElementorOpen}
+        onClose={() => setIsElementorOpen(false)}
+        siteSettings={{
+          siteName: cmsSiteName,
+          siteTagline: cmsSiteTagline,
+          badgeText: cmsBadgeText,
+          heroTitle: generalTitle,
+          heroProgress: generalProgress,
+          heroCountdown: generalCountdown,
+          heroImage: generalImage,
+          heroVideoUrl: heroVideoUrl,
+          girlsBannerImage: girlsBannerImage,
+          boysBannerImage: boysBannerImage,
+          heroButtonText: generalBtnText,
+          contactPhone: generalPhone,
+          contactEmail: generalEmail,
+          telegram: generalTelegram,
+          baleLink: baleLink,
+          eitaaLink: eitaaLink,
+          address: generalAddress,
+          aboutText: generalAboutText,
+          prizeTitle: prizeTitle,
+          prizeDescription: prizeDescription,
+          homeButtons: homeButtons,
+          homeBlocks: siteSettings?.homeBlocks
+        }}
+        onSaveSiteSettings={(updated) => {
+          setSiteSettings(updated);
+          if (updated.homeButtons) setHomeButtons(updated.homeButtons);
+          triggerAlert('چیدمان و اطلاعات جدید صفحه اصلی با موفقیت ذخیره و منتشر شد!');
+        }}
+        homeAnnouncements={homeAnnouncements || []}
+        homeStats={homeStats || { activeMissions: 12, activeParticipants: 1450, completedMissions: 3200, totalCrystalsAwarded: 58000 }}
+        faqs={faqs || []}
+        currentUser={currentUser}
+      />
 
     </div>
   );
