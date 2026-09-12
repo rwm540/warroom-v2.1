@@ -4,10 +4,6 @@ import {
   CheckCircle2, 
   Lock, 
   Sparkles, 
-  Flag, 
-  Heart, 
-  Shield, 
-  Users, 
   BookOpen, 
   Compass, 
   ArrowLeft, 
@@ -52,9 +48,12 @@ import {
 import { User, Mission, MissionSubmission, Group, Medal, UserMedal } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
 import { getSavedPostIds } from '../data/vitrinData';
+import { getStageBadge } from '../data/stageBadges';
 import SavedVitrinReelsModal from './SavedVitrinReelsModal';
 import StageQuizModal from './StageQuizModal';
 import DailyChallengeModal from './DailyChallengeModal';
+// پس‌زمینه تاکتیکی نقشه و مراحل بازی (تصویر منتخب میدان نبرد)
+import tacticalMapBg from '../assets/images/tactical_war_map_background_1787351981076.jpg';
 
 interface JourneyViewProps {
   currentUser: User | null;
@@ -71,6 +70,8 @@ interface JourneyViewProps {
   userMedals?: UserMedal[];
   onUpdateAvatar?: (avatarUrl: string) => void;
   initialOpenProfile?: boolean;
+  /** نقشه تاکتیکی فقط داخل بورد مسیر بازی نمایش داده شود؛ پس‌زمینه کل صفحه همیشه همان بنفش قبلی است */
+  showMapBackground?: boolean;
 }
 
 export interface JourneyStage {
@@ -103,7 +104,8 @@ export default function JourneyView({
   medals = [],
   userMedals = [],
   onUpdateAvatar,
-  initialOpenProfile = false
+  initialOpenProfile = false,
+  showMapBackground = true
 }: JourneyViewProps) {
   const [selectedStage, setSelectedStage] = useState<JourneyStage | null>(null);
   const [activeTabSub, setActiveTabSub] = useState<'journey' | 'journal' | 'prayer'>('journey');
@@ -242,7 +244,7 @@ export default function JourneyView({
       description: 'گام نخست حضور در کاروان و حرکت در مسیر نورانی. در این مرحله رزمنده ثبت‌نام خود را قطعی کرده و با مرام‌نامه و اهداف آشنا می‌شود.',
       missionsCount: 2,
       completedMissions: 2,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: 0 // Top center
     },
     {
@@ -256,7 +258,7 @@ export default function JourneyView({
       description: 'کسب معرفت و بینش عمیق نسبت به آرمان‌ها. رزمنده در این مرحله با مطالعه متون راهنما و پاسخ به سوالات فکری، شایستگی لازم را احراز می‌کند.',
       missionsCount: 3,
       completedMissions: 3,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: -28 // Curves left
     },
     {
@@ -270,7 +272,7 @@ export default function JourneyView({
       description: 'آمادگی روحی، جسمی و تشکیلاتی جهت انجام عملیات‌های مشترک و فعالیت‌های جهادی.',
       missionsCount: 3,
       completedMissions: 3,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: 22 // Curves right
     },
     {
@@ -284,7 +286,7 @@ export default function JourneyView({
       description: 'مشارکت در خدمت‌رسانی به نیازمندان، توزیع ارزاق و اجرای برنامه‌های خیرخواهانه جهادی.',
       missionsCount: 4,
       completedMissions: 1,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: -22 // Curves left
     },
     {
@@ -298,7 +300,7 @@ export default function JourneyView({
       description: 'هم‌افزایی جوخه‌ای، تقویت پیوندهای برادری و هماهنگی عملیاتی با سایر ارکان ستاد.',
       missionsCount: 3,
       completedMissions: 0,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: 18 // Curves right
     },
     {
@@ -312,7 +314,7 @@ export default function JourneyView({
       description: 'تجدید بیعت با آرمان‌های والای شهدا و بهره‌مندی از فیوضات معنوی زیارت.',
       missionsCount: 3,
       completedMissions: 0,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: -18 // Curves left
     },
     {
@@ -326,31 +328,28 @@ export default function JourneyView({
       description: 'رسیدن به بالاترین مرتبه خادمی و سفارت جهادی، دریافت مدال زرین و گواهینامه معتبر ستاد.',
       missionsCount: 2,
       completedMissions: 0,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: 20 // Curves right
     }
   ];
 
-  // Helper to render Stage Icon based on design reference
+  // رندر نشان تصویری (بج سپر) هر مرحله — جایگزین آیکون‌های ساده قبلی
   const renderStageIcon = (iconName: string, status: string) => {
-    const iconSize = 20;
-    switch (iconName) {
-      case 'flag':
-        return <Flag size={iconSize} className={status === 'completed' ? 'text-emerald-300' : 'text-slate-300'} />;
-      case 'heart':
-        return <Heart size={iconSize} className={status === 'completed' ? 'text-emerald-300' : 'text-slate-300'} />;
-      case 'shield':
-        return <Shield size={iconSize} className={status === 'completed' ? 'text-emerald-300' : 'text-slate-300'} />;
-      case 'service':
-        return <Heart size={iconSize} className="text-amber-300" />;
-      case 'users':
-        return <Users size={iconSize} className="text-slate-400" />;
-      case 'shrine':
-        return <Sparkles size={iconSize} className="text-slate-400" />;
-      case 'trophy':
-      default:
-        return <Award size={iconSize} className="text-slate-400" />;
-    }
+    const badgeSrc = getStageBadge(iconName);
+    return (
+      <img
+        src={badgeSrc}
+        alt="نشان مرحله"
+        draggable={false}
+        className={`w-full h-full object-cover rounded-full transition-all duration-300 ${
+          status === 'locked'
+            ? 'grayscale opacity-60'
+            : status === 'in_progress'
+            ? 'opacity-95'
+            : 'opacity-100'
+        }`}
+      />
+    );
   };
 
   const handleStageClick = (stage: JourneyStage) => {
@@ -417,24 +416,7 @@ export default function JourneyView({
       }`}
     >
       
-      {/* Background Ambient Aura & Tactical Grid */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {isGirls ? (
-          <>
-            <div className="absolute top-0 inset-x-0 h-[35vh] bg-gradient-to-b from-[#020005] via-[#090112]/70 to-transparent" />
-            <div className="absolute -bottom-24 -left-20 w-[500px] h-[500px] blur-[140px] rounded-full bg-[#ff1389]/30" />
-            <div className="absolute -bottom-24 -right-20 w-[550px] h-[550px] blur-[150px] rounded-full bg-[#7c3aed]/35" />
-          </>
-        ) : (
-          <>
-            <div className="absolute top-0 inset-x-0 h-[45vh] bg-gradient-to-b from-[#000104] via-[#010309]/85 to-transparent" />
-            <div className="absolute -bottom-20 -left-20 w-[550px] sm:w-[700px] h-[550px] sm:h-[700px] blur-[130px] rounded-full bg-gradient-to-tr from-[#991b1b] via-[#dc2626] to-[#e11d48] opacity-70" />
-            <div className="absolute -bottom-20 -right-20 w-[600px] sm:w-[750px] h-[600px] sm:h-[750px] blur-[140px] rounded-full bg-gradient-to-tl from-[#1e40af] via-[#2563eb] to-[#3b82f6] opacity-75" />
-            <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 w-[550px] h-[350px] blur-[150px] rounded-full bg-[#581c87]/35" />
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:28px_28px] opacity-75" />
-          </>
-        )}
-      </div>
+      {/* پس‌زمینه تمام‌صفحه نقشه حذف شد — کل صفحه مسیر همان پس‌زمینه بنفش قبلی (atmosphere-bg) را دارد؛ نقشه فقط داخل بورد مسیر بازی است */}
 
       <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 pb-36 md:pb-16 px-1.5 sm:px-3 relative z-10">
 
@@ -667,7 +649,18 @@ export default function JourneyView({
         >
           
           <div className="relative w-full max-w-md mx-auto flex justify-center items-center py-2 min-h-[580px] sm:min-h-[540px] lg:min-h-[490px]">
-            
+
+            {/* نقشه تاکتیکی فقط داخل محدوده مسیر بازی — واضح، بدون لایه سیاه و فیکس در جای خودش */}
+            {showMapBackground && (
+              <>
+                <div
+                  className="absolute inset-0 rounded-3xl bg-cover bg-center pointer-events-none opacity-100 border border-amber-500/50 shadow-[0_0_40px_rgba(0,0,0,0.35)]"
+                  style={{ backgroundImage: `url(${tacticalMapBg})` }}
+                />
+                <div className="absolute inset-0 rounded-3xl pointer-events-none ring-2 ring-inset ring-amber-400/40" />
+              </>
+            )}
+
             {/* SVG Winding Road Path with Textured Glowing Curves */}
             <svg 
               className="absolute inset-0 w-full h-full pointer-events-none" 
@@ -791,8 +784,8 @@ export default function JourneyView({
                         onClick={() => handleStageClick(stage)}
                         className="flex flex-row items-center gap-1.5 sm:gap-2 cursor-pointer group select-none"
                       >
-                        {/* Circular Stage Emblem */}
-                        <div className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-lg ${
+                        {/* Circular Stage Emblem (نشان تصویری مرحله) */}
+                        <div className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-lg ${
                           isCompleted 
                             ? 'bg-[#06241a] border-2 border-emerald-400 shadow-[0_0_18px_rgba(16,185,129,0.7)]'
                             : isInProgress
@@ -800,7 +793,7 @@ export default function JourneyView({
                             : 'bg-[#101726] border-2 border-slate-700/80 shadow-[0_0_10px_rgba(0,0,0,0.6)] opacity-90'
                         }`}>
                           
-                          {/* Status Icon */}
+                          {/* Status Badge Image */}
                           {renderStageIcon(stage.iconName, stage.status)}
 
                           {/* Top Number Indicator Pin */}

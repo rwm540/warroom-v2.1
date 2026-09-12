@@ -349,6 +349,17 @@ export default function VitrinView({
     <div className="space-y-5 dir-rtl pb-28 max-w-4xl mx-auto px-2.5 sm:px-4 pt-1 font-sans select-none">
       {/* 2. Instagram Feed / Timeline Stream with 1-by-1 Post Lazy Loading */}
       <div className="max-w-xl mx-auto space-y-6">
+        {posts.length === 0 && (
+          <div className={`p-10 rounded-3xl border border-dashed text-center space-y-3 ${
+            isGirls ? 'border-fuchsia-500/30 bg-[#150220]/50' : 'border-blue-500/30 bg-[#060c20]/50'
+          }`}>
+            <Sparkles className={`mx-auto ${isGirls ? 'text-fuchsia-400' : 'text-cyan-400'}`} size={36} />
+            <p className="text-sm font-black text-white">ویترین آثار هنوز خالی است</p>
+            <p className="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
+              آثار ارسالی رزمندگان پس از ارزیابی و تأیید ستاد داوری، در این بخش به نمایش عمومی درمی‌آید. شما هم می‌توانید پاسخ مأموریت‌های خود را ارسال کنید تا اثر شما در ویترین منتشر شود.
+            </p>
+          </div>
+        )}
         {posts.slice(0, visiblePostsCount).map((post, postIndex) => {
           const isPlaying = playingVideoId === post.id;
           const postComments = commentsMap[post.id] || [];

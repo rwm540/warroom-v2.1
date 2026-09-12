@@ -210,6 +210,13 @@ export default function MissionsView({
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">فهرست مأموریت‌های فعال:</h3>
           
           <div className="space-y-2.5">
+            {missions.filter(m => m.is_active).length === 0 && (
+              <div className="p-6 rounded-xl border border-dashed border-slate-700 bg-[#080d21]/60 text-center space-y-2">
+                <Target className="mx-auto text-slate-600" size={28} />
+                <p className="text-xs text-slate-400 font-bold">هنوز مأموریت فعالی تعریف نشده است</p>
+                <p className="text-[10px] text-slate-500 leading-relaxed">مأموریت‌های عملیاتی توسط ستاد فرماندهی از طریق پنل مدیریت تعریف می‌شوند. به‌زودی اولین عملیات اعلام خواهد شد.</p>
+              </div>
+            )}
             {missions.filter(m => m.is_active).map(m => {
               const sub = submissions.find(s => s.mission_id === m.id && s.user_id === currentUser.id);
               const isSelected = m.id === selectedMission?.id;

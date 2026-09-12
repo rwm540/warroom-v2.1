@@ -34,7 +34,7 @@ import {
   initialNotifications 
 } from './data';
 
-import { 
+import {
   initialHomeAnnouncements, 
   homeStatsData, 
   faqsData, 
@@ -44,6 +44,9 @@ import {
   HomeStats, 
   FaqItem 
 } from './data/home';
+
+// Supabase Data Sync Layer (falls back to localStorage automatically)
+import { useSyncedCollection, useSyncedSetting } from './lib/supabaseData';
 
 // Static Base Views
 import HomeView from './components/HomeView';
@@ -149,53 +152,69 @@ export default function App() {
   const [showNotificationCenter, setShowNotificationCenter] = useState<boolean>(false);
   const [liveToastNotification, setLiveToastNotification] = useState<AppNotification | null>(null);
 
-  // Dynamic CMS States
-  const [siteSettings, setSiteSettings] = useState(() => {
-    const saved = localStorage.getItem('warroom_site_settings');
-    const parsed = saved ? JSON.parse(saved) : {};
-    return {
-      siteName: parsed.siteName || 'اتاق جنگ',
-      siteTagline: parsed.siteTagline || 'سامانه جامع مسابقات، مأموریت‌ها و ارزیابی هوشمند',
-      badgeText: parsed.badgeText || 'پرونده ماجراجویی هفت‌خوان',
-      heroTitle: parsed.heroTitle || 'مأموریت اصلی: مسابقه بزرگ اتاق جنگ',
-      heroProgress: parsed.heroProgress || '۷۲٪',
-      heroCountdown: parsed.heroCountdown || '۰۲:۱۴:۳۹:۱۵',
-      heroImage: parsed.heroImage || '',
-      heroVideoUrl: parsed.heroVideoUrl || '',
-      girlsBannerImage: parsed.girlsBannerImage || '',
-      boysBannerImage: parsed.boysBannerImage || '',
-      heroButtonText: parsed.heroButtonText || 'ورود و ثبت‌نام',
-      contactPhone: parsed.contactPhone || '۰۲۱-۸۸۹۹۷۷۶۶',
-      contactEmail: parsed.contactEmail || 'info@warroom.ir',
-      telegram: parsed.telegram || 'WarRoom_Support',
-      baleLink: parsed.baleLink || 'https://bale.ai/warroom',
-      eitaaLink: parsed.eitaaLink || 'https://eitaa.com/warroom',
-      address: parsed.address || 'تهران، بزرگراه شهید همت، ستاد مرکزی قرارگاه فضای مجازی',
-      aboutText: parsed.aboutText || 'پلتفرم اتاق جنگ یک سامانه تعاملی، رقابتی و آموزشی است که با هدف پرورش تفکر استراتژیک، افزایش توان تحلیل مسئله و تقویت روحیه کار تیمی در میان نوجوانان و جوانان طراحی شده است.',
-      prizeTitle: parsed.prizeTitle || 'جایزه‌ها و هدایای مسابقه بزرگ',
-      prizeDescription: parsed.prizeDescription || 'کریستال جمع کن و جایزه‌های نفیس اعم از کنسول بازی، تبلت و گوشی برنده شو!',
-      homeButtons: (parsed.homeButtons && Array.isArray(parsed.homeButtons) && parsed.homeButtons.length > 0) 
-        ? parsed.homeButtons 
-        : defaultHomeButtons,
-      homeBlocks: (parsed.homeBlocks && Array.isArray(parsed.homeBlocks) && parsed.homeBlocks.length > 0)
-        ? parsed.homeBlocks
-        : defaultHomeBlocks
-    };
+  // Dynamic CMS States (synced with Supabase when configured)
+  const [siteSettings, setSiteSettings] = useSyncedSetting<Record<string, any>>({
+    storageKey: 'warroom_site_settings',
+    settingKey: 'site_settings',
+    initial: () => {
+      let parsed: Record<string, any> = {};
+      try {
+        const saved = localStorage.getItem('warroom_site_settings');
+        parsed = saved ? JSON.parse(saved) : {};
+      } catch {}
+      return {
+        siteName: parsed.siteName || 'اتاق جنگ',
+        siteTagline: parsed.siteTagline || 'سامانه جامع مسابقات، مأموریت‌ها و ارزیابی هوشمند',
+        badgeText: parsed.badgeText || 'پرونده ماجراجویی هفت‌خوان',
+        heroTitle: parsed.heroTitle || 'مأموریت اصلی: مسابقه بزرگ اتاق جنگ',
+        heroProgress: parsed.heroProgress || '۷۲٪',
+        heroCountdown: parsed.heroCountdown || '۰۲:۱۴:۳۹:۱۵',
+        heroImage: parsed.heroImage || '',
+        heroVideoUrl: parsed.heroVideoUrl || '',
+        girlsBannerImage: parsed.girlsBannerImage || '',
+        boysBannerImage: parsed.boysBannerImage || '',
+        heroButtonText: parsed.heroButtonText || 'ورود و ثبت‌نام',
+        contactPhone: parsed.contactPhone || '۰۲۱-۸۸۹۹۷۷۶۶',
+        contactEmail: parsed.contactEmail || 'info@warroom.ir',
+        telegram: parsed.telegram || 'WarRoom_Support',
+        baleLink: parsed.baleLink || 'https://bale.ai/warroom',
+        eitaaLink: parsed.eitaaLink || 'https://eitaa.com/warroom',
+        address: parsed.address || 'تهران، بزرگراه شهید همت، ستاد مرکزی قرارگاه فضای مجازی',
+        aboutText: parsed.aboutText || 'پلتفرم اتاق جنگ یک سامانه تعاملی، رقابتی و آموزشی است که با هدف پرورش تفکر استراتژیک، افزایش توان تحلیل مسئله و تقویت روحیه کار تیمی در میان نوجوانان و جوانان طراحی شده است.',
+        prizeTitle: parsed.prizeTitle || 'جایزه‌ها و هدایای مسابقه بزرگ',
+        prizeDescription: parsed.prizeDescription || 'کریستال جمع کن و جایزه‌های نفیس اعم از کنسول بازی، تبلت و گوشی برنده شو!',
+        homeButtons: (parsed.homeButtons && Array.isArray(parsed.homeButtons) && parsed.homeButtons.length > 0) 
+          ? parsed.homeButtons 
+          : defaultHomeButtons,
+        homeBlocks: (parsed.homeBlocks && Array.isArray(parsed.homeBlocks) && parsed.homeBlocks.length > 0)
+          ? parsed.homeBlocks
+          : defaultHomeBlocks
+      };
+    }
   });
 
-  const [homeAnnouncements, setHomeAnnouncements] = useState<HomeAnnouncement[]>(() => {
-    const saved = localStorage.getItem('warroom_home_announcements');
-    return saved ? JSON.parse(saved) : initialHomeAnnouncements;
+  const [homeAnnouncements, setHomeAnnouncements] = useSyncedCollection<HomeAnnouncement>({
+    storageKey: 'warroom_home_announcements',
+    table: 'warroom_home_announcements',
+    initial: initialHomeAnnouncements
   });
 
-  const [homeStats, setHomeStats] = useState<HomeStats>(() => {
-    const saved = localStorage.getItem('warroom_home_stats');
-    return saved ? JSON.parse(saved) : homeStatsData;
+  const [homeStats, setHomeStats] = useSyncedSetting<HomeStats>({
+    storageKey: 'warroom_home_stats',
+    settingKey: 'home_stats',
+    initial: () => {
+      try {
+        const saved = localStorage.getItem('warroom_home_stats');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+      return homeStatsData;
+    }
   });
 
-  const [faqs, setFaqs] = useState<FaqItem[]>(() => {
-    const saved = localStorage.getItem('warroom_faqs');
-    return saved ? JSON.parse(saved) : faqsData;
+  const [faqs, setFaqs] = useSyncedCollection<FaqItem>({
+    storageKey: 'warroom_faqs',
+    table: 'warroom_faqs',
+    initial: faqsData
   });
 
   // Current Logged-in User with Full Persistence
@@ -362,71 +381,6 @@ export default function App() {
   const [showOnboardingTutorial, setShowOnboardingTutorial] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [alertNotification, setAlertNotification] = useState<string | null>(null);
-
-  // Sync to LocalStorage
-  useEffect(() => {
-    localStorage.setItem('warroom_users', JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_groups', JSON.stringify(groups));
-  }, [groups]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_missions', JSON.stringify(missions));
-  }, [missions]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_submissions', JSON.stringify(submissions));
-  }, [submissions]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_trainings', JSON.stringify(trainings));
-  }, [trainings]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_medals', JSON.stringify(medals));
-  }, [medals]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_user_medals', JSON.stringify(userMedals));
-  }, [userMedals]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_tickets', JSON.stringify(tickets));
-  }, [tickets]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_replies', JSON.stringify(replies));
-  }, [replies]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_announcements', JSON.stringify(announcements));
-  }, [announcements]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_news', JSON.stringify(news));
-  }, [news]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_site_settings', JSON.stringify(siteSettings));
-  }, [siteSettings]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_home_announcements', JSON.stringify(homeAnnouncements));
-  }, [homeAnnouncements]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_home_stats', JSON.stringify(homeStats));
-  }, [homeStats]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_faqs', JSON.stringify(faqs));
-  }, [faqs]);
-
-  useEffect(() => {
-    localStorage.setItem('warroom_notifications', JSON.stringify(notifications));
-  }, [notifications]);
 
   // Eligibility checker for real-time notifications
   const isEligibleForNotification = (notif: AppNotification, user: User | null) => {
@@ -864,6 +818,7 @@ export default function App() {
                     {(activeTab === 'Journey' || activeTab === 'Profile') && (
                       <JourneyView 
                         currentUser={currentUser}
+                        showMapBackground={activeTab === 'Journey'}
                         groups={groups}
                         medals={medals}
                         userMedals={userMedals}
@@ -999,9 +954,9 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Global Floating Android Mobile Bottom Navigation (Visible in all sections: User views & Admin) */}
+      {/* Global Floating Android Mobile Bottom Navigation (فقط در بخش‌های پنل — در صفحه اول سایت و صفحات عمومی اصلاً نمایش داده نمی‌شود) */}
       <AnimatePresence>
-        {!(isModalActive || showNotificationCenter || showGamePortal || showSquadModal || showProfileModal || showOnboardingTutorial) && !showAuthScreen && currentUser && (
+        {!(isModalActive || showNotificationCenter || showGamePortal || showSquadModal || showProfileModal || showOnboardingTutorial) && !showAuthScreen && currentUser && !['Home', 'About', 'Support', 'Contact'].includes(activeTab) && (
           <motion.div
             key="android-bottom-nav-container"
             initial={{ y: 90, opacity: 0 }}
