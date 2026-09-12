@@ -954,9 +954,9 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Global Floating Android Mobile Bottom Navigation (Visible in all sections: User views & Admin) */}
+      {/* Global Floating Android Mobile Bottom Navigation (فقط در بخش‌های پنل — در صفحه اول سایت و صفحات عمومی اصلاً نمایش داده نمی‌شود) */}
       <AnimatePresence>
-        {!(isModalActive || showNotificationCenter || showGamePortal || showSquadModal || showProfileModal || showOnboardingTutorial) && !showAuthScreen && currentUser && (
+        {!(isModalActive || showNotificationCenter || showGamePortal || showSquadModal || showProfileModal || showOnboardingTutorial) && !showAuthScreen && currentUser && !['Home', 'About', 'Support', 'Contact'].includes(activeTab) && (
           <motion.div
             key="android-bottom-nav-container"
             initial={{ y: 90, opacity: 0 }}

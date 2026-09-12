@@ -27,6 +27,10 @@ export default function AdventureHeroSection({
   const isGirls = themeMode === 'girls';
   const [logoError, setLogoError] = useState(false);
 
+  // کاربر واردشده (ثبت‌نام/ورود انجام شده) → دکمه با نام او نمایش داده می‌شود
+  const isLoggedIn = Boolean(currentUser);
+  const honorific = currentUser?.gender === 'دختر' ? 'خانم' : 'آقای';
+
   const logoSrc = siteSettings?.heroImage || warroomLogoJpg;
   const girlsBannerSrc = siteSettings?.girlsBannerImage || girlsBannerJpg;
   const boysBannerSrc = siteSettings?.boysBannerImage || boysBannerJpg;
@@ -34,7 +38,12 @@ export default function AdventureHeroSection({
   const badgeText = siteSettings?.badgeText || 'اتاق جنگ';
 
   const handleBannerAction = () => {
-    onOpenRegister();
+    if (currentUser) {
+      // کاربر شناسایی شده → ورود مستقیم به پنل
+      onGoToDashboard?.();
+    } else {
+      onOpenRegister();
+    }
   };
 
   return (
@@ -103,16 +112,27 @@ export default function AdventureHeroSection({
               : 'from-[#010207]/95 via-[#020512]/45 to-transparent group-hover:from-[#010207]/90'
           }`} />
 
-          {/* Bottom Action Centerpiece (ثبت‌نام فقط با آیکون بدون نوشته اضافه زیرش) */}
+          {/* Bottom Action Centerpiece (مهمان: ثبت‌نام | کاربر واردشده: نام او + دعوت به ورود به پنل) */}
           <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 flex flex-col items-center justify-center px-4 z-10">
-            <div className={`px-7 sm:px-12 py-3 sm:py-3.5 rounded-2xl font-black text-sm sm:text-base border shadow-2xl flex items-center gap-3 transition transform group-hover:scale-105 cursor-pointer ${
+            <div className={`px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm border shadow-2xl flex items-center gap-2.5 sm:gap-3 transition transform group-hover:scale-105 cursor-pointer max-w-full text-center ${
               isGirls
                 ? 'girls-button-neon text-white border-pink-200/50 shadow-[0_0_35px_rgba(255,19,137,0.85)]'
                 : 'boys-button-tactical text-white border-blue-200/50 shadow-[0_0_35px_rgba(37,99,235,0.85)]'
             }`}>
-              <UserPlus size={22} className="group-hover:rotate-12 transition-transform" />
-              <span className="tracking-wide">ثبت‌نام</span>
-              <ArrowLeft size={18} className="group-hover:translate-x-[-4px] transition-transform" />
+              {isLoggedIn ? (
+                <LayoutDashboard size={22} className="shrink-0 group-hover:rotate-6 transition-transform" />
+              ) : (
+                <UserPlus size={22} className="shrink-0 group-hover:rotate-12 transition-transform" />
+              )}
+              {isLoggedIn && currentUser ? (
+                <span className="tracking-wide leading-snug py-0.5">
+                  <span>{honorific} {currentUser.first_name} {currentUser.last_name}</span>
+                  <span className="block text-[10px] sm:text-xs font-bold opacity-90 mt-0.5">برای ورود به پنل کلیک کنید</span>
+                </span>
+              ) : (
+                <span className="tracking-wide">ثبت‌نام</span>
+              )}
+              <ArrowLeft size={18} className="shrink-0 group-hover:translate-x-[-4px] transition-transform" />
             </div>
           </div>
 
