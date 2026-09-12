@@ -55,6 +55,8 @@ import { getSavedPostIds } from '../data/vitrinData';
 import SavedVitrinReelsModal from './SavedVitrinReelsModal';
 import StageQuizModal from './StageQuizModal';
 import DailyChallengeModal from './DailyChallengeModal';
+// پس‌زمینه تاکتیکی نقشه و مراحل بازی (تصویر منتخب میدان نبرد)
+import tacticalMapBg from '../assets/images/tactical_war_map_background_1787351981076.jpg';
 
 interface JourneyViewProps {
   currentUser: User | null;
@@ -242,7 +244,7 @@ export default function JourneyView({
       description: 'گام نخست حضور در کاروان و حرکت در مسیر نورانی. در این مرحله رزمنده ثبت‌نام خود را قطعی کرده و با مرام‌نامه و اهداف آشنا می‌شود.',
       missionsCount: 2,
       completedMissions: 2,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: 0 // Top center
     },
     {
@@ -256,7 +258,7 @@ export default function JourneyView({
       description: 'کسب معرفت و بینش عمیق نسبت به آرمان‌ها. رزمنده در این مرحله با مطالعه متون راهنما و پاسخ به سوالات فکری، شایستگی لازم را احراز می‌کند.',
       missionsCount: 3,
       completedMissions: 3,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: -28 // Curves left
     },
     {
@@ -270,7 +272,7 @@ export default function JourneyView({
       description: 'آمادگی روحی، جسمی و تشکیلاتی جهت انجام عملیات‌های مشترک و فعالیت‌های جهادی.',
       missionsCount: 3,
       completedMissions: 3,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: 22 // Curves right
     },
     {
@@ -284,7 +286,7 @@ export default function JourneyView({
       description: 'مشارکت در خدمت‌رسانی به نیازمندان، توزیع ارزاق و اجرای برنامه‌های خیرخواهانه جهادی.',
       missionsCount: 4,
       completedMissions: 1,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: -22 // Curves left
     },
     {
@@ -298,7 +300,7 @@ export default function JourneyView({
       description: 'هم‌افزایی جوخه‌ای، تقویت پیوندهای برادری و هماهنگی عملیاتی با سایر ارکان ستاد.',
       missionsCount: 3,
       completedMissions: 0,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: 18 // Curves right
     },
     {
@@ -312,7 +314,7 @@ export default function JourneyView({
       description: 'تجدید بیعت با آرمان‌های والای شهدا و بهره‌مندی از فیوضات معنوی زیارت.',
       missionsCount: 3,
       completedMissions: 0,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: -18 // Curves left
     },
     {
@@ -326,7 +328,7 @@ export default function JourneyView({
       description: 'رسیدن به بالاترین مرتبه خادمی و سفارت جهادی، دریافت مدال زرین و گواهینامه معتبر ستاد.',
       missionsCount: 2,
       completedMissions: 0,
-      bgThemeUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80',
+      bgThemeUrl: tacticalMapBg,
       xOffsetPercent: 20 // Curves right
     }
   ];
@@ -417,8 +419,14 @@ export default function JourneyView({
       }`}
     >
       
-      {/* Background Ambient Aura & Tactical Grid */}
+      {/* Background Ambient Aura & Tactical Grid + War Map Backdrop */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        {/* نقشه تاکتیکی جنگ — پس‌زمینه ثابت بخش نقشه و مراحل بازی */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-[0.14]"
+          style={{ backgroundImage: `url(${tacticalMapBg})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#01040f]/80 via-[#01040f]/40 to-[#01040f]/90" />
         {isGirls ? (
           <>
             <div className="absolute top-0 inset-x-0 h-[35vh] bg-gradient-to-b from-[#020005] via-[#090112]/70 to-transparent" />
@@ -667,7 +675,15 @@ export default function JourneyView({
         >
           
           <div className="relative w-full max-w-md mx-auto flex justify-center items-center py-2 min-h-[580px] sm:min-h-[540px] lg:min-h-[490px]">
-            
+
+            {/* بورد تاکتیکی نقشه — تصویر میدان نبرد پشت مسیر مراحل */}
+            <div
+              className="absolute inset-0 rounded-3xl bg-cover bg-center pointer-events-none opacity-45 border border-amber-500/20 shadow-[0_0_40px_rgba(0,0,0,0.7)]"
+              style={{ backgroundImage: `url(${tacticalMapBg})` }}
+            />
+            <div className="absolute inset-0 rounded-3xl pointer-events-none bg-gradient-to-b from-[#020617]/70 via-transparent to-[#020617]/80" />
+            <div className="absolute inset-0 rounded-3xl pointer-events-none ring-1 ring-inset ring-white/10" />
+
             {/* SVG Winding Road Path with Textured Glowing Curves */}
             <svg 
               className="absolute inset-0 w-full h-full pointer-events-none" 

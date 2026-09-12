@@ -29,6 +29,9 @@ export default function StudentShowcaseSection({ onOpenAuth }: StudentShowcaseSe
   const [activeItem, setActiveItem] = useState<StudentShowcase | null>(null);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
+  // اگر هیچ اثری ثبت نشده باشد، کل بخش مخفی می‌شود (تا صفحه اصلی خالی به نظر نرسد)
+  const hideSection = showcases.length === 0;
+
   useEffect(() => {
     if (activeItem) {
       window.dispatchEvent(new CustomEvent('warroom_modal_active_change', { detail: { active: true } }));
@@ -37,6 +40,8 @@ export default function StudentShowcaseSection({ onOpenAuth }: StudentShowcaseSe
       };
     }
   }, [activeItem]);
+
+  if (hideSection) return null;
 
   const categories = [
     'all',

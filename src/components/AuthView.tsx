@@ -20,6 +20,7 @@ import {
   HelpCircle,
   Phone,
   RefreshCw,
+  ChevronDown,
   X
 } from 'lucide-react';
 import { User, Group, RoleType, Gender } from '../types';
@@ -32,6 +33,7 @@ import {
 } from '../utils/jalali';
 import PersianDatePicker from './PersianDatePicker';
 import warroomLogoJpg from '../assets/images/warroom_logo_1787906676836.jpg';
+import { isSupabaseEnabled, sha256Hex } from '../lib/supabaseData';
 
 interface AuthViewProps {
   users: User[];
@@ -179,7 +181,7 @@ export default function AuthView({
   const [forgotMessage, setForgotMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
 
   // Handle Unified Register Submission
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegisterError(null);
 
@@ -218,6 +220,9 @@ export default function AuthView({
     setIsSubmitting(true);
 
     const personalCode = generatePersonalCode();
+    const rawPassword = registerForm.password.trim();
+    // در حالت Supabase رمزها به‌صورت هش SHA-256 ذخیره می‌شوند
+    const storedPassword = isSupabaseEnabled ? await sha256Hex(rawPassword) : rawPassword;
     const newUser: User = {
       id: `warroom-user-${Date.now()}`,
       first_name: firstName,
@@ -231,7 +236,7 @@ export default function AuthView({
       grade: 'هشتم',
       gender: selectedGender,
       birth_date: birthDate,
-      password: registerForm.password.trim(),
+      password: storedPassword,
       role: 'user',
       personal_code: personalCode,
       avatar_url: isGirls
@@ -252,7 +257,7 @@ export default function AuthView({
   };
 
   // Handle Login Submission
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
 
@@ -268,8 +273,9 @@ export default function AuthView({
     );
 
     if (user) {
-      // If user has password and user provided password check
-      if (user.password && loginPassword && user.password !== loginPassword && loginPassword !== '123456' && loginPassword !== '123') {
+      // رمز عبور: در حالت Supabase هش SHA-256 مقایسه می‌شود، در حالت محلی متن ساده
+      const suppliedPassword = isSupabaseEnabled ? await sha256Hex(loginPassword) : loginPassword;
+      if (user.password && loginPassword && user.password !== suppliedPassword) {
         setLoginError('رمز عبور وارد شده صحیح نیست. از گزینه فراموشی رمز عبور استفاده کنید.');
         return;
       }
@@ -304,7 +310,7 @@ export default function AuthView({
   };
 
   // Handle Forgot Password Step 2 (Update password)
-  const handleForgotReset = (e: React.FormEvent) => {
+  const handleForgotReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotNewPassword || forgotNewPassword.length < 4) {
       setForgotMessage({ type: 'error', text: 'رمز عبور جدید باید حداقل ۴ رقم/حرف باشد.' });
@@ -312,9 +318,10 @@ export default function AuthView({
     }
 
     const natId = normalizeToEnglishDigits(forgotNationalId.trim());
+    const hashedPassword = isSupabaseEnabled ? await sha256Hex(forgotNewPassword) : forgotNewPassword;
     setUsers(prev => prev.map(u => 
       normalizeToEnglishDigits(u.national_code) === natId 
-        ? { ...u, password: forgotNewPassword } 
+        ? { ...u, password: hashedPassword } 
         : u
     ));
 
@@ -745,6 +752,30 @@ export default function AuthView({
               <span>ورود مستقیم به بازی</span>
               <ArrowLeft size={16} />
             </button>
+
+            {/* حساب پیش‌فرض مدیر سامانه (تنها حساب پیش‌فرض ورود به پنل مدیریت) */}
+            <details className="group rounded-xl border border-slate-700/60 bg-slate-950/50 overflow-hidden">
+              <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer select-none text-[10px] font-bold text-slate-400 hover:text-slate-200 transition list-none">
+                <span className="flex items-center gap-1.5">
+                  <Shield size={12} className="text-amber-400" />
+                  ورود مدیر سامانه (پنل مدیریت)
+                </span>
+                <ChevronDown size={12} className="transition group-open:rotate-180" />
+              </summary>
+              <div className="px-3 pb-2.5 pt-1 space-y-1.5 border-t border-slate-800/80">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-slate-500">کد ملی مدیر:</span>
+                  <code className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-cyan-300 font-mono tracking-wider" dir="ltr">0012345678</code>
+                </div>
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-slate-500">رمز عبور پیش‌فرض:</span>
+                  <code className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-amber-300 font-mono tracking-wider" dir="ltr">admin</code>
+                </div>
+                <p className="text-[9px] text-slate-600 leading-relaxed pt-0.5">
+                  پس از نخستین ورود، رمز عبور را از بخش مدیریت کاربران تغییر دهید.
+                </p>
+              </div>
+            </details>
 
           </form>
         )}
