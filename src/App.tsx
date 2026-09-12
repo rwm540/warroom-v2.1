@@ -57,9 +57,6 @@ import LoadingScreen from './components/LoadingScreen';
 import BackgroundMusic from './components/BackgroundMusic';
 import PersistentMusicBar from './components/PersistentMusicBar';
 
-// پس‌زمینه نقشه تاکتیکی — فقط برای پنل ادمین
-import tacticalMapBg from './assets/images/tactical_war_map_background_1787351981076.jpg';
-
 // Core Views - Imported directly for zero-latency, instant tab switching
 import DashboardView from './components/DashboardView';
 import JourneyView from './components/JourneyView';
@@ -584,15 +581,7 @@ export default function App() {
       <BackgroundMusic />
 
       {/* Dynamic Background Atmosphere */}
-      {isAdminMode ? (
-        /* پس‌زمینه پنل ادمین: نقشه تاکتیکی جنگ — واضح و فیکس (فقط بخش ادمین) */
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-100"
-            style={{ backgroundImage: `url(${tacticalMapBg})` }}
-          />
-        </div>
-      ) : isGirlsTheme ? (
+      {isGirlsTheme ? (
         /* Girls Wallpaper Atmosphere: Obsidian top, Neon Magenta bottom-left, Royal Violet bottom-right */
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
           <div className="absolute top-0 inset-x-0 h-[40vh] bg-gradient-to-b from-[#020005] via-[#080110]/60 to-transparent" />
@@ -779,8 +768,6 @@ export default function App() {
 
             {/* Main Content Body */}
             <main className={`flex-1 w-full mx-auto ${
-              isAdminMode ? 'relative z-10 ' : ''
-            }${
               activeTab === 'Journey'
                 ? 'max-w-full px-0 py-0 flex flex-col h-[calc(100vh-64px)] overflow-hidden'
                 : 'max-w-7xl px-4 md:px-8 pt-5 pb-28 md:pb-8'
