@@ -70,6 +70,8 @@ interface JourneyViewProps {
   userMedals?: UserMedal[];
   onUpdateAvatar?: (avatarUrl: string) => void;
   initialOpenProfile?: boolean;
+  /** نقشه تاکتیکی فقط در صفحه مسیر بازی نمایش داده شود (پروفایل/پنل کاربری: پس‌زمینه بنفش قبلی) */
+  showMapBackground?: boolean;
 }
 
 export interface JourneyStage {
@@ -102,7 +104,8 @@ export default function JourneyView({
   medals = [],
   userMedals = [],
   onUpdateAvatar,
-  initialOpenProfile = false
+  initialOpenProfile = false,
+  showMapBackground = true
 }: JourneyViewProps) {
   const [selectedStage, setSelectedStage] = useState<JourneyStage | null>(null);
   const [activeTabSub, setActiveTabSub] = useState<'journey' | 'journal' | 'prayer'>('journey');
@@ -413,16 +416,18 @@ export default function JourneyView({
       }`}
     >
       
-      {/* Background: Tactical War Map — کاملاً واضح، بدون لایه سیاه */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {/* نقشه تاکتیکی جنگ — پس‌زمینه ثابت بخش نقشه و مراحل بازی (شفافیت کامل) */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-100"
-          style={{ backgroundImage: `url(${tacticalMapBg})` }}
-        />
-        {/* تینت بسیار ملایم تم دخترانه/پسرانه (بدون تیرگی) */}
-        {isGirls && <div className="absolute inset-0 bg-fuchsia-500/[0.06]" />}
-      </div>
+      {/* Background: Tactical War Map — فقط در صفحه مسیر بازی؛ کاملاً واضح، فیکس و بدون لایه سیاه */}
+      {showMapBackground && (
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          {/* نقشه تاکتیکی جنگ — پس‌زمینه ثابت بخش نقشه و مراحل بازی (شفافیت کامل) */}
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-100"
+            style={{ backgroundImage: `url(${tacticalMapBg})` }}
+          />
+          {/* تینت بسیار ملایم تم دخترانه/پسرانه (بدون تیرگی) */}
+          {isGirls && <div className="absolute inset-0 bg-fuchsia-500/[0.06]" />}
+        </div>
+      )}
 
       <div className="w-full max-w-4xl mx-auto flex flex-col gap-3 pb-36 md:pb-16 px-1.5 sm:px-3 relative z-10">
 
