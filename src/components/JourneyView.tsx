@@ -161,15 +161,11 @@ export default function JourneyView({
     setSavedPostsCount(ids.length);
   }, [currentUser, showSavedReelsModal, showProfileDrawer]);
 
-  // Smoothly center the active in-progress stage on load
+  // Saved posts count effect
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (activeStageRef.current) {
-        activeStageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 450);
-    return () => clearTimeout(timer);
-  }, []);
+    const ids = getSavedPostIds(currentUser?.id);
+    setSavedPostsCount(ids.length);
+  }, [currentUser, showSavedReelsModal, showProfileDrawer]);
 
   const scrollToActiveStage = () => {
     if (activeStageRef.current) {
@@ -395,13 +391,6 @@ export default function JourneyView({
       window.removeEventListener('mousemove', handleWindowMouseMove);
       window.removeEventListener('mouseup', handleWindowMouseUp);
     };
-  }, []);
-
-  useEffect(() => {
-    if (journeyContainerRef.current) {
-      journeyContainerRef.current.scrollTop = 0;
-    }
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, []);
 
   const handleJourneyMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {

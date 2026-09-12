@@ -165,14 +165,10 @@ export default function Navbar({
       {/* ========================================================================= */}
       {/* 1. TOP HEADER (DESKTOP & MOBILE TOP BAR)                                  */}
       {/* ========================================================================= */}
-      <header className={`sticky top-0 z-40 backdrop-blur-md border-b shadow-[0_4px_25px_rgba(0,0,0,0.7)] dir-rtl font-sans transition-colors duration-500 ${
-        isGirls 
-          ? 'bg-[#150220]/95 border-fuchsia-500/30' 
-          : 'bg-[#060c20]/95 border-blue-500/30 shadow-[0_4px_25px_rgba(0,0,0,0.8),0_0_20px_rgba(37,99,235,0.15)]'
-      }`}>
+      <header className="sticky top-0 z-40 bg-transparent border-none shadow-none dir-rtl font-sans transition-colors duration-500">
         
         {/* Top Utility Bar */}
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between border-b border-slate-800/80 text-xs">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2 flex items-center justify-between text-xs">
           
           {/* Brand Logo & Title (Clickable to return Home) */}
           <div 
