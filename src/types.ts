@@ -306,3 +306,37 @@ export interface SiteSettings {
 }
 
 
+
+/* ------------------------------------------------------------------ */
+/* 🛡️ درخواست تغییر/بازیابی رمز عبور (جریان امن با تأیید مدیر)        */
+/* ------------------------------------------------------------------ */
+export type PasswordResetStatus = 'pending' | 'contacted' | 'resolved' | 'rejected';
+
+export interface PasswordResetRequest {
+  id: string;
+  /** کد رهگیری اعلام‌شده به کاربر */
+  tracking_code?: string;
+  user_id?: string;
+  national_code: string;
+  personal_code?: string;
+  full_name?: string;
+  /** شماره همراه ثبت‌شده در سامانه */
+  account_phone?: string;
+  /** شماره تماسی که کاربر برای هماهنگی اعلام کرده است */
+  contact_phone?: string;
+  contact_phone_dial?: string;
+  account_phone_dial?: string;
+  note?: string;
+  status: PasswordResetStatus;
+  created_at: string;
+  contacted_at?: string;
+  contacted_by?: string;
+  contact_note?: string;
+  resolved_at?: string;
+  resolved_by?: string;
+  resolution_note?: string;
+  /** منبع رکورد: سرور (امن) یا حافظه محلی (حالت بدون بک‌اند) */
+  source?: 'user' | 'admin' | 'server' | 'local';
+  /** آخرین رمز موقتی که مدیر تعیین کرده (هرگز ذخیره نمی‌شود؛ فقط برای نمایش یک‌باره) */
+  lastDeliveredPassword?: string;
+}

@@ -7,3 +7,7 @@ coverage/
 .env*
 !.env.example
 badges_preview.jpg
+
+# 🛡️ داده‌های بک‌اند (پایگاه‌داده محلی، لاگ امنیتی و فایل‌های موقت)
+server/data/
+!server/data/.gitignore

@@ -7,16 +7,28 @@
 --    ۳) کل این فایل را Paste کرده و Run کنید
 --
 --  این فایل «مکمل و جایگزین» فایل supabase/schema.sql است و شامل:
---    • ۱۸ جدول داده (الگوی سند JSONB: id متنی + ستون data از نوع jsonb)
+--    • ۱۸ جدول داده عمومی (الگوی سند JSONB: id متنی + ستون data از نوع jsonb)
+--    • 🛡️ ۵ جدول امنیتی سرور (اعتبارنامه‌ها، نشست‌ها، درخواست‌های تغییر رمز،
+--      رخدادهای امنیتی، تنظیمات امنیتی) — بدون هیچ سیاست عمومی (RLS بسته)
 --    • تریگر به‌روزرسانی خودکار updated_at
 --    • ایندکس‌های کمکی روی فیلدهای jsonb
---    • فعال‌سازی RLS + سیاست‌های دسترسی (حالت دمو/توسعه: باز)
+--    • فعال‌سازی RLS (جدول‌های عمومی: سیاست دموی باز / جدول‌های حساس: بدون دسترسی عمومی)
 --    • مجوزهای اجرا (Grants)
---    • دقیقاً «یک» ادمین پیش‌فرض (با ایندکس یکتا، افزودن ادمین دوم مسدود می‌شود)
+--    • پروفایل «مدیر کل» فقط با یک ایندکس یکتا (بدون هیچ رمز پیش‌فرض در دیتابیس)
 --    • باکت Storage عمومی برای رسانه‌ها (warroom-media)
 --
---  ⚠️  نکته امنیتی: سیاست‌های RLS این فایل برای «حالت دمو و توسعه» باز هستند.
---      قبل از انتشار عمومی، سیاست‌های سخت‌گیرانه انتهای فایل را اعمال کنید.
+--  🛡️  نکات امنیتی مهم:
+--    ۱) هیچ رمز عبوری در این فایل (متن ساده یا هش) قرار ندارد. اعتبارنامه‌ها فقط
+--       توسط بک‌اند (server/) با الگوریتم scrypt ذخیره می‌شوند.
+--    ۲) رمز نخستین ورود مدیر با متغیر محیطی WARROOM_ADMIN_INITIAL_PASSWORD
+--       تعیین می‌شود و سامانه کاربر را به تغییر آن ملزم می‌کند.
+--    ۳) جدول‌های امنیتی با RLS فعال و «بدون سیاست» ساخته می‌شوند؛ بنابراین
+--       کلید عمومی (anon) هیچ دسترسی خواندن/نوشتن به آن‌ها ندارد و فقط
+--       کلید service_role (که صرفاً روی سرور است) به آن‌ها دسترسی دارد.
+--    ۴) در کد سرور هیچ کوئری SQL رشته‌ای ساخته نمی‌شود؛ همه دسترسی‌ها از طریق
+--       PostgREST (پارامترمحور) با اعتبارسنجی ورودی انجام می‌شود (ضد SQL Injection).
+--    ۵) سیاست‌های جدول‌های عمومی برای «حالت دمو» باز هستند؛ پیش از انتشار عمومی،
+--       بخش «سیاست‌های سخت‌گیرانه تولیدی» انتهای فایل را اعمال کنید.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -156,6 +168,53 @@ create table if not exists public.warroom_kv (
   updated_at timestamptz not null default now()
 );
 
+-- 🆕 درخواست‌های تغییر رمز (نسخه محلی/کلاینتی) — فاقد هرگونه رمز عبور
+create table if not exists public.warroom_password_reset_requests (
+  id         text primary key,
+  data       jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+-- ============================================================================
+--  🛡️  جدول‌های امنیتی (فقط برای بک‌اند سرور با کلید service_role)
+--      RLS فعال است و هیچ سیاستی برای anon/authenticated ساخته نمی‌شود.
+-- ============================================================================
+
+-- اعتبارنامه‌ها: فقط هش scrypt + Salt (هرگز متن ساده)
+create table if not exists public.warroom_credentials (
+  id         text primary key,          -- شناسه کاربر
+  data       jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+-- نشست‌های امن: شناسه = هش SHA-256 توکن نشست (توکن خام هرگز ذخیره نمی‌شود)
+create table if not exists public.warroom_sessions (
+  id         text primary key,
+  data       jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+-- درخواست‌های تغییر رمز (سرور) — شامل شماره تماس، وضعیت و یادداشت مدیر
+create table if not exists public.warroom_password_resets (
+  id         text primary key,
+  data       jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+-- رخدادهای امنیتی (Audit Log): ورود، تلاش ناموفق، محدودسازی نرخ، عملیات مدیر
+create table if not exists public.warroom_audit_log (
+  id         text primary key,
+  data       jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+-- تنظیمات امنیتی سرور (قفل حساب‌ها، شمارنده‌ها)
+create table if not exists public.warroom_security_kv (
+  id         text primary key,
+  value      jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
 -- ----------------------------------------------------------------------------
 -- ۲) تریگر به‌روزرسانی خودکار updated_at
 -- ----------------------------------------------------------------------------
@@ -178,7 +237,9 @@ begin
     'warroom_trainings','warroom_medals','warroom_user_medals',
     'warroom_support_tickets','warroom_support_replies','warroom_announcements',
     'warroom_news','warroom_notifications','warroom_home_announcements','warroom_faqs',
-    'warroom_vitrin_posts','warroom_vitrin_comments','warroom_game_portals','warroom_kv'
+    'warroom_vitrin_posts','warroom_vitrin_comments','warroom_game_portals','warroom_kv',
+    'warroom_password_reset_requests','warroom_credentials','warroom_sessions',
+    'warroom_password_resets','warroom_audit_log','warroom_security_kv'
   ]
   loop
     execute format('drop trigger if exists trg_%s_updated_at on public.%I', t, t);
@@ -201,6 +262,14 @@ create index if not exists idx_warroom_tickets_status      on public.warroom_sup
 create index if not exists idx_warroom_notifications_target on public.warroom_notifications ((data->>'target'));
 create index if not exists idx_warroom_vitrin_comments_post on public.warroom_vitrin_comments ((data->>'postId'));
 create index if not exists idx_warroom_user_medals_code     on public.warroom_user_medals ((data->>'personal_code'));
+-- 🛡️ ایندکس‌های جدول‌های امنیتی (کارایی بالای احراز هویت و صف درخواست‌ها)
+create index if not exists idx_warroom_credentials_updated  on public.warroom_credentials (updated_at desc);
+create index if not exists idx_warroom_sessions_expires     on public.warroom_sessions ((data->>'expires_at'));
+create index if not exists idx_warroom_sessions_user        on public.warroom_sessions ((data->>'user_id'));
+create index if not exists idx_warroom_resets_status        on public.warroom_password_resets ((data->>'status'));
+create index if not exists idx_warroom_resets_user          on public.warroom_password_resets ((data->>'user_id'));
+create index if not exists idx_warroom_resets_code          on public.warroom_password_resets ((data->>'tracking_code'));
+create index if not exists idx_warroom_audit_at             on public.warroom_audit_log (updated_at desc);
 
 -- 🆕 قاعده «فقط یک ادمین»: ایندکس یکتای شرطی باعث می‌شود در کل دیتابیس
 --    فقط یک کاربر با role='admin' وجود داشته باشد (افزودن ادمین دوم خطا می‌دهد).
@@ -233,6 +302,15 @@ alter table public.warroom_vitrin_posts       enable row level security;
 alter table public.warroom_vitrin_comments    enable row level security;
 alter table public.warroom_game_portals       enable row level security;
 alter table public.warroom_kv                 enable row level security;
+alter table public.warroom_password_reset_requests enable row level security;
+
+-- 🛡️ جدول‌های حساس: RLS فعال + «بدون سیاست» → هیچ دسترسی عمومی (anon/authenticated)
+--    فقط کلید service_role (صرفاً روی سرور) می‌تواند بخواند/بنویسد.
+alter table public.warroom_credentials     enable row level security;
+alter table public.warroom_sessions        enable row level security;
+alter table public.warroom_password_resets enable row level security;
+alter table public.warroom_audit_log       enable row level security;
+alter table public.warroom_security_kv     enable row level security;
 
 do $$
 declare
@@ -243,7 +321,8 @@ begin
     'warroom_trainings','warroom_medals','warroom_user_medals',
     'warroom_support_tickets','warroom_support_replies','warroom_announcements',
     'warroom_news','warroom_notifications','warroom_home_announcements','warroom_faqs',
-    'warroom_vitrin_posts','warroom_vitrin_comments','warroom_game_portals','warroom_kv'
+    'warroom_vitrin_posts','warroom_vitrin_comments','warroom_game_portals','warroom_kv',
+    'warroom_password_reset_requests'
   ]
   loop
     execute format('drop policy if exists "warroom_public_access" on public.%I', t);
@@ -262,16 +341,23 @@ grant all on all tables in schema public to anon, authenticated;
 grant all on all tables in schema public to service_role;
 alter default privileges in schema public grant all on tables to anon, authenticated;
 
+-- 🛡️ لغو دسترسی عمومی به جدول‌های حساس (حتی در صورت تغییر پیش‌فرض‌های schema)
+revoke all on public.warroom_credentials     from anon, authenticated;
+revoke all on public.warroom_sessions        from anon, authenticated;
+revoke all on public.warroom_password_resets from anon, authenticated;
+revoke all on public.warroom_audit_log       from anon, authenticated;
+revoke all on public.warroom_security_kv     from anon, authenticated;
+
 -- ----------------------------------------------------------------------------
--- ۶) داده اولیه: فقط «یک» ادمین پیش‌فرض (مدیر ارشد عملیات)
+-- ۶) داده اولیه: پروفایل «مدیر ارشد عملیات» — بدون هیچ رمز عبور
 -- ----------------------------------------------------------------------------
--- ورود پیش‌فرض پنل مدیریت:
---     کد ملی : 0012345678
---     رمز     : admin
--- (رمز به صورت SHA-256 هش شده ذخیره می‌شود: 8c6976e5...448a918)
+-- 🛡️ هیچ رمز/هشی در دیتابیس منتشر نمی‌شود. بک‌اند (server/) در نخستین اجرا،
+--    اعتبارنامه مدیر را با متغیر محیطی WARROOM_ADMIN_INITIAL_PASSWORD می‌سازد
+--    (پیش‌فرض: admin برای «نخستین ورود») و سامانه کاربر را ملزم به تغییر فوری
+--    رمز می‌کند (must_change_password = true).
 insert into public.warroom_users (id, data) values (
   'u-admin',
-  $${"id":"u-admin","first_name":"امیرحسین","last_name":"فرماندهی کل","national_code":"0012345678","phone":"09120000000","password":"8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918","role":"admin","education_level":"متوسطه دوم","grade":"دوازدهم","gender":"پسر","province":"تهران","city":"تهران","birth_date":"1384/01/15","school_name":"دبیرستان ماندگار البرز","personal_code":"900000001","address":"ستاد مرکزی اتاق جنگ"}$$::jsonb
+  $${"id":"u-admin","first_name":"امیرحسین","last_name":"فرماندهی کل","national_code":"0012345678","phone":"09120000000","role":"admin","education_level":"متوسطه دوم","grade":"دوازدهم","gender":"پسر","province":"تهران","city":"تهران","birth_date":"1384/01/15","school_name":"دبیرستان ماندگار البرز","personal_code":"900000001","address":"ستاد مرکزی اتاق جنگ"}$$::jsonb
 )
 on conflict (id) do update set data = excluded.data, updated_at = now();
 

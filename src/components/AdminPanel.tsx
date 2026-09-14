@@ -55,6 +55,7 @@ import {
   Building,
   Hash,
   UserCheck,
+  KeyRound,
   Shield,
   Video,
   Upload,
@@ -72,7 +73,17 @@ import {
 import { defaultHomeButtons } from '../data/home';
 import { VitrinPost, buildVitrinPostFromSubmission } from '../data/vitrinData';
 import { uploadToStorage, isSupabaseEnabled } from '../lib/supabaseClient';
+import { sha256Hex } from '../lib/supabaseData';
+import {
+  probeBackend,
+  getBackendStatus,
+  adminCreateUser,
+  adminUpdateUser,
+  adminResetUserPassword,
+} from '../lib/backendApi';
+import { PasswordResetRequest } from '../types';
 import AdminSoundtrackManager from './AdminSoundtrackManager';
+import PasswordResetsAdmin from './PasswordResetsAdmin';
 import DashboardView from './DashboardView';
 import ElementorVisualEditorModal from './ElementorVisualEditorModal';
 import { 
@@ -102,6 +113,16 @@ import {
 } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
 import { playNotificationSound } from '../utils/audioAlert';
+
+/** تولید رمز عبور قوی در حالت محلی (بدون بک‌اند) — کاراکترهای مشابه‌نما حذف شده‌اند */
+function generateSecurePasswordLocal(length = 12): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#%+=';
+  const bytes = new Uint32Array(length);
+  crypto.getRandomValues(bytes);
+  let out = '';
+  for (let i = 0; i < length; i++) out += alphabet[bytes[i] % alphabet.length];
+  return out;
+}
 
 interface AdminPanelProps {
   currentUser: User;
@@ -144,6 +165,9 @@ interface AdminPanelProps {
   setHomeStats: (stats: any) => void;
   faqs: any[];
   setFaqs: React.Dispatch<React.SetStateAction<any[]>>;
+  /** 🛡️ درخواست‌های تغییر رمز (حالت محلی — همگام با Supabase در صورت پیکربندی) */
+  passwordResetRequests: PasswordResetRequest[];
+  setPasswordResetRequests: React.Dispatch<React.SetStateAction<PasswordResetRequest[]>>;
   onNavigate?: (tab: string) => void;
 }
 
@@ -186,11 +210,24 @@ export default function AdminPanel({
   setHomeStats,
   faqs,
   setFaqs,
+  passwordResetRequests = [],
+  setPasswordResetRequests,
   onNavigate
 }: AdminPanelProps) {
   const [activeAdminTab, setActiveAdminTab] = useState<
-    'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news' | 'site_editor' | 'notifications' | 'soundtracks' | 'portals' | 'vitrins'
+    'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news' | 'site_editor' | 'notifications' | 'soundtracks' | 'portals' | 'vitrins' | 'password_resets'
   >('submissions');
+
+  // 🛡️ وضعیت بک‌اند امن (برای مدیریت امن رمز کاربران)
+  const [backendReady, setBackendReady] = useState<boolean>(() => Boolean(getBackendStatus()?.available));
+  useEffect(() => {
+    let mounted = true;
+    probeBackend().then((status) => { if (mounted) setBackendReady(Boolean(status.available)); });
+    return () => { mounted = false; };
+  }, []);
+
+  // رمز یک‌بارمصرف نمایش‌داده‌شده پس از ایجاد/بازنشانی کاربر (هرگز ذخیره نمی‌شود)
+  const [oneTimeCredential, setOneTimeCredential] = useState<{ title: string; password: string } | null>(null);
 
   // 📡 GAME PORTALS MANAGEMENT STATE — از State سراسری (همگام با Supabase)
   const portals = gamePortals;
@@ -522,7 +559,7 @@ export default function AdminPanel({
     last_name: '',
     national_code: '',
     phone: '',
-    password: '123',
+    password: '',
     role: 'user',
     gender: 'پسر',
     education_level: 'متوسطه اول',
@@ -546,7 +583,7 @@ export default function AdminPanel({
       last_name: '',
       national_code: '',
       phone: '09',
-      password: '123',
+      password: '',
       role: 'user',
       gender: 'پسر',
       education_level: 'متوسطه اول',
@@ -571,7 +608,7 @@ export default function AdminPanel({
       last_name: user.last_name || '',
       national_code: user.national_code || '',
       phone: user.phone || '',
-      password: user.password || '123',
+      password: '',
       role: user.role || 'user',
       gender: user.gender || 'پسر',
       education_level: user.education_level || 'متوسطه اول',
@@ -589,14 +626,99 @@ export default function AdminPanel({
     setShowUserModal(true);
   };
 
-  const handleSaveUserSubmit = (e: React.FormEvent) => {
+  const handleSaveUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userForm.first_name.trim() || !userForm.last_name.trim()) {
       triggerAlert('خطا: نام و نام خانوادگی کاربر الزامی است.');
       return;
     }
 
+    /* ================= 🛡️ مسیر امن: عملیات روی سرور ================= */
+    // اطمینان از مشخص بودن وضعیت بک‌اند پیش از انتخاب مسیر امن/محلی
+    const status = await probeBackend();
+    const secureMode = Boolean(status.available);
+    if (secureMode !== backendReady) setBackendReady(secureMode);
+
+    if (secureMode) {
+      if (editingUser) {
+        const res = await adminUpdateUser(editingUser.id, {
+          first_name: userForm.first_name.trim(),
+          last_name: userForm.last_name.trim(),
+          phone: userForm.phone.trim(),
+          role: userForm.role,
+          gender: userForm.gender,
+          education_level: userForm.education_level,
+          grade: userForm.grade.trim(),
+          province: userForm.province.trim(),
+          city: userForm.city.trim(),
+          school_name: userForm.school_name.trim(),
+          address: userForm.address.trim(),
+          points: Number(userForm.points) || 0,
+          level: Number(userForm.level) || 1
+        });
+        if (!res.ok) {
+          triggerAlert(res.error?.message || 'ویرایش کاربر ناموفق بود.');
+          return;
+        }
+        const updatedUser = { ...editingUser, ...(res.data?.user || {}), password: '' };
+        setUsers(prev => prev.map(u => (u.id === editingUser.id ? updatedUser as User : u)));
+
+        // اگر مدیر رمز جدیدی وارد کرده باشد، روی سرور تعیین می‌شود
+        if (userForm.password.trim()) {
+          const pwdRes = await adminResetUserPassword(editingUser.id, userForm.password.trim());
+          if (!pwdRes.ok) {
+            triggerAlert(pwdRes.error?.message || 'تعیین رمز جدید ناموفق بود.');
+            return;
+          }
+          setOneTimeCredential({
+            title: `رمز جدید ${updatedUser.first_name} ${updatedUser.last_name} (فقط یک‌بار نمایش داده می‌شود)`,
+            password: pwdRes.data?.oneTimePassword || userForm.password.trim()
+          });
+        }
+        triggerAlert(`اطلاعات کاربر «${updatedUser.first_name} ${updatedUser.last_name}» با موفقیت بروزرسانی شد.`);
+      } else {
+        const res = await adminCreateUser({
+          first_name: userForm.first_name.trim(),
+          last_name: userForm.last_name.trim(),
+          national_code: userForm.national_code.trim(),
+          phone: userForm.phone.trim(),
+          password: userForm.password.trim() || undefined,
+          role: userForm.role,
+          gender: userForm.gender,
+          education_level: userForm.education_level,
+          grade: userForm.grade.trim(),
+          province: userForm.province.trim(),
+          city: userForm.city.trim(),
+          birth_date: userForm.birth_date.trim(),
+          school_name: userForm.school_name.trim(),
+          personal_code: userForm.personal_code.trim(),
+          postal_code: userForm.postal_code.trim(),
+          address: userForm.address.trim(),
+          points: Number(userForm.points) || 100,
+          level: Number(userForm.level) || 1
+        });
+        if (!res.ok) {
+          triggerAlert(res.error?.message || 'ایجاد کاربر ناموفق بود.');
+          return;
+        }
+        const created: User = { ...(res.data?.user as User), password: '' };
+        setUsers(prev => (prev.some(u => u.id === created.id) ? prev : [...prev, created]));
+        setOneTimeCredential({
+          title: `رمز عبور «${created.first_name} ${created.last_name}» (فقط یک‌بار نمایش داده می‌شود)`,
+          password: res.data?.oneTimePassword || ''
+        });
+        triggerAlert(`کاربر جدید «${created.first_name} ${created.last_name}» با کد اختصاصی ${created.personal_code} ایجاد شد.`);
+      }
+
+      setShowUserModal(false);
+      setEditingUser(null);
+      return;
+    }
+
+    /* ==================== حالت محلی (بدون بک‌اند امن) ==================== */
     let updatedList: User[];
+    const localEditedHash = userForm.password.trim() ? await sha256Hex(userForm.password.trim()) : '';
+    const localEditedPlain = userForm.password.trim();
     if (editingUser) {
       updatedList = users.map(u => u.id === editingUser.id ? {
         ...u,
@@ -604,7 +726,7 @@ export default function AdminPanel({
         last_name: userForm.last_name.trim(),
         national_code: userForm.national_code.trim(),
         phone: userForm.phone.trim(),
-        password: userForm.password,
+        password: localEditedHash || u.password || '',
         role: userForm.role,
         gender: userForm.gender,
         education_level: userForm.education_level,
@@ -619,15 +741,22 @@ export default function AdminPanel({
         points: Number(userForm.points) || 0,
         level: Number(userForm.level) || 1
       } : u);
+      if (localEditedHash) {
+        setOneTimeCredential({
+          title: `رمز جدید ${userForm.first_name} ${userForm.last_name} (حالت محلی — فقط یک‌بار)`,
+          password: localEditedPlain
+        });
+      }
       triggerAlert(`اطلاعات کاربر «${userForm.first_name} ${userForm.last_name}» با موفقیت بروزرسانی شد.`);
     } else {
+      const localPlainPassword = userForm.password.trim() || generateSecurePasswordLocal();
       const newUserObj: User = {
         id: `usr_${Date.now()}`,
         first_name: userForm.first_name.trim(),
         last_name: userForm.last_name.trim(),
         national_code: userForm.national_code.trim(),
         phone: userForm.phone.trim(),
-        password: userForm.password || '123',
+        password: await sha256Hex(localPlainPassword),
         role: userForm.role,
         gender: userForm.gender,
         education_level: userForm.education_level,
@@ -643,6 +772,10 @@ export default function AdminPanel({
         level: Number(userForm.level) || 1
       };
       updatedList = [...users, newUserObj];
+      setOneTimeCredential({
+        title: `رمز عبور «${newUserObj.first_name} ${newUserObj.last_name}» (حالت محلی — فقط یک‌بار)`,
+        password: localPlainPassword
+      });
       triggerAlert(`کاربر جدید «${userForm.first_name} ${userForm.last_name}» با کد اختصاصی ${newUserObj.personal_code} ایجاد گردید.`);
     }
 
@@ -1301,6 +1434,61 @@ export default function AdminPanel({
 
   return (
     <div className="space-y-6 dir-rtl pb-8">
+
+      {/* 🔐 نمایش یک‌باره رمز عبور تولیدشده (هرگز ذخیره/بازیابی نمی‌شود) */}
+      {oneTimeCredential && (
+        <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
+          <div className="w-full max-w-md bg-[#0b1226] border border-amber-500/60 rounded-3xl p-5 space-y-3 text-white shadow-2xl">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                <KeyRound size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black">رمز عبور جدید</h3>
+                <p className="text-[10px] text-slate-400">{oneTimeCredential.title}</p>
+              </div>
+            </div>
+
+            <code
+              className="block text-center py-3 rounded-xl bg-black/60 border border-amber-500/40 text-amber-200 font-mono text-base tracking-widest"
+              dir="ltr"
+            >
+              {oneTimeCredential.password}
+            </code>
+
+            <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-600/40 text-[10px] text-amber-100 leading-relaxed flex items-start gap-2">
+              <AlertTriangle size={13} className="shrink-0 mt-0.5 text-amber-400" />
+              <span>
+                این رمز فقط همین یک‌بار نمایش داده می‌شود و در دیتابیس به‌صورت هش‌شده ذخیره شده است.
+                آن را یادداشت/کپی کنید و تلفنی به کاربر اعلام نمایید.
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(oneTimeCredential.password);
+                    triggerAlert('رمز عبور کپی شد.');
+                  } catch {
+                    triggerAlert('کپی خودکار ناموفق بود؛ رمز را دستی یادداشت کنید.');
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Copy size={13} />
+                <span>کپی رمز عبور</span>
+              </button>
+              <button
+                onClick={() => setOneTimeCredential(null)}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs cursor-pointer"
+              >
+                بستن
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-amber-950 via-[#0d1021] to-[#120712] border border-amber-800/60 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
@@ -1375,6 +1563,26 @@ export default function AdminPanel({
         >
           <Users size={15} />
           <span>مدیریت کاربران ({users.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveAdminTab('password_resets')}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border ${
+            activeAdminTab === 'password_resets'
+              ? 'bg-amber-500 text-slate-950 border-amber-400 font-black'
+              : 'bg-[#080d21] text-slate-300 border-slate-700 hover:text-white'
+          }`}
+          id="btn-tab-password-resets"
+        >
+          <KeyRound size={15} />
+          <span>
+            درخواست تغییر رمز کاربران
+            {passwordResetRequests.filter(r => r.status === 'pending').length > 0 && (
+              <span className="mr-1.5 px-1.5 rounded-md bg-rose-600 text-white text-[10px] font-mono">
+                {passwordResetRequests.filter(r => r.status === 'pending').length}
+              </span>
+            )}
+          </span>
         </button>
 
         <button
@@ -1726,6 +1934,17 @@ export default function AdminPanel({
       )}
 
       {/* 2. USERS & SQUADS MANAGEMENT TAB */}
+      {activeAdminTab === 'password_resets' && (
+        <PasswordResetsAdmin
+          currentUser={currentUser}
+          users={users}
+          setUsers={setUsers}
+          localRequests={passwordResetRequests}
+          setLocalRequests={setPasswordResetRequests}
+          triggerAlert={triggerAlert}
+        />
+      )}
+
       {activeAdminTab === 'users' && (
         <div className="space-y-5 dir-rtl font-sans">
           {/* Header Action Bar */}
@@ -1954,9 +2173,46 @@ export default function AdminPanel({
                     <p className="text-emerald-300 font-mono font-bold">{viewingUserDetail.phone || 'ثبت نشده'}</p>
                   </div>
 
-                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
-                    <span className="text-[11px] text-slate-400 font-bold block">کلمه عبور:</span>
-                    <p className="text-rose-300 font-mono font-bold">{viewingUserDetail.password || '123'}</p>
+                  <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1.5">
+                    <span className="text-[11px] text-slate-400 font-bold block">رمز عبور:</span>
+                    <p className="text-emerald-300 text-[11px] font-bold flex items-center gap-1.5">
+                      <ShieldCheck size={13} />
+                      <span>{backendReady ? 'به‌صورت هش‌شده (scrypt) روی سرور نگه‌داری می‌شود' : 'هش‌شده در مرورگر'}</span>
+                    </p>
+                    <button
+                      onClick={async () => {
+                        const user = viewingUserDetail;
+                        const liveStatus = await probeBackend();
+                        if (!liveStatus.available) {
+                          const temp = Array.from(crypto.getRandomValues(new Uint8Array(9)))
+                            .map((n) => 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'[n % 58])
+                            .join('');
+                          const hashed = await sha256Hex(temp);
+                          setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, password: hashed } : u)));
+                          setOneTimeCredential({ title: `رمز جدید ${user.first_name} ${user.last_name} (حالت محلی)`, password: temp });
+                          triggerAlert(`رمز جدید برای «${user.first_name} ${user.last_name}» تولید شد. آن را به کاربر اعلام کنید.`);
+                          return;
+                        }
+                        const res = await adminResetUserPassword(user.id);
+                        if (!res.ok) {
+                          triggerAlert(res.error?.message || 'بازنشانی رمز ناموفق بود.');
+                          return;
+                        }
+                        setOneTimeCredential({
+                          title: `رمز جدید ${user.first_name} ${user.last_name} (فقط یک‌بار نمایش داده می‌شود)`,
+                          password: res.data?.oneTimePassword || ''
+                        });
+                        triggerAlert('رمز جدید تولید شد. آن را به کاربر اعلام کنید.');
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 text-[10px] font-black flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <KeyRound size={12} />
+                      <span>تولید رمز جدید</span>
+                    </button>
+                    <p className="text-[9px] text-slate-500 leading-relaxed">
+                      به دلایل امنیتی، متن رمز کاربران نمایش داده نمی‌شود؛ برای رمز جدید از دکمه بالا استفاده
+                      یا درخواست تغییر رمز کاربر را از تب «درخواست تغییر رمز» بررسی کنید.
+                    </p>
                   </div>
 
                   <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
@@ -2139,13 +2395,20 @@ export default function AdminPanel({
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1">کلمه عبور</label>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">
+                        رمز عبور {editingUser ? '(خالی = بدون تغییر)' : '(خالی = تولید خودکار امن)'}
+                      </label>
                       <input
                         type="text"
+                        autoComplete="new-password"
+                        placeholder="حداقل ۸ کاراکتر شامل حرف و رقم"
                         value={userForm.password}
                         onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
                         className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs text-white font-mono"
                       />
+                      <p className="text-[9px] text-slate-500 mt-1">
+                        رمز به‌صورت هش‌شده ذخیره می‌شود و برای مدیر قابل مشاهده نیست.
+                      </p>
                     </div>
 
                     <div>
