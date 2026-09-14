@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "security:check": "node scripts/security-check.mjs"
+    "security:check": "node scripts/security-check.mjs",
+    "supabase:check": "node scripts/supabase-check.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
