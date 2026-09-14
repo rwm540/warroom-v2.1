@@ -1576,7 +1576,7 @@ export default function AdminPanel({
         >
           <KeyRound size={15} />
           <span>
-            درخواست تغییر رمز کاربران
+            درخواست تغییر رمز مشتریان
             {passwordResetRequests.filter(r => r.status === 'pending').length > 0 && (
               <span className="mr-1.5 px-1.5 rounded-md bg-rose-600 text-white text-[10px] font-mono">
                 {passwordResetRequests.filter(r => r.status === 'pending').length}
