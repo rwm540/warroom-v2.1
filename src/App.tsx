@@ -15,7 +15,8 @@ import {
   SupportReply, 
   Announcement, 
   News,
-  AppNotification 
+  AppNotification,
+  GamePortal
 } from './types';
 
 // Mock Data
@@ -46,7 +47,22 @@ import {
 } from './data/home';
 
 // Supabase Data Sync Layer (falls back to localStorage automatically)
-import { useSyncedCollection, useSyncedSetting } from './lib/supabaseData';
+import {
+  useSyncedCollection,
+  useSyncedSetting,
+  persistSavedPostsToDb,
+  loadSavedPostsFromDb
+} from './lib/supabaseData';
+import { checkSupabaseHealth } from './lib/supabaseClient';
+
+// Vitrin (Showcase) data layer
+import {
+  VitrinPost,
+  VitrinComment,
+  getVitrinPostsFromStore,
+  getAllVitrinComments
+} from './data/vitrinData';
+import { DEFAULT_GAME_PORTALS } from './data/portalData';
 
 // Static Base Views
 import HomeView from './components/HomeView';
@@ -88,65 +104,83 @@ const ViewFallback = () => (
 );
 
 export default function App() {
-  // Global Data State
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('warroom_users');
-    return saved ? JSON.parse(saved) : initialUsers;
+  // ============================================================================
+  // Global Data State — کاملاً همگام با Supabase
+  // هر مجموعه‌ای که از useSyncedCollection ساخته می‌شود، پس از بارگذاری
+  // اولیه از دیتابیس، هر تغییر آن را به‌صورت خودکار (Upsert/Delete)
+  // در جدول متناظر Supabase ذخیره می‌کند. در نبود Supabase، localStorage
+  // به‌عنوان منبع ذخیره‌سازی استفاده می‌شود (بدون تغییر رفتار قبلی).
+  // ============================================================================
+  const [users, setUsers] = useSyncedCollection<User>({
+    storageKey: 'warroom_users',
+    table: 'warroom_users',
+    initial: initialUsers
   });
 
-  const [groups, setGroups] = useState<Group[]>(() => {
-    const saved = localStorage.getItem('warroom_groups');
-    return saved ? JSON.parse(saved) : initialGroups;
+  const [groups, setGroups] = useSyncedCollection<Group>({
+    storageKey: 'warroom_groups',
+    table: 'warroom_groups',
+    initial: initialGroups
   });
 
-  const [missions, setMissions] = useState<Mission[]>(() => {
-    const saved = localStorage.getItem('warroom_missions');
-    return saved ? JSON.parse(saved) : initialMissions;
+  const [missions, setMissions] = useSyncedCollection<Mission>({
+    storageKey: 'warroom_missions',
+    table: 'warroom_missions',
+    initial: initialMissions
   });
 
-  const [submissions, setSubmissions] = useState<MissionSubmission[]>(() => {
-    const saved = localStorage.getItem('warroom_submissions');
-    return saved ? JSON.parse(saved) : initialSubmissions;
+  const [submissions, setSubmissions] = useSyncedCollection<MissionSubmission>({
+    storageKey: 'warroom_submissions',
+    table: 'warroom_submissions',
+    initial: initialSubmissions
   });
 
-  const [trainings, setTrainings] = useState<Training[]>(() => {
-    const saved = localStorage.getItem('warroom_trainings');
-    return saved ? JSON.parse(saved) : initialTrainings;
+  const [trainings, setTrainings] = useSyncedCollection<Training>({
+    storageKey: 'warroom_trainings',
+    table: 'warroom_trainings',
+    initial: initialTrainings
   });
 
-  const [medals, setMedals] = useState<Medal[]>(() => {
-    const saved = localStorage.getItem('warroom_medals');
-    return saved ? JSON.parse(saved) : initialMedals;
+  const [medals, setMedals] = useSyncedCollection<Medal>({
+    storageKey: 'warroom_medals',
+    table: 'warroom_medals',
+    initial: initialMedals
   });
 
-  const [userMedals, setUserMedals] = useState<UserMedal[]>(() => {
-    const saved = localStorage.getItem('warroom_user_medals');
-    return saved ? JSON.parse(saved) : initialUserMedals;
+  const [userMedals, setUserMedals] = useSyncedCollection<UserMedal>({
+    storageKey: 'warroom_user_medals',
+    table: 'warroom_user_medals',
+    initial: initialUserMedals
   });
 
-  const [tickets, setTickets] = useState<SupportTicket[]>(() => {
-    const saved = localStorage.getItem('warroom_tickets');
-    return saved ? JSON.parse(saved) : initialSupportTickets;
+  const [tickets, setTickets] = useSyncedCollection<SupportTicket>({
+    storageKey: 'warroom_tickets',
+    table: 'warroom_support_tickets',
+    initial: initialSupportTickets
   });
 
-  const [replies, setReplies] = useState<SupportReply[]>(() => {
-    const saved = localStorage.getItem('warroom_replies');
-    return saved ? JSON.parse(saved) : initialSupportReplies;
+  const [replies, setReplies] = useSyncedCollection<SupportReply>({
+    storageKey: 'warroom_replies',
+    table: 'warroom_support_replies',
+    initial: initialSupportReplies
   });
 
-  const [announcements, setAnnouncements] = useState<Announcement[]>(() => {
-    const saved = localStorage.getItem('warroom_announcements');
-    return saved ? JSON.parse(saved) : initialAnnouncements;
+  const [announcements, setAnnouncements] = useSyncedCollection<Announcement>({
+    storageKey: 'warroom_announcements',
+    table: 'warroom_announcements',
+    initial: initialAnnouncements
   });
 
-  const [news, setNews] = useState<News[]>(() => {
-    const saved = localStorage.getItem('warroom_news');
-    return saved ? JSON.parse(saved) : initialNews;
+  const [news, setNews] = useSyncedCollection<News>({
+    storageKey: 'warroom_news',
+    table: 'warroom_news',
+    initial: initialNews
   });
 
-  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
-    const saved = localStorage.getItem('warroom_notifications');
-    return saved ? JSON.parse(saved) : initialNotifications;
+  const [notifications, setNotifications] = useSyncedCollection<AppNotification>({
+    storageKey: 'warroom_notifications',
+    table: 'warroom_notifications',
+    initial: initialNotifications
   });
 
   const [showNotificationCenter, setShowNotificationCenter] = useState<boolean>(false);
@@ -217,6 +251,61 @@ export default function App() {
     initial: faqsData
   });
 
+  // 🆕 🎖️ ویترین آثار (Showcase) — همگام با Supabase
+  // پست‌ها از طریق تب «ویترین آثار» در پنل مدیریت یا تأیید آثار رزمندگان ساخته می‌شوند
+  const [vitrinPosts, setVitrinPosts] = useSyncedCollection<VitrinPost>({
+    storageKey: 'warroom_vitrin_custom_posts',
+    table: 'warroom_vitrin_posts',
+    initial: getVitrinPostsFromStore()
+  });
+
+  // 🆕 نظرات و دیدگاه‌های ویترین — هر ردیف یک نظر (همگام با Supabase)
+  const [vitrinComments, setVitrinComments] = useSyncedCollection<VitrinComment>({
+    storageKey: 'warroom_vitrin_comments',
+    table: 'warroom_vitrin_comments',
+    initial: getAllVitrinComments()
+  });
+
+  // 🆕 درگاه‌های بازی / لینک‌دهی — همگام با Supabase
+  const [gamePortals, setGamePortals] = useSyncedCollection<GamePortal>({
+    storageKey: 'warroom_game_portals_list',
+    table: 'warroom_game_portals',
+    initial: DEFAULT_GAME_PORTALS
+  });
+
+  // نقشه‌ی نظرات بر اساس پست (برای مصرف در کامپوننت‌ها)
+  const vitrinCommentsMap: Record<string, VitrinComment[]> = {};
+  vitrinComments.forEach(c => {
+    (vitrinCommentsMap[c.postId] = vitrinCommentsMap[c.postId] || []).push(c);
+  });
+
+  // صحت‌سنجی زنده اتصال به Supabase هنگام راه‌اندازی
+  useEffect(() => {
+    checkSupabaseHealth();
+  }, []);
+
+  // همگام‌سازی ذخیره‌های ویترین با Supabase هنگام تغییر (Bookmark Toggle)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      persistSavedPostsToDb(detail.userId, detail.ids);
+    };
+    window.addEventListener('warroom_saved_posts_changed', handler);
+    return () => window.removeEventListener('warroom_saved_posts_changed', handler);
+  }, []);
+
+  // دریافت تغییرات نظرات که توسط کامپوننت‌ها از طریق ابزارهای vitrinData انجام می‌شود
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (Array.isArray(detail)) {
+        setVitrinComments(detail);
+      }
+    };
+    window.addEventListener('warroom_vitrin_comments_updated', handler);
+    return () => window.removeEventListener('warroom_vitrin_comments_updated', handler);
+  }, [setVitrinComments]);
+
   // Current Logged-in User with Full Persistence
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
@@ -251,6 +340,14 @@ export default function App() {
       }
     }
   }, [currentUser]);
+
+  // بارگذاری ذخیره‌های (Bookmark) کاربر از ابر و ادغام با نسخه محلی
+  useEffect(() => {
+    if (currentUser) {
+      loadSavedPostsFromDb(currentUser.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
 
   // Active Campaign Theme: 'girls' vs 'boys' (prioritizes logged-in user profile gender)
   const [campaignTheme, setCampaignTheme] = useState<'girls' | 'boys'>(() => {
@@ -799,6 +896,10 @@ export default function App() {
                     setNews={setNews}
                     notifications={notifications}
                     setNotifications={setNotifications}
+                    vitrinPosts={vitrinPosts}
+                    setVitrinPosts={setVitrinPosts}
+                    gamePortals={gamePortals}
+                    setGamePortals={setGamePortals}
                     onBroadcastNotification={(notif) => {
                       setLiveToastNotification(notif);
                     }}
@@ -858,6 +959,9 @@ export default function App() {
                     {activeTab === 'Vitrin' && (
                       <VitrinView 
                         currentUser={currentUser}
+                        posts={vitrinPosts}
+                        setPosts={setVitrinPosts}
+                        commentsMap={vitrinCommentsMap}
                         triggerAlert={triggerAlert}
                         onNavigate={(tab) => handleTabChange(tab)}
                       />
@@ -1024,6 +1128,7 @@ export default function App() {
           currentUser={currentUser}
           onSelectWarRoom={handleSelectWarRoom}
           campaignTheme={campaignTheme}
+          portals={gamePortals}
         />
       </Suspense>
 

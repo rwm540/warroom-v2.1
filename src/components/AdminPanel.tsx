@@ -65,11 +65,13 @@ import {
   Gem,
   Play,
   Layout,
-  X
+  X,
+  Heart,
+  Loader2
 } from 'lucide-react';
 import { defaultHomeButtons } from '../data/home';
-import { publishSubmissionToVitrin, removeSubmissionFromVitrin } from '../data/vitrinData';
-import { getGamePortals, saveGamePortals } from '../data/portalData';
+import { VitrinPost, buildVitrinPostFromSubmission } from '../data/vitrinData';
+import { uploadToStorage, isSupabaseEnabled } from '../lib/supabaseClient';
 import AdminSoundtrackManager from './AdminSoundtrackManager';
 import DashboardView from './DashboardView';
 import ElementorVisualEditorModal from './ElementorVisualEditorModal';
@@ -126,6 +128,12 @@ interface AdminPanelProps {
   setNews: React.Dispatch<React.SetStateAction<News[]>>;
   notifications: AppNotification[];
   setNotifications: React.Dispatch<React.SetStateAction<AppNotification[]>>;
+  // 🆕 ویترین آثار — همگام با Supabase
+  vitrinPosts: VitrinPost[];
+  setVitrinPosts: React.Dispatch<React.SetStateAction<VitrinPost[]>>;
+  // 🆕 درگاه‌های بازی — همگام با Supabase
+  gamePortals: GamePortal[];
+  setGamePortals: React.Dispatch<React.SetStateAction<GamePortal[]>>;
   onBroadcastNotification?: (notif: AppNotification) => void;
   triggerAlert: (msg: string) => void;
   siteSettings: any;
@@ -164,6 +172,10 @@ export default function AdminPanel({
   setNews,
   notifications = [],
   setNotifications,
+  vitrinPosts = [],
+  setVitrinPosts,
+  gamePortals = [],
+  setGamePortals,
   onBroadcastNotification,
   triggerAlert,
   siteSettings,
@@ -177,11 +189,12 @@ export default function AdminPanel({
   onNavigate
 }: AdminPanelProps) {
   const [activeAdminTab, setActiveAdminTab] = useState<
-    'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news' | 'site_editor' | 'notifications' | 'soundtracks' | 'portals'
+    'overview' | 'submissions' | 'users' | 'missions' | 'trainings' | 'medals' | 'tickets' | 'news' | 'site_editor' | 'notifications' | 'soundtracks' | 'portals' | 'vitrins'
   >('submissions');
 
-  // GAME PORTALS MANAGEMENT STATE
-  const [portals, setPortals] = useState<GamePortal[]>(() => getGamePortals());
+  // 📡 GAME PORTALS MANAGEMENT STATE — از State سراسری (همگام با Supabase)
+  const portals = gamePortals;
+  const setPortals = setGamePortals;
   const [showPortalModal, setShowPortalModal] = useState<boolean>(false);
   const [editingPortal, setEditingPortal] = useState<GamePortal | null>(null);
   const [portalForm, setPortalForm] = useState<{
@@ -273,7 +286,6 @@ export default function AdminPanel({
     }
 
     setPortals(updatedList);
-    saveGamePortals(updatedList);
     setShowPortalModal(false);
   };
 
@@ -281,7 +293,6 @@ export default function AdminPanel({
     if (window.confirm(`آیا از حذف درگاه «${title}» اطمینان دارید؟`)) {
       const updatedList = portals.filter(p => p.id !== id);
       setPortals(updatedList);
-      saveGamePortals(updatedList);
       triggerAlert(`درگاه «${title}» حذف شد.`);
     }
   };
@@ -299,8 +310,187 @@ export default function AdminPanel({
       return p;
     });
     setPortals(updatedList);
-    saveGamePortals(updatedList);
     triggerAlert('وضعیت فعال‌سازی درگاه تغییر یافت.');
+  };
+
+  // ==========================================================================
+  // 🎖️ VITRIN (SHOWCASE) MANAGEMENT STATE — ویترین آثار (همگام با Supabase)
+  // ==========================================================================
+  const [showVitrinModal, setShowVitrinModal] = useState<boolean>(false);
+  const [editingVitrinPost, setEditingVitrinPost] = useState<VitrinPost | null>(null);
+  const [vitrinForm, setVitrinForm] = useState<{
+    title: string;
+    description: string;
+    authorName: string;
+    squadName: string;
+    stageTag: string;
+    badge: string;
+    mediaType: 'image' | 'video';
+    mediaUrl: string;
+    videoSourceUrl: string;
+    authorAvatar: string;
+    likesCount: number;
+    ratingAverage: number;
+  }>({
+    title: '',
+    description: '',
+    authorName: '',
+    squadName: '',
+    stageTag: '',
+    badge: '',
+    mediaType: 'image',
+    mediaUrl: '',
+    videoSourceUrl: '',
+    authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+    likesCount: 0,
+    ratingAverage: 5
+  });
+  const [vitrinMediaUploading, setVitrinMediaUploading] = useState<boolean>(false);
+  const vitrinMediaInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const handleOpenCreateVitrin = () => {
+    setEditingVitrinPost(null);
+    setVitrinForm({
+      title: '',
+      description: '',
+      authorName: '',
+      squadName: '',
+      stageTag: '',
+      badge: '',
+      mediaType: 'image',
+      mediaUrl: '',
+      videoSourceUrl: '',
+      authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+      likesCount: 0,
+      ratingAverage: 5
+    });
+    setShowVitrinModal(true);
+  };
+
+  const handleOpenEditVitrin = (post: VitrinPost) => {
+    setEditingVitrinPost(post);
+    setVitrinForm({
+      title: post.title,
+      description: post.description,
+      authorName: post.authorName,
+      squadName: post.squadName,
+      stageTag: post.stageTag,
+      badge: post.badge || '',
+      mediaType: post.mediaType,
+      mediaUrl: post.mediaUrl,
+      videoSourceUrl: post.videoSourceUrl || '',
+      authorAvatar: post.authorAvatar,
+      likesCount: post.likesCount,
+      ratingAverage: post.ratingAverage
+    });
+    setShowVitrinModal(true);
+  };
+
+  // آپلود فایل رسانه (تصویر/ویدیو) به Supabase Storage و درج URL
+  const handleVitrinMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!isSupabaseEnabled) {
+      triggerAlert('آپلود فایل نیازمند اتصال Supabase است. لطفاً به‌جای آن لینک مستقیم رسانه را وارد کنید.');
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      triggerAlert('حجم فایل نباید از ۲۵ مگابایت بیشتر باشد.');
+      return;
+    }
+    setVitrinMediaUploading(true);
+    try {
+      const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+      const safeName = file.name.replace(/[^\w\u0600-\u06FF.-]/g, '_');
+      const path = `vitrin/${Date.now()}_${safeName}`;
+      const result = await uploadToStorage(path, file);
+      if (result) {
+        setVitrinForm(prev => prev.mediaType === 'video'
+          ? { ...prev, videoSourceUrl: result.publicUrl, mediaUrl: result.publicUrl }
+          : { ...prev, mediaUrl: result.publicUrl });
+        triggerAlert('رسانه با موفقیت در Supabase Storage آپلود شد.');
+      } else {
+        triggerAlert('آپلود رسانه ناموفق بود. لطفا از لینک مستقیم استفاده کنید.');
+      }
+    } finally {
+      setVitrinMediaUploading(false);
+      if (vitrinMediaInputRef.current) vitrinMediaInputRef.current.value = '';
+    }
+  };
+
+  const handleSaveVitrinPost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!vitrinForm.title.trim()) {
+      triggerAlert('خطا: عنوان اثر نمی‌تواند خالی باشد.');
+      return;
+    }
+    if (vitrinForm.mediaType === 'image' && !vitrinForm.mediaUrl.trim()) {
+      triggerAlert('خطا: برای اثر تصویری، تصویر (آپلود یا لینک) الزامی است.');
+      return;
+    }
+    if (vitrinForm.mediaType === 'video' && !vitrinForm.videoSourceUrl.trim() && !vitrinForm.mediaUrl.trim()) {
+      triggerAlert('خطا: برای اثر ویدیویی، ویدیو (آپلود یا لینک) الزامی است.');
+      return;
+    }
+
+    if (editingVitrinPost) {
+      setVitrinPosts(prev => prev.map(p => p.id === editingVitrinPost.id ? {
+        ...p,
+        title: vitrinForm.title.trim(),
+        description: vitrinForm.description.trim(),
+        authorName: vitrinForm.authorName.trim() || 'رزمنده اتاق جنگ',
+        squadName: vitrinForm.squadName.trim() || 'ستاد اتاق جنگ',
+        stageTag: vitrinForm.stageTag.trim() || 'ویترین',
+        badge: vitrinForm.badge.trim() || undefined,
+        mediaType: vitrinForm.mediaType,
+        mediaUrl: vitrinForm.mediaUrl.trim(),
+        videoSourceUrl: vitrinForm.mediaType === 'video' ? vitrinForm.videoSourceUrl.trim() : undefined,
+        authorAvatar: vitrinForm.authorAvatar.trim() || p.authorAvatar,
+        likesCount: Math.max(0, Number(vitrinForm.likesCount) || 0),
+        ratingAverage: Math.min(5, Math.max(1, Number(vitrinForm.ratingAverage) || 5))
+      } : p));
+      triggerAlert(`اثر ویترین «${vitrinForm.title}» با موفقیت بروزرسانی شد و در Supabase ذخیره گردید.`);
+    } else {
+      const newPost: VitrinPost = {
+        id: `vit_${Date.now()}`,
+        authorName: vitrinForm.authorName.trim() || 'رزمنده اتاق جنگ',
+        authorAvatar: vitrinForm.authorAvatar.trim() || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+        squadName: vitrinForm.squadName.trim() || 'ستاد اتاق جنگ',
+        title: vitrinForm.title.trim(),
+        description: vitrinForm.description.trim(),
+        mediaUrl: vitrinForm.mediaUrl.trim(),
+        videoSourceUrl: vitrinForm.mediaType === 'video' ? vitrinForm.videoSourceUrl.trim() : undefined,
+        mediaType: vitrinForm.mediaType,
+        likesCount: Math.max(0, Number(vitrinForm.likesCount) || 0),
+        isLikedByUser: false,
+        ratingAverage: Math.min(5, Math.max(1, Number(vitrinForm.ratingAverage) || 5)),
+        commentsCount: 0,
+        stageTag: vitrinForm.stageTag.trim() || 'ویترین',
+        badge: vitrinForm.badge.trim() || undefined,
+        timeAgo: 'به تازگی',
+        createdAtTimestamp: Date.now()
+      };
+      setVitrinPosts(prev => [newPost, ...prev]);
+      triggerAlert(`ویترین جدید «${vitrinForm.title}» ایجاد شد و در Supabase ذخیره گردید.`);
+    }
+    setShowVitrinModal(false);
+  };
+
+  const handleDeleteVitrinPost = (post: VitrinPost) => {
+    if (window.confirm(`آیا از حذف اثر «${post.title}» از ویترین اطمینان دارید؟`)) {
+      setVitrinPosts(prev => prev.filter(p => p.id !== post.id));
+      triggerAlert(`اثر «${post.title}» از ویترین حذف و از Supabase حذف گردید.`);
+    }
+  };
+
+  const handleMoveVitrinPost = (index: number, dir: -1 | 1) => {
+    const target = index + dir;
+    if (target < 0 || target >= vitrinPosts.length) return;
+    setVitrinPosts(prev => {
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
   };
 
   // USER CRUD & DETAIL MODAL STATES
@@ -661,11 +851,11 @@ export default function AdminPanel({
   const handleToggleVitrinPublication = (sub: MissionSubmission) => {
     const isCurrentlyInVitrin = sub.is_in_vitrin;
     if (isCurrentlyInVitrin) {
-      removeSubmissionFromVitrin(sub.id);
+      setVitrinPosts(prev => prev.filter(p => p.id !== `sub_${sub.id}` && p.id !== sub.id));
       setSubmissions(prev => prev.map(s => s.id === sub.id ? { ...s, is_in_vitrin: false } : s));
       triggerAlert(`اثر «${sub.user_name}» از ویترین عمومی برداشته شد.`);
     } else {
-      publishSubmissionToVitrin({
+      const newPost = buildVitrinPostFromSubmission({
         id: sub.id,
         user_name: sub.user_name,
         personal_code: sub.personal_code,
@@ -676,6 +866,7 @@ export default function AdminPanel({
         user_note: sub.user_note,
         awarded_score: sub.awarded_score || 100
       });
+      setVitrinPosts(prev => [newPost, ...prev.filter(p => p.id !== newPost.id)]);
       setSubmissions(prev => prev.map(s => s.id === sub.id ? { ...s, is_in_vitrin: true, status: 'approved' } : s));
       triggerAlert(`اثر «${sub.user_name}» با موفقیت تأیید و در ویترین عمومی منتشر شد!`);
     }
@@ -689,7 +880,7 @@ export default function AdminPanel({
     const shouldPublishToVitrin = gradeStatus === 'approved' && publishToVitrinInForm;
 
     if (shouldPublishToVitrin) {
-      publishSubmissionToVitrin({
+      const newPost = buildVitrinPostFromSubmission({
         id: sub.id,
         user_name: sub.user_name,
         personal_code: sub.personal_code,
@@ -700,8 +891,9 @@ export default function AdminPanel({
         user_note: sub.user_note,
         awarded_score: finalScore
       });
+      setVitrinPosts(prev => [newPost, ...prev.filter(p => p.id !== newPost.id)]);
     } else if (gradeStatus === 'rejected') {
-      removeSubmissionFromVitrin(sub.id);
+      setVitrinPosts(prev => prev.filter(p => p.id !== `sub_${sub.id}` && p.id !== sub.id));
     }
 
     setSubmissions(prev => prev.map(s => 
@@ -1284,6 +1476,19 @@ export default function AdminPanel({
         >
           <Gamepad2 size={15} className="text-emerald-400" />
           <span>مدیریت درگاه‌ها و لینک‌دهی ({portals.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveAdminTab('vitrins')}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap shrink-0 transition border relative ${
+            activeAdminTab === 'vitrins'
+              ? 'bg-gradient-to-r from-fuchsia-500 via-rose-400 to-amber-400 text-slate-950 border-rose-400 font-black shadow-[0_0_20px_rgba(244,63,94,0.5)]'
+              : 'bg-[#080d21] text-rose-300 border-rose-500/40 hover:border-rose-400 hover:text-white'
+          }`}
+          id="btn-tab-vitrins"
+        >
+          <Gem size={15} className="text-rose-400" />
+          <span>ویترین آثار ({vitrinPosts.length})</span>
         </button>
 
       </div>
@@ -4738,6 +4943,365 @@ export default function AdminPanel({
         faqs={faqs || []}
         currentUser={currentUser}
       />
+
+      {/* ==================================================================== */}
+      {/* 13. 🎖️ VITRIN (SHOWCASE) MANAGER TAB — ویترین آثار                     */}
+      {/* ==================================================================== */}
+      {activeAdminTab === 'vitrins' && (
+        <div className="space-y-6 dir-rtl font-sans">
+
+          {/* Header Banner */}
+          <div className="bg-gradient-to-r from-[#1c0511] via-[#0f0310] to-[#050109] border border-rose-500/30 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden">
+            <div className="absolute -left-10 -top-10 w-48 h-48 bg-rose-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold">
+                  <Gem size={15} className="animate-pulse text-rose-400" />
+                  <span>ویترین آثار — نمایشگاه عمومی رزمندگان</span>
+                </div>
+                <h2 className="text-lg sm:text-xl font-black text-white">مدیریت و ایجاد ویترین‌های آثار</h2>
+                <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
+                  در این بخش می‌توانید آثار را مستقیماً به ویترین عمومی اضافه کنید (تصویر یا ویدیو).
+                  همه‌ی تغییرات به‌صورت خودکار در <span className="text-emerald-400 font-bold">Supabase</span> ذخیره و در بخش
+                  «ویترین آثار» سایت برای کاربران نمایش داده می‌شود.
+                </p>
+              </div>
+              <button
+                onClick={handleOpenCreateVitrin}
+                className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-400 text-slate-950 text-sm font-black shadow-[0_0_25px_rgba(244,63,94,0.5)] hover:brightness-110 transition shrink-0"
+              >
+                <Plus size={18} />
+                <span>ایجاد ویترین جدید</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Supabase Sync Status Chip */}
+          <div className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold ${
+            isSupabaseEnabled
+              ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+              : 'bg-amber-950/40 border-amber-500/40 text-amber-300'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${isSupabaseEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+            <span>
+              {isSupabaseEnabled
+                ? 'ویترین به Supabase متصل است — ذخیره‌سازی ابری فعال (جدول warroom_vitrin_posts)'
+                : 'وضعیت: حالت محلی (Supabase پیکربندی نشده) — ذخیره در localStorage'}
+            </span>
+          </div>
+
+          {/* Vitrin Posts Grid */}
+          {vitrinPosts.length === 0 ? (
+            <div className="p-12 rounded-3xl border-2 border-dashed border-slate-700/60 bg-slate-950/40 text-center space-y-3">
+              <Gem size={40} className="mx-auto text-rose-400/60" />
+              <p className="text-sm font-black text-white">هنوز اثری در ویترین ثبت نشده است</p>
+              <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+                برای شروع، روی «ایجاد ویترین جدید» کلیک کنید یا از بخش «داوری و امتیازدهی»،
+                اثر ارسالی یک رزمنده را تأیید و در ویترین منتشر نمایید.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {vitrinPosts.map((post, index) => (
+                <div
+                  key={post.id}
+                  className="group bg-[#080d1a] border border-slate-800 rounded-3xl overflow-hidden shadow-xl hover:border-rose-500/40 transition relative"
+                >
+                  {/* Media */}
+                  <div className="relative aspect-[4/3] bg-black overflow-hidden">
+                    <img
+                      src={post.mediaUrl}
+                      alt={post.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=800&q=80';
+                      }}
+                    />
+                    {post.mediaType === 'video' && (
+                      <span className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-lg bg-black/70 text-rose-300 border border-rose-500/40 text-[10px] font-bold">
+                        <Video size={11} />
+                        <span>ویدیو</span>
+                      </span>
+                    )}
+                    {post.badge && (
+                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-lg bg-amber-950/90 text-amber-300 border border-amber-500/40 text-[9px] font-bold">
+                        {post.badge}
+                      </span>
+                    )}
+                    {/* Reorder Buttons */}
+                    <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition">
+                      <button
+                        onClick={() => handleMoveVitrinPost(index, -1)}
+                        disabled={index === 0}
+                        className="p-1.5 rounded-lg bg-black/70 border border-slate-600 text-slate-200 hover:text-white disabled:opacity-30 hover:disabled:opacity-30"
+                        title="جابه‌جایی به بالا"
+                      >
+                        <ArrowUp size={13} />
+                      </button>
+                      <button
+                        onClick={() => handleMoveVitrinPost(index, 1)}
+                        disabled={index === vitrinPosts.length - 1}
+                        className="p-1.5 rounded-lg bg-black/70 border border-slate-600 text-slate-200 hover:text-white disabled:opacity-30"
+                        title="جابه‌جایی به پایین"
+                      >
+                        <ArrowDown size={13} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div className="p-3.5 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <img src={post.authorAvatar} alt={post.authorName} className="w-7 h-7 rounded-full object-cover border border-rose-500/40" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-black text-white truncate">{post.authorName}</p>
+                        <p className="text-[10px] text-slate-400 truncate">{post.squadName}</p>
+                      </div>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-950/60 text-rose-300 border border-rose-500/30 shrink-0">
+                        {post.stageTag}
+                      </span>
+                    </div>
+
+                    <h3 className="text-sm font-bold text-white leading-snug line-clamp-1">{post.title}</h3>
+                    <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">{post.description}</p>
+
+                    <div className="flex items-center gap-3 text-[10px] text-slate-400 pt-1">
+                      <span className="flex items-center gap-1"><Heart size={11} className="text-rose-400" /> {formatToPersianDigits(post.likesCount)}</span>
+                      <span className="flex items-center gap-1"><Star size={11} className="text-amber-400" /> {formatToPersianDigits(post.ratingAverage)}</span>
+                      <span className="flex items-center gap-1"><MessageSquare size={11} className="text-cyan-400" /> {formatToPersianDigits(post.commentsCount)}</span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+                      <button
+                        onClick={() => handleOpenEditVitrin(post)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-[11px] font-bold hover:bg-cyan-900/60 transition"
+                      >
+                        <Edit3 size={13} />
+                        <span>ویرایش</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteVitrinPost(post)}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-[11px] font-bold hover:bg-rose-900/60 transition"
+                      >
+                        <Trash2 size={13} />
+                        <span>حذف</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 13b. 🎖️ VITRIN CREATE/EDIT MODAL */}
+      {showVitrinModal && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
+          <div className="bg-[#090e21] border border-rose-500/40 rounded-3xl max-w-2xl w-full overflow-hidden text-white shadow-2xl relative flex flex-col max-h-[90vh] my-auto">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-rose-950 text-rose-400 border border-rose-500/40">
+                  <Gem size={18} />
+                </span>
+                <div>
+                  <h3 className="text-sm font-black text-white">{editingVitrinPost ? 'ویرایش اثر ویترین' : 'ایجاد ویترین جدید'}</h3>
+                  <span className="text-[10px] text-rose-300 font-mono">📡 ذخیره در Supabase (warroom_vitrin_posts)</span>
+                </div>
+              </div>
+              <button onClick={() => setShowVitrinModal(false)} className="p-1.5 rounded-full bg-slate-900 text-slate-400 hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form id="vitrin-form" onSubmit={handleSaveVitrinPost} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">عنوان اثر *</label>
+                  <input
+                    type="text"
+                    value={vitrinForm.title}
+                    onChange={e => setVitrinForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="مثلاً: طرح استراتژیک عملیات فنی و مهندسی"
+                    className="w-full bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">توضیحات اثر</label>
+                  <textarea
+                    value={vitrinForm.description}
+                    onChange={e => setVitrinForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="توضیح مختصر درباره این اثر..."
+                    rows={3}
+                    className="w-full bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">نام سازنده / رزمنده</label>
+                  <input
+                    type="text"
+                    value={vitrinForm.authorName}
+                    onChange={e => setVitrinForm(prev => ({ ...prev, authorName: e.target.value }))}
+                    placeholder="مثلاً: سارا احمدی"
+                    className="w-full bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">نام جوخه / تیم</label>
+                  <input
+                    type="text"
+                    value={vitrinForm.squadName}
+                    onChange={e => setVitrinForm(prev => ({ ...prev, squadName: e.target.value }))}
+                    placeholder="مثلاً: جوخه صاعقه"
+                    className="w-full bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">نوع رسانه</label>
+                  <select
+                    value={vitrinForm.mediaType}
+                    onChange={e => setVitrinForm(prev => ({ ...prev, mediaType: e.target.value as 'image' | 'video' }))}
+                    className="w-full bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition"
+                  >
+                    <option value="image">تصویر</option>
+                    <option value="video">ویدیو</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">برچسب مرحله / بخش</label>
+                  <input
+                    type="text"
+                    value={vitrinForm.stageTag}
+                    onChange={e => setVitrinForm(prev => ({ ...prev, stageTag: e.target.value }))}
+                    placeholder="مثلاً: مأموریت ۳"
+                    className="w-full bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">رسانه {vitrinForm.mediaType === 'video' ? 'ویدیو' : 'تصویر'} (آپلود یا لینک) *</label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        ref={vitrinMediaInputRef}
+                        type="file"
+                        accept={vitrinForm.mediaType === 'video' ? 'video/*' : 'image/*'}
+                        onChange={handleVitrinMediaUpload}
+                        disabled={vitrinMediaUploading}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => vitrinMediaInputRef.current?.click()}
+                        disabled={vitrinMediaUploading || !isSupabaseEnabled}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-[11px] font-bold hover:border-rose-400 hover:text-white disabled:opacity-40 transition shrink-0"
+                        title={isSupabaseEnabled ? 'آپلود به Supabase Storage' : 'آپلود نیازمند اتصال Supabase است'}
+                      >
+                        {vitrinMediaUploading ? <Loader2 size={13} className="animate-spin text-rose-400" /> : <Upload size={13} />}
+                        <span>{vitrinMediaUploading ? 'در حال آپلود...' : 'آپلود فایل'}</span>
+                      </button>
+                      <input
+                        type="text"
+                        value={vitrinForm.mediaType === 'video' ? vitrinForm.videoSourceUrl : vitrinForm.mediaUrl}
+                        onChange={e => setVitrinForm(prev => prev.mediaType === 'video'
+                          ? { ...prev, videoSourceUrl: e.target.value, mediaUrl: e.target.value }
+                          : { ...prev, mediaUrl: e.target.value })}
+                        placeholder="یا لینک مستقیم رسانه (https://...)"
+                        className="flex-1 bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition"
+                      />
+                    </div>
+                    {vitrinForm.mediaType === 'image' ? (
+                      vitrinForm.mediaUrl ? (
+                        <img src={vitrinForm.mediaUrl} alt="پیش‌نمایش" className="w-24 h-24 object-cover rounded-xl border border-slate-700" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
+                        <p className="text-[10px] text-slate-500 flex items-center gap-1"><Image size={11} /> پس از آپلود یا وارد کردن لینک، پیش‌نمایش نمایش داده می‌شود.</p>
+                      )
+                    ) : (
+                      <p className="text-[10px] text-slate-500 flex items-center gap-1"><Video size={11} /> لینک ویدیو (mp4) برای پخش در ویترین استفاده می‌شود.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">لینک آواتار سازنده</label>
+                  <input
+                    type="text"
+                    value={vitrinForm.authorAvatar}
+                    onChange={e => setVitrinForm(prev => ({ ...prev, authorAvatar: e.target.value }))}
+                    className="w-full bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">برچسب افتخارات (اختیاری)</label>
+                  <input
+                    type="text"
+                    value={vitrinForm.badge}
+                    onChange={e => setVitrinForm(prev => ({ ...prev, badge: e.target.value }))}
+                    className="w-full bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition"
+                    placeholder="مثلاً: تأیید شده داوران ستاد"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">تعداد لایک اولیه</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={vitrinForm.likesCount}
+                    onChange={e => setVitrinForm(prev => ({ ...prev, likesCount: Number(e.target.value) || 0 }))}
+                    className="w-full bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1.5">میانگین امتیاز (۱ تا ۵)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    step={0.1}
+                    value={vitrinForm.ratingAverage}
+                    onChange={e => setVitrinForm(prev => ({ ...prev, ratingAverage: Number(e.target.value) || 5 }))}
+                    className="w-full bg-slate-950 border border-slate-700 focus:border-rose-400 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition"
+                  />
+                </div>
+              </div>
+            </form>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
+              <button
+                onClick={() => setShowVitrinModal(false)}
+                className="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-xs font-bold hover:text-white transition"
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const form = document.getElementById('vitrin-form') as HTMLFormElement | null;
+                  if (form) form.requestSubmit();
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-500 text-white text-xs font-black shadow-[0_0_20px_rgba(244,63,94,0.4)] hover:brightness-110 transition"
+              >
+                <Check size={14} />
+                <span>{editingVitrinPost ? 'ذخیره تغییرات' : 'ایجاد ویترین'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Dispatch, SetStateAction } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Heart, 
@@ -24,39 +24,41 @@ import { playTacticalSound } from '../utils/epicBgmEngine';
 import { 
   VitrinPost, 
   VitrinComment, 
-  initialVitrinPosts, 
-  getAllVitrinPosts,
   getSavedPostIds, 
   savePostId, 
-  getAllComments, 
-  saveComment 
+  saveComment, 
+  toggleCommentLike as vitrinToggleCommentLike 
 } from '../data/vitrinData';
 
 interface VitrinViewProps {
   currentUser: User | null;
+  // 📡 داده‌های همگام با Supabase (از State سراسری App)
+  posts: VitrinPost[];
+  setPosts: Dispatch<SetStateAction<VitrinPost[]>>;
+  commentsMap?: Record<string, VitrinComment[]>;
   triggerAlert: (msg: string) => void;
   onNavigate?: (tab: string) => void;
 }
 
 export default function VitrinView({
   currentUser,
+  posts,
+  setPosts,
+  commentsMap: commentsMapProp,
   triggerAlert,
   onNavigate
 }: VitrinViewProps) {
   const isGirls = currentUser?.gender === 'دختر' || localStorage.getItem('hisstory_theme_mode') === 'girls';
 
-  // Initialize posts with all vitrin posts including admin-approved user submissions
-  const [posts, setPosts] = useState<VitrinPost[]>(() => {
-    return getAllVitrinPosts(currentUser?.id);
-  });
+  // 📡 پست‌ها: مستقیماً از State همگام‌شده با Supabase (پنل مدیریت + تأیید آثار)
+  // (Prop از App دریافت می‌شود؛ تغییرات این صفحه با setPosts به دیتابیس همگام می‌شوند)
 
+  // 📡 نظرات: آینه‌ی State همگام‌شده با Supabase
+  // (تغییرات از طریق saveComment/toggleCommentLike → رویداع → App → این Prop)
+  const [commentsMap, setCommentsMap] = useState<Record<string, VitrinComment[]>>(commentsMapProp || {});
   useEffect(() => {
-    const handleVitrinUpdated = () => {
-      setPosts(getAllVitrinPosts(currentUser?.id));
-    };
-    window.addEventListener('warroom_vitrin_updated', handleVitrinUpdated);
-    return () => window.removeEventListener('warroom_vitrin_updated', handleVitrinUpdated);
-  }, [currentUser?.id]);
+    if (commentsMapProp) setCommentsMap(commentsMapProp);
+  }, [commentsMapProp]);
 
   // Lazy Loading for Vitrin Feed: Display 1 post initially, load 1 next post per scroll/trigger
   const [visiblePostsCount, setVisiblePostsCount] = useState<number>(1);
@@ -124,9 +126,6 @@ export default function VitrinView({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [visiblePostsCount, posts.length, isLoadingNextPost]);
 
-  // Comments map state
-  const [commentsMap, setCommentsMap] = useState<Record<string, VitrinComment[]>>(() => getAllComments());
-  
   // Active expandable comments section on feed cards
   const [expandedCommentsPostId, setExpandedCommentsPostId] = useState<string | null>(null);
   
@@ -319,27 +318,10 @@ export default function VitrinView({
     triggerAlert('دیدگاه شما با موفقیت ثبت و منتشر شد.');
   };
 
-  // Like a comment
+  // Like a comment (📡 همگام با Supabase از طریق ابزار sync‌شده)
   const handleToggleCommentLike = (postId: string, commentId: string) => {
-    setCommentsMap(prev => {
-      const list = prev[postId] || [];
-      const updatedList = list.map(c => {
-        if (c.id === commentId) {
-          const nextLiked = !c.isLiked;
-          return {
-            ...c,
-            isLiked: nextLiked,
-            likesCount: nextLiked ? (c.likesCount || 0) + 1 : Math.max(0, (c.likesCount || 0) - 1)
-          };
-        }
-        return c;
-      });
-      const nextMap = { ...prev, [postId]: updatedList };
-      try {
-        localStorage.setItem('warroom_vitrin_comments', JSON.stringify(nextMap));
-      } catch (e) {}
-      return nextMap;
-    });
+    const updated = vitrinToggleCommentLike(postId, commentId);
+    setCommentsMap(updated);
   };
 
   // Total saved count for user
