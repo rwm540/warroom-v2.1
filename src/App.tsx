@@ -16,7 +16,8 @@ import {
   Announcement, 
   News,
   AppNotification,
-  GamePortal
+  GamePortal,
+  PasswordResetRequest
 } from './types';
 
 // Mock Data
@@ -54,6 +55,9 @@ import {
   loadSavedPostsFromDb
 } from './lib/supabaseData';
 import { checkSupabaseHealth } from './lib/supabaseClient';
+// 🛡️ لایه ارتباط امن با بک‌اند (احراز هویت، رمز عبور، درخواست‌های تغییر رمز)
+import { probeBackend, apiLogout, apiSession, getBackendStatus, subscribeBackendStatus } from './lib/backendApi';
+import ForcePasswordChangeModal from './components/ForcePasswordChangeModal';
 
 // Vitrin (Showcase) data layer
 import {
@@ -273,6 +277,13 @@ export default function App() {
     initial: DEFAULT_GAME_PORTALS
   });
 
+  // 🛡️ درخواست‌های تغییر رمز عبور (حالت محلی) — در حالت بک‌اند، سرور مرجع است
+  const [passwordResetRequests, setPasswordResetRequests] = useSyncedCollection<PasswordResetRequest>({
+    storageKey: 'warroom_password_reset_requests',
+    table: 'warroom_password_reset_requests',
+    initial: []
+  });
+
   // نقشه‌ی نظرات بر اساس پست (برای مصرف در کامپوننت‌ها)
   const vitrinCommentsMap: Record<string, VitrinComment[]> = {};
   vitrinComments.forEach(c => {
@@ -283,6 +294,62 @@ export default function App() {
   useEffect(() => {
     checkSupabaseHealth();
   }, []);
+
+  // 🛡️ بررسی سلامت بک‌اند امن و پایش وضعیت آن
+  const [backendReady, setBackendReady] = useState<boolean>(() => Boolean(getBackendStatus()?.available));
+  useEffect(() => {
+    probeBackend();
+    return subscribeBackendStatus((status) => setBackendReady(Boolean(status.available)));
+  }, []);
+
+  // 🛡️ اعتبارسنجی نشست سمت سرور هنگام بارگذاری برنامه:
+  // نشست محلی (localStorage) تنها زمانی معتبر است که سرور نیز آن را تأیید کند؛
+  // در غیر این صورت دسترسی (به‌ویژه پنل مدیریت) باطل می‌شود.
+  useEffect(() => {
+    if (!backendReady) return;
+    let cancelled = false;
+
+    apiSession().then((res) => {
+      if (cancelled) return;
+      const serverUser: User | undefined = res.ok && res.data?.authenticated ? (res.data.user as User) : undefined;
+
+      if (!serverUser) {
+        setCurrentUser((prev) => {
+          if (!prev) return prev;
+          localStorage.removeItem('warroom_current_user_id');
+          localStorage.removeItem('warroom_current_user_data');
+          localStorage.removeItem('warroom_active_tab');
+          return null;
+        });
+        setIsAdminMode(false);
+        setMustChangePassword(false);
+        return;
+      }
+
+      const safeUser: User = { ...serverUser, password: '' };
+      setCurrentUser((prev) => (prev && prev.id === safeUser.id ? { ...prev, ...safeUser } : safeUser));
+      if (res.data?.mustChangePassword) setMustChangePassword(true);
+    });
+
+    return () => { cancelled = true; };
+    // فقط زمانی اجرا می‌شود که وضعیت بک‌اند امن مشخص شود
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backendReady]);
+
+  // 🛡️ پاک‌سازی رمزهای باقی‌مانده در حافظه مرورگر در «حالت امن»
+  // در حالت بک‌اند، اعتبارسنجی رمز فقط روی سرور انجام می‌شود و مرورگر هیچ رمزی نگه نمی‌دارد.
+  useEffect(() => {
+    if (!backendReady) return;
+    setUsers(prev => {
+      const hasSecret = prev.some(u => Boolean(u.password));
+      return hasSecret ? prev.map(u => ({ ...u, password: '' })) : prev;
+    });
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('warroom_') && /password|credential/i.test(k))
+        .forEach(k => localStorage.removeItem(k));
+    } catch { /* ignore */ }
+  }, [backendReady, setUsers]);
 
   // همگام‌سازی ذخیره‌های ویترین با Supabase هنگام تغییر (Bookmark Toggle)
   useEffect(() => {
@@ -305,6 +372,43 @@ export default function App() {
     window.addEventListener('warroom_vitrin_comments_updated', handler);
     return () => window.removeEventListener('warroom_vitrin_comments_updated', handler);
   }, [setVitrinComments]);
+
+  /**
+   * ثبت درخواست تغییر رمز در «حالت محلی» (زمانی که بک‌اند امن در دسترس نیست).
+   * در حالت امن، این کار توسط سرور انجام و در پنل مدیریت نمایش داده می‌شود.
+   */
+  const createLocalPasswordResetRequest = (input: {
+    nationalCode: string;
+    contactPhone?: string;
+    note?: string;
+  }): { trackingCode: string } => {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+    const trackingCode = `WR-${code}`;
+
+    const targetUser = users.find(
+      u => String(u.national_code || '').replace(/\D/g, '') === input.nationalCode
+    );
+
+    const request: PasswordResetRequest = {
+      id: `pr_local_${Date.now()}`,
+      tracking_code: trackingCode,
+      user_id: targetUser?.id,
+      national_code: input.nationalCode,
+      personal_code: targetUser?.personal_code,
+      full_name: targetUser ? `${targetUser.first_name} ${targetUser.last_name}` : '',
+      account_phone: targetUser?.phone || '',
+      contact_phone: input.contactPhone || targetUser?.phone || '',
+      note: input.note,
+      status: 'pending',
+      source: 'local',
+      created_at: new Date().toISOString()
+    };
+
+    setPasswordResetRequests(prev => [request, ...prev]);
+    return { trackingCode };
+  };
 
   // Current Logged-in User with Full Persistence
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -414,6 +518,8 @@ export default function App() {
 
   const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
   const [showGamePortal, setShowGamePortal] = useState<boolean>(false);
+  /** 🛡️ الزام تغییر رمز پیش‌فرض/موقت (اعلام‌شده توسط سرور) */
+  const [mustChangePassword, setMustChangePassword] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'login' | 'register_individual' | 'register_group'>('register_individual');
 
   // Global active modal tracking (hides bottom nav & music bar with smooth exit animation when any modal opens)
@@ -550,6 +656,11 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    // 🛡️ ابطال نشست سمت سرور (توکن هش‌شده + کوکی HttpOnly)
+    if (backendReady) {
+      apiLogout().catch(() => { /* خروج محلی در هر صورت انجام می‌شود */ });
+    }
+    setMustChangePassword(false);
     setCurrentUser(null);
     setIsAdminMode(false);
     setActiveTab('Home');
@@ -560,9 +671,11 @@ export default function App() {
     triggerAlert('خروج از سامانه اتاق جنگ با موفقیت انجام شد.');
   };
 
-  const handleLoginSuccess = (user: User) => {
+  const handleLoginSuccess = (user: User, meta?: { mustChangePassword?: boolean }) => {
     setCurrentUser(user);
     setShowAuthScreen(false);
+    // 🛡️ اگر مدیر با رمز پیش‌فرض/موقت وارد شده باشد، تغییر رمز اجباری می‌شود
+    setMustChangePassword(Boolean(meta?.mustChangePassword));
     localStorage.setItem('warroom_current_user_id', user.id);
     localStorage.setItem('warroom_current_user_data', JSON.stringify(user));
 
@@ -697,6 +810,24 @@ export default function App() {
         </div>
       )}
 
+      {/* 🛡️ تغییر اجباری رمز پیش‌فرض/موقت مدیر */}
+      {mustChangePassword && currentUser && (
+        <ForcePasswordChangeModal
+          userName={`${currentUser.first_name} ${currentUser.last_name}`}
+          onChanged={() => {
+            setMustChangePassword(false);
+            triggerAlert('رمز عبور شما با موفقیت تغییر کرد. لطفاً دوباره وارد شوید.');
+            handleLogout();
+            setShowAuthScreen(true);
+            setAuthMode('login');
+          }}
+          onLogout={() => {
+            setMustChangePassword(false);
+            handleLogout();
+          }}
+        />
+      )}
+
       {/* Global Toast Alert Notification (Swipeable right on Touch/Mobile + Close X Button) */}
       <AnimatePresence>
         {alertNotification && (
@@ -773,6 +904,7 @@ export default function App() {
               }}
               initialAuthMode={authMode}
               campaignTheme={campaignTheme}
+              createLocalPasswordResetRequest={createLocalPasswordResetRequest}
             />
           </motion.div>
         ) : activeTab === 'Home' ? (
@@ -912,6 +1044,8 @@ export default function App() {
                     setHomeStats={setHomeStats}
                     faqs={faqs}
                     setFaqs={setFaqs}
+                    passwordResetRequests={passwordResetRequests}
+                    setPasswordResetRequests={setPasswordResetRequests}
                     onNavigate={(tab) => handleTabChange(tab)}
                   />
                 ) : (

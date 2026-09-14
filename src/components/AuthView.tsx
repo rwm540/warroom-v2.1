@@ -21,6 +21,9 @@ import {
   Phone,
   RefreshCw,
   ChevronDown,
+  ShieldCheck,
+  ShieldAlert,
+  Send,
   X
 } from 'lucide-react';
 import { User, Group, RoleType, Gender } from '../types';
@@ -34,13 +37,29 @@ import {
 import PersianDatePicker from './PersianDatePicker';
 import warroomLogoJpg from '../assets/images/warroom_logo_1787906676836.jpg';
 import { isSupabaseEnabled, sha256Hex } from '../lib/supabaseData';
+import {
+  probeBackend,
+  subscribeBackendStatus,
+  getBackendStatus,
+  apiLogin,
+  apiRegister,
+  requestPasswordReset,
+  checkPasswordResetStatus,
+  type BackendStatus
+} from '../lib/backendApi';
 
 interface AuthViewProps {
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   groups: Group[];
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
-  onLoginSuccess: (user: User) => void;
+  onLoginSuccess: (user: User, meta?: { mustChangePassword?: boolean }) => void;
+  /** ثبت درخواست تغییر رمز در «حالت محلی» (زمانی که بک‌اند امن در دسترس نیست) */
+  createLocalPasswordResetRequest?: (input: {
+    nationalCode: string;
+    contactPhone?: string;
+    note?: string;
+  }) => { trackingCode: string } | null;
   triggerAlert: (msg: string) => void;
   onBackToHome?: () => void;
   initialAuthMode?: 'login' | 'register_individual' | 'register_group';
@@ -55,6 +74,7 @@ export default function AuthView({
   onLoginSuccess,
   triggerAlert,
   onBackToHome,
+  createLocalPasswordResetRequest,
   initialAuthMode = 'register_individual',
   campaignTheme
 }: AuthViewProps) {
@@ -95,6 +115,8 @@ export default function AuthView({
     firstName: '',
     lastName: '',
     nationalCode: '',
+    /** شماره همراه — برای هماهنگی تلفنی مدیر در فرآیند بازیابی رمز */
+    phone: '',
     birthDate: '1388/06/20',
     gender: selectedGender,
     password: ''
@@ -172,13 +194,31 @@ export default function AuthView({
     }
   }, [loginNationalId, users]);
 
-  // 3. Forgot Password Modal State
+  // 3. Forgot Password Modal State — «درخواست تغییر رمز» با تأیید مدیر سامانه
+  // (کاربر دیگر نمی‌تواند رمز خود را مستقیم و بدون احراز هویت عوض کند)
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotStep, setForgotStep] = useState<1 | 2>(1);
   const [forgotNationalId, setForgotNationalId] = useState('');
-  const [forgotPhone, setForgotPhone] = useState('');
-  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotContactPhone, setForgotContactPhone] = useState('');
+  const [forgotNote, setForgotNote] = useState('');
+  const [forgotTrackingCode, setForgotTrackingCode] = useState('');
+  const [forgotStatusText, setForgotStatusText] = useState('');
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotMessage, setForgotMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
+
+  // 🛡️ «راه‌اندازی نخستین رمز مدیر» در حالت محلی (بدون بک‌اند)
+  //    در حالت امن، رمز مدیر فقط توسط سرور ساخته می‌شود و این بخش فعال نیست.
+  const [localAdminSetup, setLocalAdminSetup] = useState(false);
+  const [localAdminPassword, setLocalAdminPassword] = useState('');
+  const [localAdminPasswordConfirm, setLocalAdminPasswordConfirm] = useState('');
+
+  // 🛡️ وضعیت بک‌اند امن (لایه‌های امنیتی سرور)
+  const [backendStatus, setBackendStatus] = useState<BackendStatus | null>(() => getBackendStatus());
+  useEffect(() => {
+    probeBackend();
+    return subscribeBackendStatus(setBackendStatus);
+  }, []);
+  const backendReady = Boolean(backendStatus?.available);
 
   // Handle Unified Register Submission
   const handleRegisterSubmit = async (e: React.FormEvent) => {
@@ -212,23 +252,80 @@ export default function AuthView({
       return;
     }
 
-    if (!registerForm.password || registerForm.password.trim().length < 4) {
-      setRegisterError('لطفاً رمز عبور را وارد نمایید (حداقل ۴ کاراکتر).');
+    const rawPassword = registerForm.password.trim();
+    if (rawPassword.length < 8) {
+      setRegisterError('رمز عبور باید حداقل ۸ کاراکتر باشد.');
+      return;
+    }
+    if (!/[A-Za-z]/.test(rawPassword) || !/\d/.test(rawPassword)) {
+      setRegisterError('رمز عبور باید ترکیبی از حرف لاتین و رقم باشد.');
+      return;
+    }
+    if (/\s/.test(rawPassword)) {
+      setRegisterError('رمز عبور نباید فاصله داشته باشد.');
       return;
     }
 
-    setIsSubmitting(true);
+    const phone = normalizeToEnglishDigits(registerForm.phone.trim()).replace(/\D/g, '');
+    if (!/^09\d{9}$/.test(phone)) {
+      setRegisterError('شماره همراه معتبر وارد کنید (مثال: 09123456789) — برای هماهنگی تلفنی لازم است.');
+      return;
+    }
 
     const personalCode = generatePersonalCode();
-    const rawPassword = registerForm.password.trim();
-    // در حالت Supabase رمزها به‌صورت هش SHA-256 ذخیره می‌شوند
-    const storedPassword = isSupabaseEnabled ? await sha256Hex(rawPassword) : rawPassword;
+    const avatarUrl = isGirls
+      ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+
+    setIsSubmitting(true);
+
+    const lockTheme = () => {
+      const targetTheme = selectedGender === 'دختر' ? 'girls' : 'boys';
+      localStorage.setItem('hisstory_theme_mode', targetTheme);
+      window.dispatchEvent(new Event('storage'));
+    };
+
+    /* ================= 🛡️ مسیر امن: ثبت‌نام روی بک‌اند ================= */
+    const registerBackend = await probeBackend();
+    if (registerBackend.available) {
+      const res = await apiRegister({
+        first_name: firstName,
+        last_name: lastName,
+        national_code: nationalCode,
+        phone,
+        birth_date: birthDate,
+        gender: selectedGender,
+        education_level: 'متوسطه اول',
+        grade: 'هشتم',
+        province: 'تهران',
+        city: 'تهران',
+        school_name: 'دبیرستان شهید بهشتی',
+        personal_code: personalCode,
+        password: rawPassword
+      });
+      setIsSubmitting(false);
+
+      if (!res.ok) {
+        setRegisterError(res.error.message);
+        return;
+      }
+
+      const serverUser: User = { ...res.data.user, password: '' };
+      setUsers(prev => (prev.some(u => u.id === serverUser.id) ? prev : [...prev, serverUser]));
+      lockTheme();
+      triggerAlert(`ثبت‌نام شما با موفقیت انجام شد! به اتاق جنگ خوش آمدید ${firstName} عزیز.`);
+      onLoginSuccess(serverUser, { mustChangePassword: res.data.mustChangePassword });
+      return;
+    }
+
+    /* ============ حالت محلی (بدون بک‌اند): رمز فقط به‌صورت هش ============ */
+    const storedPassword = await sha256Hex(rawPassword);
     const newUser: User = {
       id: `warroom-user-${Date.now()}`,
       first_name: firstName,
       last_name: lastName,
       national_code: nationalCode,
-      phone: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
+      phone,
       province: 'تهران',
       city: 'تهران',
       school_name: 'دبیرستان شهید بهشتی',
@@ -239,21 +336,16 @@ export default function AuthView({
       password: storedPassword,
       role: 'user',
       personal_code: personalCode,
-      avatar_url: isGirls
-        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
-        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'
+      avatar_url: avatarUrl
     };
 
     setTimeout(() => {
       setUsers(prev => [...prev, newUser]);
       setIsSubmitting(false);
-      // Explicitly lock theme to newly registered user gender
-      const targetTheme = selectedGender === 'دختر' ? 'girls' : 'boys';
-      localStorage.setItem('hisstory_theme_mode', targetTheme);
-      window.dispatchEvent(new Event('storage'));
+      lockTheme();
       triggerAlert(`ثبت‌نام شما با موفقیت انجام شد! به اتاق جنگ خوش آمدید ${firstName} عزیز.`);
       onLoginSuccess(newUser);
-    }, 400);
+    }, 300);
   };
 
   // Handle Login Submission
@@ -267,69 +359,194 @@ export default function AuthView({
       return;
     }
 
-    const user = users.find(u => 
-      normalizeToEnglishDigits(u.national_code) === natId || 
-      normalizeToEnglishDigits(u.personal_code) === natId
-    );
+    /* ================= 🛡️ مسیر امن: بررسی رمز روی سرور ================= */
+    // اگر وضعیت بک‌اند هنوز مشخص نشده باشد، همان‌جا بررسی می‌شود تا
+    // کاربر به‌اشتباه وارد «حالت محلی» (کم‌امن) نشود.
+    const status = await probeBackend();
+    if (status.available) {
+      setIsSubmitting(true);
+      const res = await apiLogin(natId, loginPassword);
+      setIsSubmitting(false);
 
-    if (user) {
-      // رمز عبور: در حالت Supabase هش SHA-256 مقایسه می‌شود، در حالت محلی متن ساده
-      const suppliedPassword = isSupabaseEnabled ? await sha256Hex(loginPassword) : loginPassword;
-      if (user.password && loginPassword && user.password !== suppliedPassword) {
-        setLoginError('رمز عبور وارد شده صحیح نیست. از گزینه فراموشی رمز عبور استفاده کنید.');
+      if (!res.ok) {
+        setLoginError(res.error.message);
         return;
       }
-      
-      // CRITICAL: Strictly enforce the registered user's profile gender theme
-      const targetTheme = user.gender === 'دختر' ? 'girls' : 'boys';
-      setSelectedGender(user.gender);
+
+      const serverUser: User = { ...res.data.user, password: '' };
+      // هم‌گام‌سازی پروفایل در مجموعه محلی (بدون رمز عبور)
+      setUsers(prev => {
+        const exists = prev.some(u => u.id === serverUser.id);
+        return exists
+          ? prev.map(u => (u.id === serverUser.id ? { ...u, ...serverUser, password: '' } : u))
+          : [...prev, serverUser];
+      });
+
+      const targetTheme = serverUser.gender === 'دختر' ? 'girls' : 'boys';
+      setSelectedGender(serverUser.gender);
       localStorage.setItem('hisstory_theme_mode', targetTheme);
       window.dispatchEvent(new Event('storage'));
 
-      triggerAlert(`خوش آمدید ${user.first_name} ${user.last_name}`);
-      onLoginSuccess(user);
-    } else {
-      setLoginError('کاربری با این کد ملی یافت نشد. لطفاً ابتدا ثبت‌نام کنید.');
+      triggerAlert(`خوش آمدید ${serverUser.first_name} ${serverUser.last_name}`);
+      onLoginSuccess(serverUser, { mustChangePassword: res.data.mustChangePassword });
+      return;
     }
-  };
 
-  // Handle Forgot Password Step 1
-  const handleForgotVerify = (e: React.FormEvent) => {
-    e.preventDefault();
-    setForgotMessage(null);
-    const natId = normalizeToEnglishDigits(forgotNationalId.trim());
-    const user = users.find(u => normalizeToEnglishDigits(u.national_code) === natId);
+    /* ============ حالت محلی (بدون بک‌اند امن) ============ */
+    const user = users.find(u =>
+      normalizeToEnglishDigits(u.national_code) === natId ||
+      normalizeToEnglishDigits(u.personal_code) === natId
+    );
 
     if (!user) {
-      setForgotMessage({ type: 'error', text: 'کاربری با این کد ملی در سامانه ثبت نشده است.' });
+      setLoginError('کاربری با این کد ملی یافت نشد. لطفاً ابتدا ثبت‌نام کنید.');
       return;
     }
 
-    setForgotStep(2);
-    setForgotMessage({ type: 'success', text: `هویت شما (${user.first_name} ${user.last_name}) تایید شد. رمز جدید را وارد کنید.` });
+    const suppliedHash = await sha256Hex(loginPassword);
+    const stored = String(user.password || '');
+    const storedIsHash = /^[0-9a-f]{64}$/i.test(stored);
+
+    if (!stored) {
+      if (user.role === 'admin') {
+        // نخستین راه‌اندازی در حالت محلی: تعیین رمز مدیر روی همین دستگاه
+        setLocalAdminSetup(true);
+        setLoginError(
+          'این حساب هنوز رمز عبور ندارد. در حالت محلی، رمز نخستین ورود مدیر را در همین صفحه تعیین کنید.'
+        );
+        return;
+      }
+      setLoginError(
+        'این حساب رمز عبور فعال ندارد. برای دریافت رمز، از گزینه «فراموشی رمز عبور» درخواست دهید تا مدیر سامانه با شما تماس بگیرد.'
+      );
+      return;
+    }
+
+    if (storedIsHash ? stored !== suppliedHash : stored !== loginPassword) {
+      setLoginError('رمز عبور وارد شده صحیح نیست. از گزینه فراموشی رمز عبور استفاده کنید.');
+      return;
+    }
+
+    // ارتقای امنیتی: اگر رمز قدیمی متن‌ساده بود، به هش SHA-256 تبدیل می‌شود
+    if (!storedIsHash) {
+      setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, password: suppliedHash } : u)));
+    }
+
+    const targetTheme = user.gender === 'دختر' ? 'girls' : 'boys';
+    setSelectedGender(user.gender);
+    localStorage.setItem('hisstory_theme_mode', targetTheme);
+    window.dispatchEvent(new Event('storage'));
+
+    triggerAlert(`خوش آمدید ${user.first_name} ${user.last_name}`);
+    onLoginSuccess({ ...user, password: '' });
   };
 
-  // Handle Forgot Password Step 2 (Update password)
-  const handleForgotReset = async (e: React.FormEvent) => {
+  /** تعیین رمز مدیر در «حالت محلی» (نخستین راه‌اندازی روی همین دستگاه) */
+  const handleLocalAdminSetup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotNewPassword || forgotNewPassword.length < 4) {
-      setForgotMessage({ type: 'error', text: 'رمز عبور جدید باید حداقل ۴ رقم/حرف باشد.' });
+    setLoginError(null);
+
+    const admin = users.find(u => u.role === 'admin');
+    if (!admin) return;
+
+    const password = localAdminPassword.trim();
+    if (password.length < 10 || !/[A-Za-z]/.test(password) || !/\d/.test(password) || /\s/.test(password)) {
+      setLoginError('رمز مدیر باید حداقل ۱۰ کاراکتر و شامل حرف لاتین و رقم باشد (بدون فاصله).');
+      return;
+    }
+    if (password !== localAdminPasswordConfirm.trim()) {
+      setLoginError('تکرار رمز با رمز وارد‌شده یکسان نیست.');
       return;
     }
 
-    const natId = normalizeToEnglishDigits(forgotNationalId.trim());
-    const hashedPassword = isSupabaseEnabled ? await sha256Hex(forgotNewPassword) : forgotNewPassword;
-    setUsers(prev => prev.map(u => 
-      normalizeToEnglishDigits(u.national_code) === natId 
-        ? { ...u, password: hashedPassword } 
-        : u
-    ));
+    const hashed = await sha256Hex(password);
+    const updatedAdmin: User = { ...admin, password: hashed };
+    setUsers(prev => prev.map(u => (u.id === admin.id ? updatedAdmin : u)));
 
-    triggerAlert('رمز عبور شما با موفقیت به‌روزرسانی شد. اکنون می‌توانید وارد شوید.');
-    setShowForgotPassword(false);
-    setLoginPassword(forgotNewPassword);
-    setForgotStep(1);
+    setLocalAdminSetup(false);
+    setLocalAdminPassword('');
+    setLocalAdminPasswordConfirm('');
+    triggerAlert('رمز مدیر ثبت شد. ورود شما انجام می‌شود.');
+
+    const targetTheme = updatedAdmin.gender === 'دختر' ? 'girls' : 'boys';
+    setSelectedGender(updatedAdmin.gender);
+    localStorage.setItem('hisstory_theme_mode', targetTheme);
+    onLoginSuccess({ ...updatedAdmin, password: '' });
+  };
+
+  /**
+   * ارسال «درخواست تغییر رمز عبور» به مدیر سامانه.
+   * کاربر دیگر نمی‌تواند مستقیماً رمز را عوض کند؛ مدیر پس از احراز هویت
+   * تلفنی، رمز جدید را تعیین و اعلام می‌کند.
+   */
+  const handleForgotRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
     setForgotMessage(null);
+
+    const natId = normalizeToEnglishDigits(forgotNationalId.trim()).replace(/\D/g, '');
+    const phone = normalizeToEnglishDigits(forgotContactPhone.trim()).replace(/\D/g, '');
+    const note = forgotNote.trim();
+
+    if (!/^\d{10}$/.test(natId)) {
+      setForgotMessage({ type: 'error', text: 'کد ملی ۱۰ رقمی خود را کامل وارد کنید.' });
+      return;
+    }
+    if (forgotContactPhone.trim() && !/^09\d{9}$/.test(phone)) {
+      setForgotMessage({ type: 'error', text: 'شماره تماس باید با ۰۹ شروع شده و ۱۱ رقم باشد.' });
+      return;
+    }
+
+    setForgotSubmitting(true);
+
+    /* 🛡️ مسیر امن: ثبت درخواست در سرور (برای مشاهده مدیر در پنل) */
+    const resetBackend = await probeBackend();
+    if (resetBackend.available) {
+      const res = await requestPasswordReset({ nationalCode: natId, contactPhone: phone, note });
+      setForgotSubmitting(false);
+
+      if (!res.ok) {
+        setForgotMessage({ type: 'error', text: res.error.message });
+        return;
+      }
+
+      setForgotTrackingCode(res.data.trackingCode);
+      setForgotStep(2);
+      setForgotMessage({ type: 'success', text: res.data.message });
+      triggerAlert('درخواست تغییر رمز شما برای مدیر سامانه ارسال شد.');
+      return;
+    }
+
+    /* حالت محلی: ثبت درخواست در حافظه برنامه تا مدیر (همین دستگاه) ببیند */
+    const created = createLocalPasswordResetRequest?.({ nationalCode: natId, contactPhone: phone, note });
+    setForgotSubmitting(false);
+    setForgotTrackingCode(created?.trackingCode || '');
+    setForgotStep(2);
+    setForgotMessage({
+      type: 'success',
+      text: 'درخواست شما ثبت شد. مدیر سامانه با شماره تماس شما ارتباط می‌گیرد و رمز جدید را اعلام می‌کند.'
+    });
+  };
+
+  /** استعلام وضعیت درخواست با کد رهگیری */
+  const handleForgotStatusCheck = async () => {
+    if (!forgotTrackingCode) return;
+    const natId = normalizeToEnglishDigits(forgotNationalId.trim()).replace(/\D/g, '');
+
+    const statusBackend = await probeBackend();
+    if (!statusBackend.available) {
+      setForgotStatusText('در حالت محلی، وضعیت درخواست در پنل مدیریت (بخش «درخواست‌های تغییر رمز») قابل مشاهده است.');
+      return;
+    }
+
+    setForgotSubmitting(true);
+    const res = await checkPasswordResetStatus(natId, forgotTrackingCode);
+    setForgotSubmitting(false);
+
+    if (!res.ok) {
+      setForgotStatusText(res.error.message);
+      return;
+    }
+    setForgotStatusText(res.data.message || 'در حال بررسی');
   };
 
   return (
@@ -602,6 +819,24 @@ export default function AuthView({
               </div>
             </div>
 
+            {/* Mobile Phone (برای هماهنگی تلفنی مدیر در بازیابی رمز) */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 block">
+                شماره همراه <span className="text-rose-400">*</span>
+              </label>
+              <input
+                type="tel"
+                required
+                inputMode="numeric"
+                maxLength={11}
+                placeholder="09123456789"
+                value={registerForm.phone}
+                onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
+                className="w-full py-2 px-3 rounded-xl bg-slate-950/70 border border-slate-700/80 focus:border-cyan-400 text-xs text-white font-mono placeholder:text-slate-500 focus:outline-none transition dir-ltr text-left"
+              />
+              <p className="text-[9px] text-slate-500">این شماره برای احراز هویت و تماس مدیر در فرآیند بازیابی رمز استفاده می‌شود.</p>
+            </div>
+
             {/* Password (Required with Auto Generator & Eye Toggle) */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
@@ -666,6 +901,44 @@ export default function AuthView({
               <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500/60 text-rose-200 text-xs flex items-center gap-2">
                 <AlertTriangle size={15} className="text-rose-400 shrink-0" />
                 <span>{loginError}</span>
+              </div>
+            )}
+
+            {/* 🛡️ راه‌اندازی نخستین رمز مدیر در حالت محلی (تنها زمانی که بک‌اند امن در دسترس نیست) */}
+            {localAdminSetup && !backendReady && (
+              <div className="p-3 rounded-2xl bg-amber-950/40 border border-amber-500/50 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert size={14} className="text-amber-400" />
+                  <span className="text-[11px] font-black text-amber-200">تعیین رمز نخستین ورود مدیر (حالت محلی)</span>
+                </div>
+                <p className="text-[9px] text-amber-100/90 leading-relaxed">
+                  بک‌اند امن فعال نیست؛ رمز شما فقط روی همین دستگاه (هش‌شده) ذخیره می‌شود. برای امنیت کامل،
+                  بک‌اند را با دستور <code className="font-mono">npm run dev</code> اجرا کنید.
+                </p>
+                <form onSubmit={handleLocalAdminSetup} className="space-y-2">
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="رمز جدید مدیر (حداقل ۱۰ کاراکتر شامل حرف و رقم)"
+                    value={localAdminPassword}
+                    onChange={(e) => setLocalAdminPassword(e.target.value)}
+                    className="w-full py-2 px-3 rounded-xl bg-slate-950 border border-amber-600/50 text-xs text-white font-mono focus:outline-none focus:border-amber-400"
+                  />
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="تکرار رمز جدید"
+                    value={localAdminPasswordConfirm}
+                    onChange={(e) => setLocalAdminPasswordConfirm(e.target.value)}
+                    className="w-full py-2 px-3 rounded-xl bg-slate-950 border border-amber-600/50 text-xs text-white font-mono focus:outline-none focus:border-amber-400"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] transition"
+                  >
+                    ثبت رمز و ورود به پنل مدیریت
+                  </button>
+                </form>
               </div>
             )}
 
@@ -753,42 +1026,53 @@ export default function AuthView({
               <ArrowLeft size={16} />
             </button>
 
-            {/* حساب پیش‌فرض مدیر سامانه (تنها حساب پیش‌فرض ورود به پنل مدیریت) */}
-            <details className="group rounded-xl border border-slate-700/60 bg-slate-950/50 overflow-hidden">
-              <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer select-none text-[10px] font-bold text-slate-400 hover:text-slate-200 transition list-none">
-                <span className="flex items-center gap-1.5">
-                  <Shield size={12} className="text-amber-400" />
-                  ورود مدیر سامانه (پنل مدیریت)
-                </span>
-                <ChevronDown size={12} className="transition group-open:rotate-180" />
-              </summary>
-              <div className="px-3 pb-2.5 pt-1 space-y-1.5 border-t border-slate-800/80">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-slate-500">کد ملی مدیر:</span>
-                  <code className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-cyan-300 font-mono tracking-wider" dir="ltr">0012345678</code>
-                </div>
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-slate-500">رمز عبور پیش‌فرض:</span>
-                  <code className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-amber-300 font-mono tracking-wider" dir="ltr">admin</code>
-                </div>
-                <p className="text-[9px] text-slate-600 leading-relaxed pt-0.5">
-                  پس از نخستین ورود، رمز عبور را از بخش مدیریت کاربران تغییر دهید.
+            {/* 🛡️ وضعیت لایه‌های امنیتی — رمز/پسورد پیش‌فرض هیچ‌گاه در رابط کاربری نمایش داده نمی‌شود */}
+            <div
+              className={`rounded-xl border px-3 py-2.5 text-[10px] leading-relaxed flex items-start gap-2 ${
+                backendReady
+                  ? 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200'
+                  : 'border-amber-500/50 bg-amber-950/30 text-amber-200'
+              }`}
+            >
+              <ShieldCheck size={14} className="shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="font-bold flex items-center gap-1.5">
+                  <span>{backendReady ? 'لایه‌های امنیتی سرور فعال است' : 'حالت محلی — لایه امنیتی سرور غیرفعال'}</span>
+                  {backendStatus?.mode && (
+                    <span className="px-1.5 rounded-md bg-black/30 border border-current/30 font-mono">
+                      {backendStatus.mode === 'supabase' ? 'DB: Supabase' : 'DB: Server'}
+                    </span>
+                  )}
+                </p>
+                <p className="text-[9px] opacity-90">
+                  {backendReady
+                    ? 'رمز عبور با scrypt هش می‌شود، محدودسازی نرخ (ضد DDoS/حمله جست‌وجوی رمز)، اعتبارسنجی ورودی (ضد SQL Injection) و قفل خودکار حساب فعال است.'
+                    : 'برای رمزگذاری امن، جلوگیری از حملات DDoS/SQL Injection و بازیابی امن رمز، بک‌اند را اجرا کنید: npm run dev'}
+                </p>
+                <p className="text-[9px] opacity-80 font-bold">
+                  برای بازیابی رمز، از «فراموشی رمز عبور» درخواست دهید تا مدیر سامانه تلفنی هماهنگ کند.
                 </p>
               </div>
-            </details>
+            </div>
 
           </form>
         )}
 
       </div>
 
-      {/* Forgot Password Modal */}
+      {/* Forgot Password Modal — ثبت «درخواست تغییر رمز» برای مدیر سامانه */}
       {showForgotPassword && (
         <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 dir-rtl overflow-y-auto">
-          <div className="bg-[#0b1226] border border-cyan-500/40 rounded-3xl p-5 sm:p-6 max-w-sm w-full space-y-4 text-white shadow-2xl relative my-auto max-h-[85vh] sm:max-h-[88vh] overflow-y-auto">
-            
+          <div className="bg-[#0b1226] border border-cyan-500/40 rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 text-white shadow-2xl relative my-auto max-h-[88vh] overflow-y-auto">
+
             <button
-              onClick={() => setShowForgotPassword(false)}
+              onClick={() => {
+                setShowForgotPassword(false);
+                setForgotStep(1);
+                setForgotMessage(null);
+                setForgotTrackingCode('');
+                setForgotStatusText('');
+              }}
               className="absolute top-4 left-4 text-slate-400 hover:text-white p-1 rounded-full bg-slate-900"
             >
               <X size={16} />
@@ -799,15 +1083,17 @@ export default function AuthView({
                 <KeyRound size={20} />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white">بازیابی رمز عبور</h3>
-                <p className="text-[10px] text-slate-400">تغییر رمز عبور با اعتبارسنجی کد ملی</p>
+                <h3 className="text-sm font-black text-white">درخواست تغییر رمز عبور</h3>
+                <p className="text-[10px] text-slate-400">
+                  احراز هویت و تعیین رمز جدید توسط مدیر سامانه انجام می‌شود
+                </p>
               </div>
             </div>
 
             {forgotMessage && (
-              <div className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
-                forgotMessage.type === 'error' 
-                  ? 'bg-rose-950 border border-rose-500/60 text-rose-200' 
+              <div className={`p-2.5 rounded-xl text-[11px] leading-relaxed flex items-start gap-2 ${
+                forgotMessage.type === 'error'
+                  ? 'bg-rose-950 border border-rose-500/60 text-rose-200'
                   : 'bg-emerald-950 border border-emerald-500/60 text-emerald-200'
               }`}>
                 <span>{forgotMessage.text}</span>
@@ -815,12 +1101,13 @@ export default function AuthView({
             )}
 
             {forgotStep === 1 ? (
-              <form onSubmit={handleForgotVerify} className="space-y-3">
+              <form onSubmit={handleForgotRequest} className="space-y-3">
                 <div className="space-y-1">
                   <label className="text-[11px] text-slate-300 block">کد ملی ثبت‌شده در سامانه:</label>
                   <input
                     type="text"
                     required
+                    inputMode="numeric"
                     maxLength={10}
                     placeholder="۰۰۱۱۱۱۱۱۱۱"
                     value={forgotNationalId}
@@ -829,36 +1116,90 @@ export default function AuthView({
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-xs transition"
-                >
-                  بررسی و تایید هویت
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleForgotReset} className="space-y-3">
                 <div className="space-y-1">
-                  <label className="text-[11px] text-slate-300 block">رمز عبور جدید:</label>
+                  <label className="text-[11px] text-slate-300 block">شماره همراه برای تماس مدیر:</label>
                   <input
-                    type="password"
-                    required
-                    placeholder="حداقل ۴ کاراکتر"
-                    value={forgotNewPassword}
-                    onChange={(e) => setForgotNewPassword(e.target.value)}
-                    className="w-full py-2 px-3 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white font-mono text-left focus:outline-none focus:border-cyan-400"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
+                    placeholder="09123456789"
+                    value={forgotContactPhone}
+                    onChange={(e) => setForgotContactPhone(e.target.value)}
+                    className="w-full py-2 px-3 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white font-mono text-left focus:outline-none focus:border-cyan-400 dir-ltr"
                   />
+                  <p className="text-[9px] text-slate-500">
+                    مدیر سامانه با این شماره تماس می‌گیرد و پس از احراز هویت، رمز جدید را اعلام می‌کند.
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] text-slate-300 block">توضیح (اختیاری):</label>
+                  <textarea
+                    rows={2}
+                    maxLength={200}
+                    placeholder="مثال: رمز عبورم را فراموش کرده‌ام."
+                    value={forgotNote}
+                    onChange={(e) => setForgotNote(e.target.value)}
+                    className="w-full py-2 px-3 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400 resize-none"
+                  />
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[9px] text-slate-400 leading-relaxed">
+                  🔒 به دلایل امنیتی، امکان تغییر رمز به‌صورت مستقیم وجود ندارد. درخواست شما با کد رهگیری ثبت
+                  و پس از احراز هویت تلفنی، رمز جدید توسط مدیر تعیین می‌شود.
+                  {!backendReady && ' (هشدار: بک‌اند امن فعال نیست؛ درخواست فقط در همین دستگاه ذخیره می‌شود.)'}
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition"
+                  disabled={forgotSubmitting}
+                  className="w-full py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 disabled:opacity-60 text-slate-950 font-black text-xs transition flex items-center justify-center gap-2"
                 >
-                  ثبت رمز جدید و بازگشت
+                  <Send size={14} />
+                  <span>{forgotSubmitting ? 'در حال ارسال...' : 'ارسال درخواست به مدیر سامانه'}</span>
                 </button>
               </form>
-            )}
+            ) : (
+              <div className="space-y-3">
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                  <span className="text-[10px] text-slate-400 block">کد رهگیری درخواست شما:</span>
+                  <code className="block w-full text-center py-2 rounded-lg bg-black/60 border border-cyan-500/40 text-cyan-300 font-mono text-sm tracking-widest" dir="ltr">
+                    {forgotTrackingCode || '—'}
+                  </code>
+                  <p className="text-[9px] text-slate-500 leading-relaxed">
+                    این کد را نزد خود نگه دارید؛ می‌توانید وضعیت درخواست را با آن پیگیری کنید.
+                  </p>
+                </div>
 
+                <button
+                  type="button"
+                  onClick={handleForgotStatusCheck}
+                  disabled={forgotSubmitting}
+                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-slate-100 font-bold text-xs transition flex items-center justify-center gap-2"
+                >
+                  <RefreshCw size={14} className={forgotSubmitting ? 'animate-spin' : ''} />
+                  <span>{forgotSubmitting ? 'در حال بررسی...' : 'استعلام وضعیت درخواست'}</span>
+                </button>
+
+                {forgotStatusText && (
+                  <div className="p-2.5 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 text-[11px] leading-relaxed">
+                    {forgotStatusText}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setForgotStep(1);
+                    setForgotMessage(null);
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition"
+                >
+                  متوجه شدم و بستن
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
