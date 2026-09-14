@@ -146,6 +146,79 @@ export function useSyncedCollection<T extends { id: string }>(options: {
 }
 
 /* ------------------------------------------------------------------ */
+/* همگام‌سازی ذخیره‌های کاربری ویترین (Bookmarks) با Supabase          */
+/* ------------------------------------------------------------------ */
+const savedPostsTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+
+/**
+ * ذخیره فهرست آثار ذخیره‌شده (Bookmark) یک کاربر در جدول warroom_kv
+ * (کلید: saved_posts_<userId>) — با Debounce برای جلوگیری از نوشتن‌های پیاپی.
+ */
+export function persistSavedPostsToDb(userId: string | undefined, ids?: string[]): void {
+  if (!isSupabaseEnabled || !supabase || !userId) return;
+  const key = `saved_posts_${userId}`;
+  const list = ids || (() => {
+    try {
+      const raw = localStorage.getItem(`warroom_saved_vitrin_posts_${userId}`)
+        || localStorage.getItem('warroom_saved_vitrin_posts');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  })();
+  if (savedPostsTimers[key]) clearTimeout(savedPostsTimers[key]);
+  savedPostsTimers[key] = setTimeout(() => {
+    supabase!
+      .from('warroom_kv')
+      .upsert({ id: key, value: { postIds: list } })
+      .then(({ error }) => {
+        if (error) console.warn(`[WarRoom] همگام‌سازی ذخیره‌های ${userId} ناموفق:`, error.message);
+      });
+  }, 1000);
+}
+
+/**
+ * بارگذاری ذخیره‌های یک کاربر از Supabase و ادغام با نسخه محلی.
+ * فهرست ادغام‌شده برمی‌گردد و در localStorage آینه‌سازی می‌شود.
+ */
+export async function loadSavedPostsFromDb(userId: string | undefined): Promise<string[]> {
+  const local = () => {
+    try {
+      const raw = userId
+        ? localStorage.getItem(`warroom_saved_vitrin_posts_${userId}`)
+        : null;
+      if (raw) return JSON.parse(raw);
+      const fallback = localStorage.getItem('warroom_saved_vitrin_posts');
+      return fallback ? JSON.parse(fallback) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  if (!isSupabaseEnabled || !supabase || !userId) return local();
+
+  try {
+    const { data } = await supabase!
+      .from('warroom_kv')
+      .select('value')
+      .eq('id', `saved_posts_${userId}`)
+      .maybeSingle();
+    const remote: string[] = Array.isArray((data?.value as any)?.postIds)
+      ? ((data!.value as any).postIds as string[])
+      : [];
+    const merged = Array.from(new Set([...local(), ...remote]));
+    try {
+      localStorage.setItem(`warroom_saved_vitrin_posts_${userId}`, JSON.stringify(merged));
+      localStorage.setItem('warroom_saved_vitrin_posts', JSON.stringify(merged));
+    } catch {}
+    return merged;
+  } catch (err) {
+    console.warn('[WarRoom] بارگذاری ذخیره‌ها از Supabase ناموفق بود:', err);
+    return local();
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* هوک ۲: تنظیمات تکی (ذخیره در جدول warroom_kv)                       */
 /* ------------------------------------------------------------------ */
 export function useSyncedSetting<T extends Record<string, any>>(options: {

@@ -379,6 +379,7 @@ class UniversalAudioEngine {
       localStorage.setItem('warroom_soundtracks', JSON.stringify(newPlaylist));
       window.dispatchEvent(new CustomEvent('warroom_soundtracks_updated', { detail: newPlaylist }));
     } catch {}
+    pushMusicStateToSupabase(); // 📡 همگام‌سازی با Supabase
 
     // Check if current track was removed or deactivated
     if (this.currentTrack && !this.playlist.some(t => t.id === this.currentTrack?.id && t.is_active)) {
@@ -401,6 +402,7 @@ class UniversalAudioEngine {
       localStorage.setItem('warroom_audio_settings', JSON.stringify(savedSettings));
       window.dispatchEvent(new CustomEvent('warroom_audio_settings_updated', { detail: savedSettings }));
     } catch {}
+    pushMusicStateToSupabase(); // 📡 همگام‌سازی با Supabase
   }
 
   public getCurrentTrack(): SoundtrackItem | null {
@@ -428,6 +430,8 @@ class UniversalAudioEngine {
       localStorage.setItem('warroom_selected_track', track.id);
       window.dispatchEvent(new CustomEvent('warroom_track_changed', { detail: track }));
     } catch {}
+
+    pushMusicStateToSupabase(); // 📡 همگام‌سازی با Supabase
 
     if (this.isRunning) {
       this.playTrack(track);
@@ -1064,3 +1068,81 @@ class UniversalAudioEngine {
 }
 
 export const battleMusicSynth = new UniversalAudioEngine();
+
+// ============================================================================
+// 📡 Supabase Sync — Music Playlist & Audio Settings (جدول warroom_kv)
+// ============================================================================
+// لیست موسیقی و تنظیمات پخش به صورت ابری همگام می‌شوند تا ادمین در یک
+// دستگاه لیست جدید بسازد و روی همه‌ی دستگاه‌های کاربران اعمال شود.
+// در نبود Supabase، رفتار قبلی (localStorage) بدون تغییر باقی می‌ماند.
+// ============================================================================
+import { isSupabaseEnabled, supabase } from '../lib/supabaseClient';
+
+const musicKvTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+
+function readLocalAudioSettings(): Record<string, any> {
+  try {
+    return JSON.parse(localStorage.getItem('warroom_audio_settings') || '{}') || {};
+  } catch {
+    return {};
+  }
+}
+
+/** ذخیره‌ی حالت فعلی موسیقی (لیست + تنظیمات) در Supabase — با Debounce */
+function pushMusicStateToSupabase(): void {
+  if (!isSupabaseEnabled || !supabase) return;
+  if (musicKvTimers.music) clearTimeout(musicKvTimers.music);
+  musicKvTimers.music = setTimeout(async () => {
+    try {
+      const playlist = battleMusicSynth.getPlaylist();
+      const localSettings = readLocalAudioSettings();
+      const settings: Record<string, any> = {
+        ...localSettings,
+        playbackMode: battleMusicSynth.getPlaybackMode(),
+        activeTrackId: battleMusicSynth.getCurrentTrack()?.id || localSettings.activeTrackId || '',
+        defaultVolume: Math.round(battleMusicSynth.getVolume() * 100)
+      };
+      const [{ error: e1 }, { error: e2 }] = await Promise.all([
+        supabase!.from('warroom_kv').upsert({ id: 'soundtracks', value: { items: playlist } }),
+        supabase!.from('warroom_kv').upsert({ id: 'audio_settings', value: settings })
+      ]);
+      if (e1 || e2) {
+        console.warn('[WarRoom] همگام‌سازی موسیقی با Supabase ناموفق بود:', e1?.message || e2?.message);
+      }
+    } catch (err) {
+      console.warn('[WarRoom] خطا در همگام‌سازی موسیقی با Supabase:', err);
+    }
+  }, 1200);
+}
+
+/** بارگذاری اولیه‌ی لیست موسیقی و تنظیمات از ابر (اگر ادمین تغییری کرده باشد) */
+(async () => {
+  if (!isSupabaseEnabled || !supabase) return;
+  try {
+    const [{ data: tracksRow }, { data: settingsRow }] = await Promise.all([
+      supabase.from('warroom_kv').select('value').eq('id', 'soundtracks').maybeSingle(),
+      supabase.from('warroom_kv').select('value').eq('id', 'audio_settings').maybeSingle()
+    ]);
+    const items: SoundtrackItem[] | undefined = Array.isArray((tracksRow?.value as any)?.items)
+      ? ((tracksRow!.value as any).items as SoundtrackItem[])
+      : undefined;
+    const remoteSettings: Record<string, any> | null = (settingsRow?.value as any) || null;
+
+    if (items && items.length > 0) {
+      battleMusicSynth.setPlaylist(items);
+    }
+    if (remoteSettings) {
+      if (remoteSettings.playbackMode) {
+        battleMusicSynth.setPlaybackMode(remoteSettings.playbackMode);
+      }
+      if (typeof remoteSettings.defaultVolume === 'number') {
+        battleMusicSynth.setVolume(remoteSettings.defaultVolume / 100);
+      }
+      if (remoteSettings.activeTrackId) {
+        battleMusicSynth.setTrack(remoteSettings.activeTrackId);
+      }
+    }
+  } catch (err) {
+    console.warn('[WarRoom] بارگذاری تنظیمات موسیقی از Supabase ناموفق بود:', err);
+  }
+})();

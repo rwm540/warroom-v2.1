@@ -4,7 +4,7 @@ import {
   X, Bookmark, Heart, MessageCircle, Play, Pause, Volume2, VolumeX, 
   Send, Loader2, ChevronDown, Share2, Sparkles, Video, ArrowLeft, CheckCircle2
 } from 'lucide-react';
-import { VitrinPost, VitrinComment, initialVitrinPosts, getAllComments, saveComment, getSavedPostIds, savePostId } from '../data/vitrinData';
+import { VitrinPost, VitrinComment, getAllComments, saveComment, toggleCommentLike, getVitrinPostsFromStore, getSavedPostIds, savePostId } from '../data/vitrinData';
 import { formatToPersianDigits } from '../utils/jalali';
 import { User } from '../types';
 
@@ -61,8 +61,8 @@ export default function SavedVitrinReelsModal({
       const ids = getSavedPostIds(currentUser?.id);
       setSavedIds(ids);
 
-      // Filter from initial posts
-      const matched = initialVitrinPosts.filter(post => ids.includes(post.id));
+      // 📡 Filter from the shared vitrin store (synced with Supabase via App state)
+      const matched = getVitrinPostsFromStore(currentUser?.id).filter(post => ids.includes(post.id));
       setSavedPosts(matched);
 
       // Load comments
@@ -114,7 +114,7 @@ export default function SavedVitrinReelsModal({
     const isAdded = savePostId(postId, currentUser?.id);
     const updatedIds = getSavedPostIds(currentUser?.id);
     setSavedIds(updatedIds);
-    setSavedPosts(initialVitrinPosts.filter(p => updatedIds.includes(p.id)));
+    setSavedPosts(getVitrinPostsFromStore(currentUser?.id).filter(p => updatedIds.includes(p.id)));
 
     if (isAdded) {
       triggerAlert('به آثار ذخیره‌شده افزوده شد.');
@@ -128,29 +128,10 @@ export default function SavedVitrinReelsModal({
     triggerAlert(`امتیاز ${formatToPersianDigits(rating)} ستاره برای این اثر ثبت شد.`);
   };
 
-  // Like a comment in saved reels modal
+  // Like a comment in saved reels modal (📡 همگام با Supabase)
   const handleToggleCommentLike = (postId: string, commentId: string) => {
-    setCommentsMap(prev => {
-      const list = prev[postId] || [];
-      const updatedList = list.map(c => {
-        if (c.id === commentId) {
-          const nextLiked = !c.isLiked;
-          return {
-            ...c,
-            isLiked: nextLiked,
-            likesCount: nextLiked ? (c.likesCount || 0) + 1 : Math.max(0, (c.likesCount || 0) - 1)
-          };
-        }
-        return c;
-      });
-      const nextMap = { ...prev, [postId]: updatedList };
-      try {
-        localStorage.setItem('warroom_vitrin_comments', JSON.stringify(nextMap));
-      } catch (e) {
-        console.error('Failed to update comment like', e);
-      }
-      return nextMap;
-    });
+    const updated = toggleCommentLike(postId, commentId);
+    setCommentsMap(updated);
   };
 
   const handleAddComment = (postId: string) => {

@@ -23,7 +23,7 @@ import { User, Group, Medal, UserMedal } from '../types';
 import { formatToPersianDigits } from '../utils/jalali';
 import { 
   VitrinPost, 
-  initialVitrinPosts, 
+  getVitrinPostsFromStore,
   getSavedPostIds, 
   removeSavedPostId,
   getAllComments
@@ -98,8 +98,8 @@ export default function ProfileView({
   // User Squad if any
   const userGroup = groups.find(g => g.id === currentUser.group_id);
 
-  // Filter saved Vitrin posts
-  const savedPosts = initialVitrinPosts.filter(p => savedPostIds.includes(p.id));
+  // Filter saved Vitrin posts (📡 از داده‌های همگام‌شده با Supabase)
+  const savedPosts = getVitrinPostsFromStore(currentUser.id).filter(p => savedPostIds.includes(p.id));
   const allComments = getAllComments();
 
   const copyCode = () => {
